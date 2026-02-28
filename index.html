@@ -1,44 +1,227 @@
-function init() {
-            // ローカルストレージからクリア状況を取得
-            const cleared = JSON.parse(localStorage.getItem('clearedStages') || '[]');
-            
-            // 各ボタンにクリア済みクラスを付与
-            const modes = ['ki', 'do', 'ai', 'raku', 'hidden'];
-            modes.forEach(id => {
-                const btn = document.getElementById('btn-' + id);
-                if (btn) {
-                    if (cleared.includes(id)) {
-                        btn.classList.add('cleared');
-                    } else {
-                        btn.classList.remove('cleared');
-                    }
-                }
-            });
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>RESONANCE: FINAL EDITION</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@700&display=swap');
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Shippori Mincho', serif; color: #fff; user-select: none; }
+        canvas { display: block; }
+        
+        /* UI情報 */
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; padding: 25px; box-sizing: border-box; }
+        .stat { font-size: 1.2rem; text-shadow: 0 0 10px #fff; margin-bottom: 2px; }
+        #hp-bar-bg { width: 300px; height: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; overflow: hidden; margin: 10px 0; }
+        #hp-bar-fill { width: 100%; height: 100%; transition: width 0.1s; box-shadow: 0 0 20px currentColor; }
+        #p-timer { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 3rem; color: #fff; text-shadow: 0 0 20px #00dfff; display: none; font-weight: bold; }
 
-            // 【ここを修正】隠しステージ（中央線）の出現条件を厳密に
-            // 1. 管理者ログインで 'hidden' がクリア済みになっているか
-            // 2. あるいは、通常プレイで ki, do, ai, raku の4つが揃っているか
-            const standardRequired = ['ki', 'do', 'ai', 'raku'];
-            const isStandardUnlocked = standardRequired.every(s => cleared.includes(s));
-            const isAdminUnlocked = cleared.includes('hidden');
+        /* メニュー画面 */
+        #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; text-align: center; }
+        .stage-select { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 10px; }
+        .stage-btn { width: 260px; padding: 20px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: 0.2s; position: relative; background: #050505; }
+        .stage-btn:hover { background: rgba(255,255,255,0.15); transform: scale(1.02); border-color: #fff; }
+        .stage-btn.cleared::after { content: "COMPLETED ✔"; position: absolute; top: 5px; right: 10px; font-size: 0.6rem; color: #00ffcc; }
+        
+        /* 中央線：デフォルトは非表示 */
+        #btn-hidden { grid-column: span 2; display: none; border-color: #f39700; color: #f39700; font-weight: bold; font-size: 1.5rem; letter-spacing: 5px; box-shadow: 0 0 30px rgba(243,151,0,0.3); }
+        
+        .footer { margin-top: 30px; display: flex; gap: 20px; font-size: 0.65rem; opacity: 0.3; }
+        .link { cursor: pointer; transition: 0.3s; }
+        .link:hover { opacity: 1; color: #00ffcc; }
+        .manual { margin: 15px; font-size: 0.75rem; color: #888; border: 1px dashed #333; padding: 10px; line-height: 1.6; }
+    </style>
+</head>
+<body>
 
-            const hiddenBtn = document.getElementById('btn-hidden');
-            if (isStandardUnlocked || isAdminUnlocked) {
-                hiddenBtn.style.display = 'block';
-            } else {
-                hiddenBtn.style.display = 'none';
-            }
-        }
+    <div id="overlay">
+        <h1 style="letter-spacing: 1rem; font-size: 3rem; margin: 0;">RESONANCE</h1>
+        <div class="manual">
+            【操作】マウス移動 / 左クリック連射<br>
+            【★】5秒無敵＆超速射 / 【✚】HP回復 / 【×】爆弾誘爆
+        </div>
+        <div class="stage-select">
+            <div id="btn-ki" class="stage-btn" style="color: #00b2e5;" onclick="start('ki')">喜 / 京浜東北線</div>
+            <div id="btn-do" class="stage-btn" style="color: #da0442;" onclick="start('do')">怒 / 京葉線</div>
+            <div id="btn-ai" class="stage-btn" style="color: #ffd400;" onclick="start('ai')">哀 / 総武線</div>
+            <div id="btn-raku" class="stage-btn" style="color: #00a651;" onclick="start('raku')">楽 / 埼京線</div>
+            <div id="btn-hidden" class="stage-btn" onclick="start('hidden')">超 鬼 む ず / 中央線</div>
+        </div>
+        
+        <div class="footer">
+            <span class="link" onclick="adminLogin()">[ ADMIN LOGIN ]</span>
+            <span class="link" onclick="resetData()">[ RESET SAVE DATA ]</span>
+        </div>
+    </div>
+
+    <div id="ui-layer">
+        <div class="stat">SCORE: <span id="score">0</span> / <span id="target">0</span></div>
+        <div id="hp-bar-bg"><div id="hp-bar-fill"></div></div>
+        <div id="stage-name" style="letter-spacing: 5px; font-weight: bold;"></div>
+    </div>
+    <div id="p-timer">POWER UP! <span id="p-sec">5.0</span></div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let gameActive = false, score = 0, hp = 100, frame = 0, powerUpTimer = 0;
+        let currentMode = null;
+        const bullets = [], enemies = [], particles = [], items = [];
+        const player = { x: canvas.width/2, y: canvas.height/2 };
+
+        const config = {
+            ki: { color: '#00b2e5', speed: 2.5, spawn: 0.1, hp: [1, 2], target: 10000, name: "喜: 京浜東北" },
+            do: { color: '#da0442', speed: 4.5, spawn: 0.18, hp: [1, 4], target: 15000, name: "怒: 京葉" },
+            ai: { color: '#ffd400', speed: 2.0, spawn: 0.15, hp: [15, 35], target: 15000, name: "哀: 総武" },
+            raku: { color: '#00a651', speed: 6.5, spawn: 0.42, hp: [2, 6], target: 20000, name: "楽: 埼京" },
+            hidden: { color: '#f39700', speed: 9.0, spawn: 0.7, hp: [30, 100], target: 50000, name: "極: 中央オレンジ" }
+        };
 
         function adminLogin() {
             const pass = prompt("管理者パスワードを入力してください:");
-            if (pass === "admin1234") {
-                // 管理者として全解禁
-                const allStages = ['ki', 'do', 'ai', 'raku', 'hidden'];
-                localStorage.setItem('clearedStages', JSON.stringify(allStages));
-                alert("ADMIN MODE: 全ステージを強制解禁しました。");
-                init(); // 再読み込みせずにUIを更新
-            } else {
-                alert("パスワードが違います。");
-            }
+            if(pass === "admin1234") {
+                localStorage.setItem('clearedStages', JSON.stringify(['ki', 'do', 'ai', 'raku', 'hidden']));
+                alert("ADMIN MODE: 全ステージ解禁");
+                init();
+            } else { alert("パスワードエラー"); }
         }
+
+        function init() {
+            const cleared = JSON.parse(localStorage.getItem('clearedStages') || '[]');
+            ['ki', 'do', 'ai', 'raku', 'hidden'].forEach(id => {
+                const btn = document.getElementById('btn-'+id);
+                if(btn) cleared.includes(id) ? btn.classList.add('cleared') : btn.classList.remove('cleared');
+            });
+            
+            // 解禁条件の厳格化
+            const allStandardCleared = ['ki','do','ai','raku'].every(s => cleared.includes(s));
+            document.getElementById('btn-hidden').style.display = (allStandardCleared || cleared.includes('hidden')) ? 'block' : 'none';
+        }
+
+        function start(modeKey) {
+            currentMode = { ...config[modeKey], key: modeKey };
+            score = 0; hp = 100; frame = 0; powerUpTimer = 0;
+            bullets.length = 0; enemies.length = 0; particles.length = 0; items.length = 0;
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('stage-name').innerText = currentMode.name;
+            document.getElementById('stage-name').style.color = currentMode.color;
+            document.getElementById('target').innerText = currentMode.target;
+            gameActive = true; loop();
+        }
+
+        let mx = canvas.width/2, my = canvas.height/2, isDown = false;
+        window.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+        window.addEventListener('mousedown', () => isDown = true);
+        window.addEventListener('mouseup', () => isDown = false);
+
+        function update() {
+            frame++;
+            if(powerUpTimer > 0) {
+                powerUpTimer--;
+                document.getElementById('p-timer').style.display = 'block';
+                document.getElementById('p-sec').innerText = (powerUpTimer/60).toFixed(1);
+            } else { document.getElementById('p-timer').style.display = 'none'; }
+
+            player.x += (mx - player.x) * 0.2;
+            player.y += (my - player.y) * 0.2;
+
+            const shootInt = (powerUpTimer > 0) ? 2 : 4;
+            if(isDown && frame % shootInt === 0) bullets.push({x: player.x, y: player.y-20, vy: -25});
+
+            if(Math.random() < currentMode.spawn) {
+                if(Math.random() < 0.05) enemies.push({ x: Math.random()*canvas.width, y: -50, type: 'bomb', hp: 1, speed: 3, size: 40 });
+                else {
+                    const h = Math.floor(Math.random()*(currentMode.hp[1]-currentMode.hp[0]+1))+currentMode.hp[0];
+                    enemies.push({ x: Math.random()*canvas.width, y: -50, hp: h, maxHp: h, speed: currentMode.speed + Math.random()*2, size: 25+(h*1.2) });
+                }
+            }
+
+            bullets.forEach((b, i) => { b.y += b.vy; if(b.y < -50) bullets.splice(i, 1); });
+
+            enemies.forEach((e, ei) => {
+                e.y += e.speed;
+                if(Math.hypot(e.x-player.x, e.y-player.y) < 25 && powerUpTimer <= 0) {
+                    if(e.type === 'bomb') explode(e.x, e.y, true); else hp -= 0.8;
+                    if(hp <= 0) finish(false);
+                }
+                bullets.forEach((b, bi) => {
+                    if(Math.hypot(e.x-b.x, e.y-b.y) < e.size/2) {
+                        e.hp--; bullets.splice(bi, 1);
+                        if(currentMode.key === 'hidden') e.y -= 1.5; // 鬼モードノックバック
+                        if(e.hp <= 0) {
+                            if(e.type === 'bomb') explode(e.x, e.y, powerUpTimer <= 0);
+                            else {
+                                enemies.splice(ei, 1); score += e.maxHp * 50;
+                                if(Math.random() < 0.12) items.push({x: e.x, y: e.y, type:'heal'});
+                                if(Math.random() < 0.07) items.push({x: e.x, y: e.y, type:'power'});
+                                createParticles(e.x, e.y, currentMode.color, 15);
+                            }
+                            if(score >= currentMode.target) finish(true);
+                        }
+                    }
+                });
+                if(e.y > canvas.height + 100) enemies.splice(ei, 1);
+            });
+
+            items.forEach((it, i) => {
+                it.y += 3;
+                if(Math.hypot(it.x-player.x, it.y-player.y) < 30) {
+                    if(it.type==='heal') hp = Math.min(100, hp+25); else powerUpTimer = 300;
+                    items.splice(i, 1); createParticles(player.x, player.y, "#fff", 20);
+                }
+            });
+
+            particles.forEach((p, i) => { p.x += p.vx; p.y += p.vy; p.l -= 0.03; if(p.l <= 0) particles.splice(i, 1); });
+            document.getElementById('score').innerText = score;
+            document.getElementById('hp-bar-fill').style.width = hp + "%";
+            document.getElementById('hp-bar-fill').style.backgroundColor = currentMode.color;
+        }
+
+        function explode(x, y, damage) {
+            createParticles(x, y, "#f00", 40);
+            if(damage) hp -= 40;
+            enemies.forEach((e, i) => { if(Math.hypot(e.x-x, e.y-y) < 250) enemies.splice(i, 1); });
+            if(hp <= 0) finish(false);
+        }
+        function createParticles(x, y, c, n) { for(let i=0; i<n; i++) particles.push({x, y, c, vx:(Math.random()-0.5)*18, vy:(Math.random()-0.5)*18, l:1}); }
+        
+        function draw() {
+            ctx.fillStyle = "rgba(0,0,0,0.5)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.shadowBlur = (powerUpTimer > 0) ? 30 : 15;
+            ctx.shadowColor = (powerUpTimer > 0) ? "#fff" : currentMode.color;
+            ctx.fillStyle = "#fff";
+            ctx.beginPath(); ctx.moveTo(player.x, player.y-22); ctx.lineTo(player.x-18, player.y+15); ctx.lineTo(player.x+18, player.y+15); ctx.fill();
+            enemies.forEach(e => {
+                ctx.strokeStyle = e.type === 'bomb' ? "#f00" : currentMode.color;
+                ctx.lineWidth = 2; ctx.strokeRect(e.x-e.size/2, e.y-e.size/2, e.size, e.size);
+            });
+            items.forEach(it => {
+                ctx.fillStyle = it.type === 'heal' ? "#00ffcc" : "#00dfff";
+                ctx.fillRect(it.x-8, it.y-8, 16, 16);
+            });
+            ctx.shadowBlur = 0; ctx.fillStyle = (powerUpTimer > 0) ? "#00dfff" : "#fff";
+            bullets.forEach(b => ctx.fillRect(b.x-1, b.y-15, 2, 25));
+            particles.forEach(p => { ctx.globalAlpha = p.l; ctx.fillStyle = p.c; ctx.fillRect(p.x, p.y, 2, 2); });
+            ctx.globalAlpha = 1;
+        }
+
+        function finish(isClear) {
+            gameActive = false;
+            if(isClear) {
+                const cleared = JSON.parse(localStorage.getItem('clearedStages') || '[]');
+                if(!cleared.includes(currentMode.key)) { cleared.push(currentMode.key); localStorage.setItem('clearedStages', JSON.stringify(cleared)); }
+                alert("STAGE CLEAR!");
+            } else alert("GAME OVER...");
+            init(); document.getElementById('overlay').style.display = 'flex';
+        }
+        function resetData() { if(confirm("RESET SAVE DATA?")) { localStorage.removeItem('clearedStages'); init(); location.reload(); } }
+        function loop() { if(!gameActive) return; update(); draw(); requestAnimationFrame(loop); }
+        init(); window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
+    </script>
+</body>
+</html>
