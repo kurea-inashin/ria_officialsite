@@ -1,814 +1,214 @@
 <!DOCTYPE html>
 <html lang="ja">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="プロフィールとプロジェクトの紹介サイト">
- 　 
-    <title id="pageTitle">ria's introduction</title>
+    <title>RESONANCE: STAR BURST</title>
     <style>
-      
-        ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        #menuPopup a {
-            text-decoration: none;
-            color: #212121; /* ダークグレー */
-            display: block;
-            padding: 10px 0;
-            transition: color 0.3s;
-        }
-
-        #menuPopup a:hover {
-            color: #E9E3FC; /* 少し暗いオレンジ */
-        }
-       body {
-            font-family: 'Arial', sans-serif;
-            margin: 0;
-            padding: 0;
-            background: #F5F5F0; /* 淡いオレンジ */
-            color: #212121; /* ダークグレー */
-            text-align: center;
-        }
-
-        header {
-            background-color: #B19DFC; /* JR東海東海道本線のオレンジ */
-            color: #ffffff; /* 白 */
-            padding: 20px 0;
-        }
-
-        section {
-            padding: 20px;
-            max-width: 800px;
-            margin: 20px auto;
-            background-color: #ffffff; /* 白 */
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            border-radius: 10px;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@700&display=swap');
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Shippori Mincho', serif; color: #fff; user-select: none; }
+        canvas { display: block; }
         
-        h2 {
-        margin-bottom: 20px;
-        font-size: 130%;
-        padding: 0.4em;/*文字周りの余白*/
-        color: #B19DFC;/*文字色*/
-        background: #E9E3FC  ;/*背景色*/
-        border-left: solid 10px #B19DFC  ;/*左線（実線 太さ 色）*/
-      }
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; padding: 25px; box-sizing: border-box; }
+        #hp-bar-bg { width: 300px; height: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.2); border-radius: 6px; overflow: hidden; margin: 10px 0; }
+        #hp-bar-fill { width: 100%; height: 100%; transition: width 0.1s; box-shadow: 0 0 20px currentColor; }
         
+        /* パワーアップタイマー */
+        #p-timer { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 3rem; color: #fff; text-shadow: 0 0 20px #00dfff; display: none; opacity: 0.8; }
 
-        img {
-            max-width: 150px;
-            border-radius: 50%;
-            margin-bottom: 20px;
-        }
-
-        .profile-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            border-bottom: 1px solid #B19DFC; /* 淡いオレンジ */
-        }
-
-        .profile-item:last-child {
-            border-bottom: none;
-        }
-
-        .profile-label {
-            font-weight: bold;
-            color: #212121; /* ダークグレー */
-        }
-
-        .profile-value {
-            color: #424242; /* グレー */
-            text-align: left;
-            flex: 1;
-            margin-left: 10px;
-        }
-
-        ul {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-        }
-
-        ul li {
-            background-color: #B19DFC; /* JR東海東海道本線のオレンジ */
-            color: #ffffff; /* 白 */
-            padding: 10px;
-            margin-bottom: 10px;
-            border-radius: 5px;
-        }
-
-        .project {
-            margin-bottom: 20px;
-        }
-
-        .project h3 {
-            margin: 0;
-            font-size: 1.2em;
-            color: #B19DFC; /* JR東海東海道本線のオレンジ */
-        }
-
-        .project p {
-            margin: 10px 0;
-            color: #424242; /* グレー */
-        }
-
-        .project a {
-            display: inline-block;
-            margin-top: 10px;
-            color: #B19DFC; /* JR東海東海道本線のオレンジ */
-            text-decoration: none;
-            border: 1px solid #B19DFC; /* JR東海東海道本線のオレンジ */
-            padding: 5px 10px;
-            border-radius: 5px;
-            transition: background-color 0.3s, color 0.3s;
-        }
-
-        .project a:hover {
-            background-color: #B19DFC; /* JR東海東海道本線のオレンジ */
-            color: #ffffff; /* 白 */
-        }
-
-        form {
-            display: flex;
-            flex-direction: column;
-        }
-
-        label {
-            margin-top: 10px;
-            text-align: left;
-            color: #B19DFC; /* JR東海東海道本線のオレンジ */
-        }
-
-        input,
-        textarea {
-            padding: 10px;
-            margin-top: 5px;
-            border: 1px solid #ffb74d; /* 淡いオレンジ */
-            border-radius: 5px;
-            width: 100%;
-        }
-
-        button {
-            margin-top: 20px;
-            padding: 10px;
-            background-color: #B19DFC; /* JR東海東海道本線のオレンジ */
-            color: #ffffff; /* 白 */
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color 0.3s;
-        }
-
-        button:hover {
-            background-color: #E9E3FC; /* 少し暗いオレンジ */
-        }
-
-        footer {
-            text-align: center;
-            padding: 20px;
-            background-color: #B19DFC; /* JR東海東海道本線のオレンジ */
-            color: #ffffff; /* 白 */
-            border-top: 1px solid #B19DFC; /* 淡いオレンジ */
-            margin-top: 20px;
-        }
-
-        /* お知らせボードのスタイル */
-        #noticeBoard {
-            background-color: #B19DFC; /* JR東海東海道本線のオレンジ */
-            color: #ffffff; /* 白 */
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            margin: 20px auto;
-            max-width: 800px;
-            text-align: center;
-        }
-
-        /* おみくじタブのスタイル */
-        #omikujiTab {
-            position: fixed;
-            right: 20px;
-            bottom: 20px;
-            background-color: #B19DFC; /* JR東海東海道本線のオレンジ */
-            color: #ffffff; /* 白 */
-            padding: 10px;
-            border-radius: 10px;
-            cursor: pointer;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            transition: background-color 0.3s;
-        }
-
-        #omikujiTab:hover {
-            background-color: #B19DFC; /* 少し暗いオレンジ */
-        }
-
-        #omikujiPopup {
-            display: none;
-            position: fixed;
-            right: 20px;
-            bottom: 70px;
-            background-color: #ffffff; /* 白 */
-            color: #212121; /* ダークグレー */
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            max-width: 300px;
-            text-align: left;
-        }
-
-        #omikujiPopup p {
-            font-size: 1.2em;
-            margin-top: 10px;
-            color: #B19DFC; /* JR東海東海道本線のオレンジ */
-        }
-
-        #omikujiPopup button {
-            width: 100%;
-            margin-top: 10px;
-        }
-
-        /* SNSタブのスタイル */
-        #snsTab {
-            position: fixed;
-            left: 20px;
-            bottom: 20px;
-            background-color: #B19DFC; /* JR東海東海道本線のオレンジ */
-            color: #ffffff; /* 白 */
-            padding: 10px;
-            border-radius: 10px;
-            cursor: pointer;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            transition: background-color 0.3s;
-        }
-
-        #snsTab:hover {
-            background-color: #E9E3FC; /* 少し暗いオレンジ */
-        }
-
-        #snsPopup {
-            display: none;
-            position: fixed;
-            left: 20px;
-            bottom: 70px;
-            background-color: #ffffff; /* 白 */
-            color: #212121; /* ダークグレー */
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            max-width: 300px;
-            text-align: left;
-        }
-
-        #snsPopup a {
-            display: block;
-            margin-bottom: 10px;
-            color: #B19DFC; /* JR東海東海道本線のオレンジ */
-            text-decoration: none;
-            transition: color 0.3s;
-        }
-
-        #snsPopup a:hover {
-            color: #B19DFC; /* 少し暗いオレンジ */
-        }
-              /* 言語タブのスタイル */
-        #languageTab {
-            position: fixed;
-            right: 20px;
-            top: 20px;
-            background-color: #B19DFC; /* JR東海東海道本線のオレンジ */
-            color: #ffffff; /* 白 */
-            padding: 10px;
-            border-radius: 10px;
-            cursor: pointer;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            transition: background-color 0.3s;
-        }
-
-        #languageTab:hover {
-            background-color: #E9E3FC; /* 少し暗いオレンジ */
-        }
-
-        #languagePopup {
-            display: none;
-            position: fixed;
-            right: 20px;
-            top: 70px;
-            background-color: #ffffff; /* 白 */
-            color: #212121; /* ダークグレー */
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            max-width: 200px;
-            text-align: left;
-        }
-
-        #languagePopup a {
-            display: block;
-            margin-bottom: 10px;
-            color: #B19DFC; /* JR東海東海道本線のオレンジ */
-            text-decoration: none;
-            transition: color 0.3s;
-        }
-
-        #languagePopup a:hover {
-            color: #B19DFC; /* 少し暗いオレンジ */
-        }
-
-        /* 色選択タブのスタイル */
-        #colorTab {
-            position: fixed;
-            left: 20px;
-            top: 20px;
-            background-color: #B19DFC; /* JR東海東海道本線のオレンジ */
-            color: #ffffff; /* 白 */
-            padding: 10px;
-            border-radius: 10px;
-            cursor: pointer;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            transition: background-color 0.3s;
-        }
-
-        #colorTab:hover {
-            background-color: #B19DFC; /* 少し暗いオレンジ */
-        }
-
-        #colorPopup {
-            display: none;
-            position: fixed;
-            left: 20px;
-            top: 70px;
-            background-color: #ffffff; /* 白 */
-            color: #212121; /* ダークグレー */
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            max-width: 200px;
-            text-align: left;
-        }
-
-        #colorPopup label {
-            display: block;
-            margin-bottom: 10px;
-        }
-
-        #colorPopup select {
-            width: 100%;
-            padding: 10px;
-            border-radius: 5px;
-            border: 1px solid #B19DFC; /* 淡いオレンジ */
-        }
-
-        /* ハンバーガーメニューのスタイル */
-        #hamburgerMenu {
-            position: fixed;
-            left: 20px;
-            top: 20px;
-            background-color: #a3a3ff; /* JR東海東海道本線のオレンジ */
-            color: #ffffff; /* 白 */
-            padding: 10px;
-            border-radius: 10px;
-            cursor: pointer;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            transition: background-color 0.3s;
-            z-index: 1000;
-        }
-
-        #hamburgerMenu:hover {
-            background-color: #B19DFC; /* 少し暗いオレンジ */
-        }
-
-        #menuPopup {
-            display: none;
-            position: fixed;
-            left: 20px;
-            top: 70px;
-            background-color: #ffffff; /* 白 */
-            color: #212121; /* ダークグレー */
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            max-width: 200px;
-            text-align: left;
-            z-index: 1000;
-        }
-
-        #menuPopup div {
-            margin-bottom: 10px;
-        }
-
-        #menuPopup div:hover {
-            background-color: #B19DFC; /* JR東海東海道本線のオレンジ */
-            color: #ffffff; /* 白 */
-            border-radius: 5px;
-            padding: 5px;
-            cursor: pointer;
-        }
-
-        /* 他のスタイルは省略 */
-      #login {
-  position: fixed;
-  left: 20px;
-  top: 100px; /* ヘッダーの高さを考慮 */
-  background-color: #ffffff;
-  padding: 20px;
-  border-radius: 10px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  z-index: 1000; /* メニューやポップアップより手前に表示 */
-}
-
-#login form {
-  display: flex;
-  flex-direction: column;
-}
-
-#login label {
-  margin-bottom: 5px;
-}
-
-#login input[type="text"],
-#login input[type="password"] {
-  padding: 3.5px;
-  margin-bottom: 10px;
-  border: 1px solid #ccc;
-}
-
-#login button {
-  padding: 10px 20px;
-  background-color: #f57f17;
-  color: #fff;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
-      header h1 {
-      position: relative;
-    }
-
-    /* ハンバーガーメニューのtopとleftを調整 */
-    #hamburgerMenu {
-      position: absolute;
-      top: 30px; /* h1要素の上から20px */
-      left: 20px;
-        #colorForm {
-        text-align: center;
-        margin-top: 20px;
-}
-
-#colorInput {
-    padding: 10px;
-    border: 1px solid #B19DFC;
-    border-radius: 5px;
-}
-.ribbon7 {
-  display: inline-block;
-  position: relative;
-  padding: 15px 20px;
-  font-size: 18px;/*フォントサイズ*/
-  color: #FFF;/*フォントカラー*/
-  background: #a6d3c8;/*リボンの色*/
-}
-
-.ribbon7:before {
-  position: absolute;
-  content: '';
-  top: 100%;
-  left: 0;
-  border: none;
-  border-bottom: solid 15px transparent;
-  border-right: solid 20px rgb(149, 158, 155);/*折り返し部分*/
-}
+        #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; text-align: center; padding: 20px; }
+        .stage-select { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 10px; }
+        .stage-btn { width: 260px; padding: 20px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: 0.2s; background: #050505; }
+        .stage-btn:hover { background: rgba(255,255,255,0.1); transform: scale(1.02); }
+        .stage-btn.cleared::after { content: "COMPLETED"; position: absolute; top: 5px; right: 10px; font-size: 0.6rem; color: #00ffcc; }
+        #btn-hidden { grid-column: span 2; display: none; border-color: #f39700; color: #f39700; font-weight: bold; }
+        
+        .manual { margin: 20px; font-size: 0.8rem; color: #888; border: 1px dashed #333; padding: 10px; }
     </style>
 </head>
-
 <body>
-     <header>
-    
-    <div id="hamburgerMenu" onclick="toggleMenuPopup()">≡</div>
-         <div id="ribbon7">Welcome to My Official Site!!</div>
-    <div id="dateTime"></div>
-   
- 　 </header>
- 
-  　<form id="colorForm">
- <strong> <label for="colorInput">背景色を設定(自分の希望に合わせて入力してみてください。色によっては目が疲れます。）</label>
-  <input type="text" id="colorInput" placeholder="#(任意の色コード)">
-   <button type="button" onclick="changeBackgroundColor()">change color</button></strong>
-</form>
 
-    <!-- お知らせボード -->
-    <section id="noticeBoard">
-      <p><strong>【お知らせ】現在は特にございません。</strong></p>
-    </section>
-  
-  <!-- プロフィールセクション -->
-    <section id="profile">
-        <h2 id="profileTitle">developer profile</h2>
-      <strong>
-        <div class="profile-item">
-            <span class="profile-label" id="profileNameLabel">名前:</span>
-            <span class="profile-value" id="profileNameValue">---</span>
+    <div id="overlay">
+        <h1 style="letter-spacing: 1rem;">RESONANCE</h1>
+        <div class="manual">
+            【★】青い星：5秒間 無敵＆超連射<br>
+            【✚】緑の十字：HP回復 / 【×】赤い爆弾：大爆発（自分も被弾）
         </div>
-        <div class="profile-item">
-            <span class="profile-label" id="profileAgeLabel">年齢:</span>
-            <span class="profile-value" id="profileAgeValue">---</span>
+        <div class="stage-select">
+            <div id="btn-ki" class="stage-btn" style="color: #00b2e5;" onclick="start('ki')">喜 / 京浜東北線</div>
+            <div id="btn-do" class="stage-btn" style="color: #da0442;" onclick="start('do')">怒 / 京葉線</div>
+            <div id="btn-ai" class="stage-btn" style="color: #ffd400;" onclick="start('ai')">哀 / 総武線</div>
+            <div id="btn-raku" class="stage-btn" style="color: #00a651;" onclick="start('raku')">楽 / 埼京線</div>
+            <div id="btn-hidden" class="stage-btn" onclick="start('hidden')">超 鬼 む ず / 中央線</div>
         </div>
-        <div class="profile-item">
-            <span class="profile-label" id="profileHobbyLabel">趣味:</span>
-            <span class="profile-value" id="profileHobbyValue">読書・プログラミング・学問探求</span>
-        </div>
-        <div class="profile-item">
-            <span class="profile-label" id="profileMessageLabel">一言:</span>
-            <span class="profile-value" id="profileMessageValue">よろしくお願いします！！基本主はのほほんとしている人間なので気軽にかかわってほしいです！</span>
-        </div>
-        <div class="profile-item">
-            <span class="profile-label" id="profileQualificationsLabel">資格:</span>
-            <span class="profile-value" id="profileQualificationsValue">実用英語検定準1級 / 世界遺産検定3級 / TOEIC L&R 600点</span>
-        </div>
-          </strong>
-    </section>
-  <!-- ikONセクション -->
-    <section id="ikon">
-        <h2 id="ikonTitle">developer ikon</h2>
-        <img src="https://cdn.glitch.global/1522ff09-d912-4bac-b6b1-f423e404de91/thumbnails%2Fpixai-1782990814162290043-0.png?1724839799173">
-    </section>
-
-    <!-- スキルセクション -->
-    <section id="skills">
-       <strong> <h2 id="skillsTitle">developer skills</h2>
-        <ul>
-            <li id="skillHtml">HTML / CSS</li>
-            <li id="skillJs">JavaScript</li>
-            <li id="skillC">C</li>
-            <li id="skillNode">Node.js</li>
-            <li id="skillDiscord">php</li>
-        </ul>
-      </strong>
-    </section>
-
-    <!-- プロジェクトセクション -->
-    <section id="projects">
-        <h2 id="projectsTitle">developer projects</h2>
-      <strong>
-        <div class="project">
-            <h3 id="project1Title">project1: マインスイーパー</h3>
-            <p id="project1Description">シンプルなマインスイーパーサイトです！よかったらやってみてください。</p>
-            <a id="project1Link" href="https://mine-swiper.glitch.me/" target="_blank">check the project</a>
-        </div>
-        <div class="project">
-            <h3 id="project2Title">project2: 数当てゲーム</h3>
-            <p id="project2Description">数当てゲームが可能です！興味があれば入ってみてください。</p>
-            <a id="project2Link" href="https://numberchallenge.glitch.me/" target="_blank">check the project</a>
-        </div>
-        <div class="project">
-            <h3 id="project3Title">project3: 自分のサーバー</h3>
-            <p id="project3Description">経営するサーバーです。ぜひ入ってみてください。</p>
-            <a id="project3Link" href="https://discord.gg/v6U4dzKZTn" target="_blank">my server entrance</a>
-        </div>
-        <div class="project">
-            <h3 id="project4Title">project4: サーバー紹介サイト</h3>
-            <p id="project4Description">サーバーにまだ入ってないという方は一度ご覧になってどのようなものか見てみることを推奨します。</p>
-            <a id="project4Link" href="https://eternal-rain-empireg.glitch.me/" target="_blank">my server portal</a>
-        </div>
-      </strong>
-    </section>
-
-    <!-- 過去のお知らせセクション -->
-    <section id="pastNotices">
-        <h2 id="pastNoticesTitle">過去のお知らせ</h2>
-        <strong><ul id="pastNoticesList">
-            <li>2024年8月29日: （進行中）カラーピッカー機能を搭載しました。</li>
-            <li>2024年8月27日: （進行中）言語翻訳機能を整備中です。</li>
-            <li>2024年8月26日: ミニゲーム・諸機能が追加されました。</li>
-            <li>2024年8月25日: サイトメンテナンス完了しました。</li>
-        </ul>
-      </strong>
-    </section>
-
-    <!-- お問い合わせセクション -->
-    <section id="contact">
-        <strong>
-       <div class="project">
-       <h2 id="project5Title">お問い合わせ</h2>
-            <p id="project5Description">本サイトについて要望・意見がある場合は以下のボタンをクリックして問い合わせページへ飛んでください。</p>
-            <a id="project5Link" href="https://forms.office.com/Pages/ResponsePage.aspx?id=DQSIkWdsW0yxEjajBLZtrQAAAAAAAAAAAAYAADWYBldUN0RRQ1FYWTNTRVNaNEdJVFZYVVg5WEpOMi4u" target="_blank">FORM</a>
-        </div>
-      </strong>
-      
-    </section>
-   
-
-    <footer>
-        <p id="footerText">&copy; 2024 made by ria_1031</p>
-    </footer>
-
-    <!-- ハンバーガーメニュー -->
-    <div id="menuPopup">
-        <div><a href="#noticeBoard" onclick="toggleMenuPopup()">お知らせ</a></div>
-        <div><a href="#ikon" onclick="toggleMenuPopup()">ikon</a></div>
-        <div><a href="#profile" onclick="toggleMenuPopup()">プロフィール</a></div>
-        <div><a href="#skills" onclick="toggleMenuPopup()">スキル</a></div>
-        <div><a href="#projects" onclick="toggleMenuPopup()">プロジェクト</a></div>
-        <div><a href="#pastNotices" onclick="toggleMenuPopup()">過去のお知らせ</a></div>
-        <div><a href="#contact" onclick="toggleMenuPopup()">お問い合わせ</a></div>
-        <div onclick="toggleSnsPopup()">MY APPS ACCOUNT</div>
-        <div onclick="toggleOmikujiPopup()">CATCH THE FORTUNE!!</div>
-        <div onclick="toggleLanguagePopup()">Language</div>
-        <div onclick="toggleColorPopup()">Select Color</div>
+        <p onclick="resetData()" style="margin-top: 20px; font-size: 0.6rem; opacity: 0.2; cursor: pointer;">RESET DATA</p>
     </div>
 
-    <div id="omikujiPopup">
-        <p id="omikujiResult">おみくじを引いてみましょう！</p>
-        <button onclick="drawOmikuji()">おみくじを引く</button>
+    <div id="ui-layer">
+        <div style="font-size: 1.2rem;">SCORE: <span id="score">0</span> / <span id="target">10000</span></div>
+        <div id="hp-bar-bg"><div id="hp-bar-fill"></div></div>
+        <div id="stage-name" style="letter-spacing: 5px; font-weight: bold;"></div>
     </div>
+    <div id="p-timer">POWER UP! <span id="p-sec">5.0</span></div>
 
-    <div id="snsPopup">
-        <a href="https://www.instagram.com/kagu_milky" target="_blank">Instagram</a>
-        <a href="https://pixai.art/@ria1031/artworks" target="_blank">Pixai</a>
-        <a href="https://www.youtube.com/@rico.1031_ichi" target="_blank">Youtube</a>
-    </div>
-
-    <div id="languagePopup">
-        <label for="languageSelect">Select Language:</label>
-        <select id="languageSelect" onchange="changeLanguage()">
-            <option value="en">English</option>
-            <option value="ja">japanese</option>
-        </select>
-    </div>
-
-    <div id="colorPopup">
-        <label for="colorSelect">Select Background Color:</label>
-        <select id="colorSelect" onchange="changeColor()">
-            <option value="#ffffad">Clear Yellow1</option>
-            <option value="#ffffb2"> Clear Yellow2 </option>
-            <option value="#bdbb7ff">Clear Purple1</option>
-            <option value="#ddbcff">Clear Purple2</option>
-            <option value="#b7ffdb">Clear Green1</option>
-            <option value="#bbcffbc">Clear Green2</option>
-            <option value="#bcffdd">Clear Blue1</option>
-            <option value="#b7ffff">Clear Blue2</option>
-            <option value="#ffbcff">Clear Pink1</option>
-            <option value="#ffb7ff">Clear Pink2</option>
-            <option value="#ffadad">Clear Red1</option>
-            <option value="#ffb7b7">Clearr Red2</option>
-           <option value="#b0c4de">Light Steel Blue</option>
-            
-        </select>
-    </div>
+    <canvas id="gameCanvas"></canvas>
 
     <script>
-        function toggleMenuPopup() {
-            var popup = document.getElementById('menuPopup');
-            popup.style.display = (popup.style.display === 'block') ? 'none' : 'block';
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        let gameActive = false, score = 0, hp = 100, frame = 0, powerUpTimer = 0;
+        let currentMode = null;
+        const bullets = [], enemies = [], particles = [], items = [];
+        const player = { x: canvas.width/2, y: canvas.height/2 };
+
+        const config = {
+            ki: { color: '#00b2e5', speed: 2.5, spawn: 0.1, hp: [1, 2], target: 10000, name: "喜: 京浜東北" },
+            do: { color: '#da0442', speed: 4.5, spawn: 0.18, hp: [1, 4], target: 15000, name: "怒: 京葉" },
+            ai: { color: '#ffd400', speed: 2.0, spawn: 0.15, hp: [10, 20], target: 15000, name: "哀: 総武" },
+            raku: { color: '#00a651', speed: 6.0, spawn: 0.35, hp: [2, 6], target: 20000, name: "楽: 埼京" },
+            hidden: { color: '#f39700', speed: 8.0, spawn: 0.6, hp: [20, 80], target: 50000, name: "極: 中央オレンジ" }
+        };
+
+        function init() {
+            const cleared = JSON.parse(localStorage.getItem('clearedStages') || '[]');
+            cleared.forEach(id => document.getElementById('btn-'+id)?.classList.add('cleared'));
+            document.getElementById('btn-hidden').style.display = (['ki','do','ai','raku'].every(s => cleared.includes(s))) ? 'block' : 'none';
         }
 
-        function toggleOmikujiPopup() {
-            var popup = document.getElementById('omikujiPopup');
-            popup.style.display = (popup.style.display === 'block') ? 'none' : 'block';
+        function start(modeKey) {
+            currentMode = { ...config[modeKey], key: modeKey };
+            score = 0; hp = 100; frame = 0; powerUpTimer = 0;
+            bullets.length = 0; enemies.length = 0; particles.length = 0; items.length = 0;
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('stage-name').innerText = currentMode.name;
+            document.getElementById('stage-name').style.color = currentMode.color;
+            document.getElementById('target').innerText = currentMode.target;
+            gameActive = true; loop();
         }
 
-        function toggleSnsPopup() {
-            var popup = document.getElementById('snsPopup');
-            popup.style.display = (popup.style.display === 'block') ? 'none' : 'block';
-        }
+        let mx = canvas.width/2, my = canvas.height/2, isDown = false;
+        window.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+        window.addEventListener('mousedown', () => isDown = true);
+        window.addEventListener('mouseup', () => isDown = false);
 
-        function toggleLanguagePopup() {
-            var popup = document.getElementById('languagePopup');
-            popup.style.display = (popup.style.display === 'block') ? 'none' : 'block';
-        }
-
-        function toggleColorPopup() {
-            var popup = document.getElementById('colorPopup');
-            popup.style.display = (popup.style.display === 'block') ? 'none' : 'block';
-        }
-
-        function changeColor() {
-            var colorSelect = document.getElementById('colorSelect');
-            var selectedColor = colorSelect.value;
-            document.body.style.backgroundColor = selectedColor;
-        }
-
-        function changeLanguage() {
-            var languageSelect = document.getElementById('languageSelect');
-            var selectedLanguage = languageSelect.value;
-            var translations = {
-                en: {
-                    pageTitle: "ria's introduction",
-                    headerTitle: "Welcome to this site！！",
-                    profileTitle: "My Profile",
-                    skillsTitle: "Skill",
-                    projectsTitle: "Project",
-                    contactTitle: "Contact",
-                    footerText: "© 2024 made by ria_1031",
-                    omikujiResult: "Draw your fortune!",
-                    contactNameLabel: "Name",
-                    contactEmailLabel: "Your Email",
-                    contactMessageLabel: "Contents",
-                    contactSubmitButton: "Send"
-                },
-                ja: {
-                    pageTitle: "りあの紹介",
-                    headerTitle: "このサイトへようこそ！！",
-                    profileTitle: "プロフィール",
-                    skillsTitle: "スキル",
-                    projectsTitle: "プロジェクト",
-                    contactTitle: "お問い合わせ",
-                    footerText: "© 2024 made by ria_1031",
-                    omikujiResult: "おみくじを引いてみましょう！",
-                    contactNameLabel: "名前",
-                    contactEmailLabel: "メールアドレス",
-                    contactMessageLabel: "内容",
-                    contactSubmitButton: "送信できません"
-                }
-            };
-            
-            var translationsToUse = translations[selectedLanguage];
-            document.getElementById('pageTitle').innerText = translationsToUse.pageTitle;
-            document.getElementById('headerTitle').innerText = translationsToUse.headerTitle;
-            document.getElementById('profileTitle').innerText = translationsToUse.profileTitle;
-            document.getElementById('skillsTitle').innerText = translationsToUse.skillsTitle;
-            document.getElementById('projectsTitle').innerText = translationsToUse.projectsTitle;
-            document.getElementById('contactTitle').innerText = translationsToUse.contactTitle;
-            document.getElementById('footerText').innerText = translationsToUse.footerText;
-            document.getElementById('omikujiResult').innerText = translationsToUse.omikujiResult;
-            document.getElementById('contactNameLabel').innerText = translationsToUse.contactNameLabel;
-            document.getElementById('contactEmailLabel').innerText = translationsToUse.contactEmailLabel;
-            document.getElementById('contactMessageLabel').innerText = translationsToUse.contactMessageLabel;
-            document.getElementById('contactSubmitButton').innerText = translationsToUse.contactSubmitButton;
-        }
-
-        function drawOmikuji() {
-            var results = [
-                "大吉 - よいことがたくさんあります。",
-                "中吉 - そこそこ良い運勢です。",
-                "小吉 - ちょっとした幸運がありそう。",
-                "凶 - 注意が必要です。気をつけて。",
-            ];
-            var randomIndex = Math.floor(Math.random() * results.length);
-            document.getElementById('omikujiResult').innerText = results[randomIndex];
-        }
-
-        function updateDateTime() {
-            var now = new Date();
-            var year = now.getFullYear();
-            var month = ('0' + (now.getMonth() + 1)).slice(-2);
-            var day = ('0' + now.getDate()).slice(-2);
-            var hours = ('0' + now.getHours()).slice(-2);
-            var minutes = ('0' + now.getMinutes()).slice(-2);
-            var seconds = ('0' + now.getSeconds()).slice(-2);
-
-            var formattedDate = year + '-' + month + '-' + day;
-            var formattedTime = hours + ':' + minutes + ':' + seconds;
-
-            var dateTimeString = formattedDate + ' ' + formattedTime;
-            document.getElementById('dateTime').innerText = dateTimeString;
-        }
-
-        updateDateTime();
-        setInterval(updateDateTime, 1000);
-      // 既存のJavaScriptに以下のコードを追加
-var count = 0; // 初期化
-
-document.getElementById("countButton").addEventListener("click", function() {
-  count++;
-  document.getElementById("count").textContent = count;
-});
-       document.getElementById('loginForm').addEventListener('submit', function(event) {
-            event.preventDefault(); // フォームのデフォルト動作を阻止
-
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-
-            // ここで、サーバーにログイン情報を送信し、認証を行う
-            // ここでは、簡単な例として、ハードコーディングされた値と比較する
-            if (username === 'ria1031' && password === 'rico2025') {
-                // ログイン成功時の処理
-                alert('ログイン成功！');
-                // ログイン後の画面遷移など
+        function update() {
+            frame++;
+            if(powerUpTimer > 0) {
+                powerUpTimer--;
+                document.getElementById('p-timer').style.display = 'block';
+                document.getElementById('p-sec').innerText = (powerUpTimer/60).toFixed(1);
             } else {
-                // ログイン失敗時の処理
-                alert('ユーザーIDまたはパスワードが間違っています。');
+                document.getElementById('p-timer').style.display = 'none';
             }
-        });
-      function changeBackgroundColor() {
-  const colorInput = document.getElementById('colorInput');
-  const newColor = colorInput.value;
 
-  // 入力された値が正しい色形式かチェック
-  if (/^#[0-9A-F]{6}$/i.test(newColor)) {
-    document.body.style.backgroundColor = newColor;
-  } else {
-    alert('正しいカラーコードを入力してください。例: #FF0000');
-  }
-}
+            player.x += (mx - player.x) * 0.2;
+            player.y += (my - player.y) * 0.2;
 
+            const shootInterval = (powerUpTimer > 0) ? 2 : 5;
+            if(isDown && frame % shootInterval === 0) bullets.push({x: player.x, y: player.y-20, vy: -25});
+
+            if(Math.random() < currentMode.spawn) {
+                if(Math.random() < 0.04) enemies.push({ x: Math.random()*canvas.width, y: -50, type: 'bomb', hp: 1, speed: 3, size: 40 });
+                else {
+                    const hp = Math.floor(Math.random()*(currentMode.hp[1]-currentMode.hp[0]+1))+currentMode.hp[0];
+                    enemies.push({ x: Math.random()*canvas.width, y: -50, hp: hp, maxHp: hp, speed: currentMode.speed + Math.random()*2, size: 20+(hp*1.5) });
+                }
+            }
+
+            bullets.forEach((b, i) => { b.y += b.vy; if(b.y < -50) bullets.splice(i, 1); });
+
+            enemies.forEach((e, ei) => {
+                e.y += e.speed;
+                if(Math.hypot(e.x - player.x, e.y - player.y) < 25 && powerUpTimer <= 0) {
+                    if(e.type === 'bomb') explode(e.x, e.y, true); else hp -= 0.5;
+                    if(hp <= 0) finish(false);
+                }
+                bullets.forEach((b, bi) => {
+                    if(Math.hypot(e.x - b.x, e.y - b.y) < e.size/2) {
+                        e.hp--; bullets.splice(bi, 1);
+                        if(e.hp <= 0) {
+                            if(e.type === 'bomb') explode(e.x, e.y, (powerUpTimer <= 0));
+                            else {
+                                enemies.splice(ei, 1); score += e.maxHp * 50;
+                                if(Math.random() < 0.1) spawnItem(e.x, e.y, 'heal');
+                                if(Math.random() < 0.05) spawnItem(e.x, e.y, 'power');
+                                createParticles(e.x, e.y, currentMode.color, 10);
+                            }
+                            if(score >= currentMode.target) finish(true);
+                        }
+                    }
+                });
+                if(e.y > canvas.height + 100) enemies.splice(ei, 1);
+            });
+
+            items.forEach((it, i) => {
+                it.y += 3;
+                if(Math.hypot(it.x - player.x, it.y - player.y) < 30) {
+                    if(it.type === 'heal') hp = Math.min(100, hp + 20);
+                    else powerUpTimer = 300; // 5秒間
+                    items.splice(i, 1);
+                    createParticles(player.x, player.y, it.type==='heal'?"#00ffcc":"#00dfff", 20);
+                }
+                if(it.y > canvas.height) items.splice(i, 1);
+            });
+
+            particles.forEach((p, i) => { p.x += p.vx; p.y += p.vy; p.l -= 0.03; if(p.l <= 0) particles.splice(i, 1); });
+            document.getElementById('score').innerText = score;
+            document.getElementById('hp-bar-fill').style.width = hp + "%";
+            document.getElementById('hp-bar-fill').style.backgroundColor = currentMode.color;
+        }
+
+        function explode(x, y, damage) {
+            createParticles(x, y, "#f00", 30);
+            if(damage) hp -= 40;
+            enemies.forEach((e, i) => { if(Math.hypot(e.x - x, e.y - y) < 200) enemies.splice(i, 1); });
+            if(hp <= 0) finish(false);
+        }
+
+        function spawnItem(x, y, type) { items.push({ x, y, type }); }
+        function createParticles(x, y, c, n) { for(let i=0; i<n; i++) particles.push({x, y, c, vx:(Math.random()-0.5)*15, vy:(Math.random()-0.5)*15, l:1}); }
+
+        function draw() {
+            ctx.fillStyle = "rgba(0,0,0,0.4)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // 自機
+            ctx.shadowBlur = (powerUpTimer > 0) ? 30 : 15;
+            ctx.shadowColor = (powerUpTimer > 0) ? "#fff" : currentMode.color;
+            ctx.fillStyle = (powerUpTimer > 0) ? "#fff" : "#fff";
+            ctx.beginPath(); ctx.moveTo(player.x, player.y-20); ctx.lineTo(player.x-15, player.y+15); ctx.lineTo(player.x+15, player.y+15); ctx.fill();
+            // 敵
+            enemies.forEach(e => {
+                ctx.strokeStyle = e.type === 'bomb' ? "#f00" : currentMode.color;
+                ctx.strokeRect(e.x - e.size/2, e.y - e.size/2, e.size, e.size);
+            });
+            // アイテム
+            items.forEach(it => {
+                ctx.fillStyle = it.type === 'heal' ? "#00ffcc" : "#00dfff";
+                if(it.type === 'heal') ctx.fillRect(it.x-10, it.y-2, 20, 4), ctx.fillRect(it.x-2, it.y-10, 4, 20);
+                else { ctx.beginPath(); for(let i=0; i<5; i++) ctx.lineTo(it.x+Math.cos((18+72*i)*Math.PI/180)*15, it.y+Math.sin((18+72*i)*Math.PI/180)*15), ctx.lineTo(it.x+Math.cos((54+72*i)*Math.PI/180)*7, it.y+Math.sin((54+72*i)*Math.PI/180)*7); ctx.fill(); }
+            });
+            // 弾
+            ctx.fillStyle = (powerUpTimer > 0) ? "#00dfff" : "#fff";
+            bullets.forEach(b => ctx.fillRect(b.x-1, b.y-15, 2, 25));
+            particles.forEach(p => { ctx.globalAlpha = p.l; ctx.fillStyle = p.c; ctx.fillRect(p.x, p.y, 2, 2); });
+            ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+        }
+
+        function finish(isClear) {
+            gameActive = false;
+            if(isClear) {
+                const cleared = JSON.parse(localStorage.getItem('clearedStages') || '[]');
+                if(!cleared.includes(currentMode.key)) { cleared.push(currentMode.key); localStorage.setItem('clearedStages', JSON.stringify(cleared)); }
+                alert("CLEAR!");
+            } else alert("GAME OVER...");
+            init(); document.getElementById('overlay').style.display = 'flex';
+        }
+
+        function resetData() { if(confirm("RESET?")) { localStorage.removeItem('clearedStages'); init(); } }
+        function loop() { if(!gameActive) return; update(); draw(); requestAnimationFrame(loop); }
+        init(); window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
     </script>
 </body>
-
 </html>
