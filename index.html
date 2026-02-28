@@ -61,15 +61,15 @@
 
         // 難易度を大幅緩和
         const config = {
-            ki: { color: '#00b2e5', speed: 2.0, spawn: 0.08, hp: [1, 1], target: 5000, name: "LEVEL 1" },
-            do: { color: '#da0442', speed: 3.5, spawn: 0.15, hp: [1, 2], target: 8000, name: "LEVEL 2" },
-            ai: { color: '#ffd400', speed: 1.5, spawn: 0.12, hp: [5, 12], target: 10000, name: "LEVEL 3" },
-            raku: { color: '#00a651', speed: 5.0, spawn: 0.3, hp: [1, 4], target: 12000, name: "LEVEL 4" },
-            hidden: { color: '#f39700', speed: 7.0, spawn: 0.6, hp: [10, 40], target: 30000, name: "LEVEL: 極 (ORANGE)" }
+            ki: { color: '#00b2e5', speed: 4.0, spawn: 0.08, hp: [1, 1], target: 2000, name: "LEVEL Ⅰ" },
+            do: { color: '#da0442', speed: 4.5, spawn: 0.15, hp: [1, 2], target: 4000, name: "LEVEL Ⅱ" },
+            ai: { color: '#ffd400', speed: 5.5, spawn: 0.12, hp: [5, 12], target: 60000, name: "LEVEL Ⅲ" },
+            raku: { color: '#00a651', speed: 7.0, spawn: 0.3, hp: [1, 4], target: 12000, name: "LEVEL Ⅳ" },
+            hidden: { color: '#f39700', speed: 9.0, spawn: 0.6, hp: [10, 40], target: 30000, name: "LEVEL ???" }
         };
 
         function adminLogin() {
-            if(prompt("PASS:") === "admin1234") {
+            if(prompt("PASS:") === "minami20250823") {
                 localStorage.setItem('clearedStages', JSON.stringify(['ki', 'do', 'ai', 'raku', 'hidden']));
                 init();
             }
@@ -134,7 +134,7 @@
                 }
                 bullets.forEach((b, bi) => {
                     if(Math.hypot(e.x-b.x, e.y-b.y) < e.size/1.5) {
-                        e.hp -= (powerUpTimer > 0 ? 3 : 1); // パワーアップ中は攻撃力も3倍
+                        e.hp -= (powerUpTimer > 0 ? 2 : 1); // パワーアップ中は攻撃力も2倍
                         bullets.splice(bi, 1);
                         if(e.hp <= 0) {
                             if(e.type === 'bomb') explode(e.x, e.y, powerUpTimer <= 0);
