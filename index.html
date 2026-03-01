@@ -2,66 +2,65 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>RESONANCE: INFINITY DRIVE</title>
+    <title>RESONANCE: INFINITY -LEGACY-</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@400;900&display=swap');
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Orbitron', sans-serif; color: #fff; user-select: none; }
-        canvas { display: block; filter: contrast(1.1) saturate(1.2); }
+        canvas { display: block; filter: contrast(1.1) saturate(1.3); }
         
-        /* レトロなスキャンライン */
-        #scanline { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.1) 50%), linear-gradient(90deg,rgba(255,0,0,0.03),rgba(0,255,0,0.01),rgba(0,0,255,0.03)); background-size: 100% 3px, 3px 100%; pointer-events: none; z-index: 10; }
+        /* UIデザイン */
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; padding: 20px; box-sizing: border-box; z-index: 5; }
+        .hud-item { margin-bottom: 10px; }
+        .hud-label { font-size: 0.7rem; color: #00dfff; font-family: 'Press Start 2P', cursive; margin-bottom: 5px; }
+        
+        /* スコア数字が動く演出用のクラス */
+        #score { font-size: 2rem; font-weight: 900; text-shadow: 0 0 15px #00dfff; transition: transform 0.1s; display: inline-block; }
+        .score-bump { transform: scale(1.1); color: #fff; }
 
-        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; padding: 20px; box-sizing: border-box; z-index: 5; display: flex; flex-direction: column; justify-content: space-between; }
-        .hud-top { display: flex; justify-content: space-between; align-items: flex-start; }
-        .hud-label { font-size: 0.7rem; color: #00dfff; font-family: 'Press Start 2P', cursive; }
-        .hud-value { font-size: 1.5rem; font-weight: 900; text-shadow: 0 0 10px #00dfff; }
-        
-        #hp-container { width: 300px; height: 15px; border: 2px solid #fff; padding: 2px; box-shadow: 0 0 10px #fff; }
-        #hp-bar-fill { height: 100%; background: #fff; transition: width 0.1s; }
-        
-        #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, #1a1a1a, #000); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; transition: 0.5s; }
+        #hp-container { width: 300px; height: 12px; border: 2px solid #fff; position: relative; overflow: hidden; }
+        #hp-bar-fill { height: 100%; background: #fff; box-shadow: 0 0 15px #fff; width: 100%; }
+
+        /* メニュー画面 */
+        #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, #1a1a1a, #000); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 100; text-align: center; }
         .stage-select { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
-        .stage-btn { width: 250px; padding: 15px; border: 2px solid rgba(255,255,255,0.2); cursor: pointer; background: rgba(255,255,255,0.05); font-family: 'Press Start 2P', cursive; font-size: 0.7rem; transition: 0.2s; position: relative; }
-        .stage-btn:hover { background: #fff; color: #000; transform: scale(1.05); box-shadow: 0 0 20px #fff; }
-        .stage-btn.cleared::before { content: "★"; position: absolute; left: 10px; color: #ffd400; }
-        #btn-hidden { grid-column: span 2; display: none; border-color: #f39700; color: #f39700; font-size: 0.9rem; animation: blink 0.8s infinite; }
-        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        .stage-btn { width: 260px; padding: 20px; border: 2px solid rgba(255,255,255,0.2); cursor: pointer; background: rgba(0,0,0,0.6); font-family: 'Press Start 2P', cursive; font-size: 0.7rem; transition: 0.3s; position: relative; }
+        .stage-btn:hover { background: #fff; color: #000; box-shadow: 0 0 30px #fff; }
+        .stage-btn.cleared::after { content: "★"; position: absolute; top: 5px; right: 10px; color: #ffd400; }
+        
+        /* 難易度：極・DEATH */
+        #btn-hidden { grid-column: span 2; display: none; border-color: #f39700; color: #f39700; font-size: 0.9rem; }
+        .death-mode { border-color: #ff0044 !important; color: #ff0044 !important; }
 
-        #msg-pop { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); font-family: 'Press Start 2P', cursive; font-size: 2rem; color: #fff; text-shadow: 0 0 20px #00dfff; pointer-events: none; display: none; z-index: 20; }
+        #msg-pop { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); font-family: 'Press Start 2P', cursive; font-size: 3rem; text-align: center; pointer-events: none; display: none; z-index: 50; line-height: 1.5; }
     </style>
 </head>
 <body>
 
-    <div id="scanline"></div>
-    <div id="msg-pop">READY...</div>
+    <div id="msg-pop"></div>
 
     <div id="overlay">
-        <h1 style="font-size: 3.5rem; font-style: italic; margin-bottom: 40px; text-shadow: 5px 5px #f39700;">RESONANCE : X</h1>
+        <h1 style="font-size: 3rem; font-weight: 900; font-style: italic; margin-bottom: 30px; letter-spacing: -2px;">RESONANCE<span style="color:#f39700">INFINITY</span></h1>
         <div class="stage-select">
             <div id="btn-ki" class="stage-btn" style="color: #00b2e5;" onclick="start('ki')">LV.01 BLUE</div>
             <div id="btn-do" class="stage-btn" style="color: #da0442;" onclick="start('do')">LV.02 RED</div>
             <div id="btn-ai" class="stage-btn" style="color: #ffd400;" onclick="start('ai')">LV.03 YELLOW</div>
             <div id="btn-raku" class="stage-btn" style="color: #00a651;" onclick="start('raku')">LV.04 GREEN</div>
             <div id="btn-hidden" class="stage-btn" onclick="start('hidden')">LV.MAX ORANGE</div>
+            <div id="btn-death" class="stage-btn death-mode" style="display:none; grid-column: span 2;" onclick="start('death')">LV.INFINITY DEATH</div>
         </div>
-        <p style="margin-top: 50px; font-size: 0.6rem; opacity: 0.3;" onclick="resetData()">[ CLEAR DATA ]</p>
+        <p style="margin-top: 40px; font-size: 0.6rem; opacity: 0.3;" onclick="resetData()">[ SYSTEM RESET ]</p>
     </div>
 
     <div id="ui-layer">
-        <div class="hud-top">
-            <div>
-                <div class="hud-label">SCORE</div>
-                <div id="score" class="hud-value">000000</div>
-            </div>
-            <div style="text-align: right;">
-                <div class="hud-label">COMBO</div>
-                <div id="combo" class="hud-value" style="color: #ffd400;">0</div>
-            </div>
+        <div class="hud-item">
+            <div class="hud-label">TOTAL RESONANCE SCORE</div>
+            <div id="score">000000</div>
         </div>
-        <div>
+        <div class="hud-item">
+            <div class="hud-label">SHIELD STABILITY</div>
             <div id="hp-container"><div id="hp-bar-fill"></div></div>
-            <div id="stage-name" style="font-size: 0.8rem; font-family: 'Press Start 2P'; margin-top: 10px;"></div>
         </div>
+        <div id="stage-name" style="font-family:'Press Start 2P'; font-size: 0.8rem; margin-top: 10px;"></div>
     </div>
 
     <canvas id="gameCanvas"></canvas>
@@ -72,50 +71,57 @@
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        let gameActive = false, score = 0, hp = 100, combo = 0, frame = 0, powerUpTimer = 0, shake = 0;
-        let currentMode = null, comboTimer = 0;
+        let gameActive = false, score = 0, hp = 100, frame = 0, powerUpTimer = 0, shake = 0, noDamage = true;
+        let currentMode = null;
         const bullets = [], enemies = [], particles = [], items = [], stars = [];
 
-        // 背景の星
-        for(let i=0; i<80; i++) stars.push({x: Math.random()*canvas.width, y: Math.random()*canvas.height, z: Math.random()*5+1});
+        for(let i=0; i<100; i++) stars.push({x: Math.random()*canvas.width, y: Math.random()*canvas.height, s: Math.random()*3});
 
         const config = {
-            ki: { color: '#00b2e5', speed: 2.2, spawn: 0.08, hp: [1, 1], target: 5000, name: "KEIHIN-BLUE" },
-            do: { color: '#da0442', speed: 3.8, spawn: 0.15, hp: [1, 2], target: 10000, name: "KEIYO-RED" },
-            ai: { color: '#ffd400', speed: 1.8, spawn: 0.12, hp: [10, 20], target: 12000, name: "SOBU-YELLOW" },
-            raku: { color: '#00a651', speed: 6.0, spawn: 0.4, hp: [1, 5], target: 20000, name: "SAIKYO-GREEN" },
-            hidden: { color: '#f39700', speed: 8.5, spawn: 0.7, hp: [20, 60], target: 50000, name: "CHUO-ORANGE" }
+            ki: { color: '#00b2e5', speed: 2.2, spawn: 0.08, hp: [1, 1], target: 5000, name: "KEIHIN BLUE" },
+            do: { color: '#da0442', speed: 3.8, spawn: 0.15, hp: [1, 2], target: 10000, name: "KEIYO RED" },
+            ai: { color: '#ffd400', speed: 1.8, spawn: 0.12, hp: [10, 20], target: 12000, name: "SOBU YELLOW" },
+            raku: { color: '#00a651', speed: 6.0, spawn: 0.4, hp: [1, 5], target: 15000, name: "SAIKYO GREEN" },
+            hidden: { color: '#f39700', speed: 8.5, spawn: 0.7, hp: [20, 60], target: 40000, name: "CHUO ORANGE" },
+            death: { color: '#ff0044', speed: 11.0, spawn: 0.9, hp: [40, 100], target: 80000, name: "INFINITY DEATH" }
         };
 
         function resetData() { localStorage.removeItem('clearedStages'); location.reload(); }
+
         function init() {
             const cleared = JSON.parse(localStorage.getItem('clearedStages') || '[]');
-            ['ki','do','ai','raku','hidden'].forEach(id => {
+            ['ki','do','ai','raku','hidden','death'].forEach(id => {
                 const b = document.getElementById('btn-'+id);
                 if(b && cleared.includes(id)) b.classList.add('cleared');
             });
             const allS = ['ki','do','ai','raku'].every(s => cleared.includes(s));
             document.getElementById('btn-hidden').style.display = (allS || cleared.includes('hidden')) ? 'block' : 'none';
+            if(cleared.includes('hidden')) document.getElementById('btn-death').style.display = 'block';
         }
 
-        function popMsg(text, color="#fff") {
+        function popMsg(text, color="#fff", dur=1000) {
             const el = document.getElementById('msg-pop');
-            el.innerText = text; el.style.color = color; el.style.display = 'block';
-            setTimeout(() => el.style.display = 'none', 1000);
+            el.innerHTML = text; el.style.color = color; el.style.display = 'block';
+            setTimeout(() => el.style.display = 'none', dur);
+        }
+
+        function addScore(pts) {
+            score += pts;
+            const sEl = document.getElementById('score');
+            sEl.innerText = score.toString().padStart(6, '0');
+            sEl.classList.add('score-bump');
+            setTimeout(() => sEl.classList.remove('score-bump'), 100);
         }
 
         function start(modeKey) {
             currentMode = { ...config[modeKey], key: modeKey };
-            score = 0; hp = 100; combo = 0; frame = 0; powerUpTimer = 0;
+            score = 0; hp = 100; frame = 0; powerUpTimer = 0; noDamage = true;
             bullets.length = 0; enemies.length = 0; items.length = 0;
-            document.getElementById('overlay').style.opacity = '0';
-            setTimeout(() => {
-                document.getElementById('overlay').style.display = 'none';
-                document.getElementById('stage-name').innerText = currentMode.name;
-                document.getElementById('stage-name').style.color = currentMode.color;
-                popMsg("GO!!", currentMode.color);
-                gameActive = true; loop();
-            }, 500);
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('stage-name').innerText = currentMode.name;
+            document.getElementById('stage-name').style.color = currentMode.color;
+            popMsg("READY... GO!", currentMode.color);
+            gameActive = true; loop();
         }
 
         let mx = canvas.width/2, my = canvas.height/2, isDown = false;
@@ -125,16 +131,11 @@
 
         function update() {
             frame++;
-            if(shake > 0) shake *= 0.85;
-            if(comboTimer > 0) { comboTimer--; } else { combo = 0; }
+            if(shake > 0) shake *= 0.9;
+            player.x += (mx - player.x) * 0.2;
+            player.y += (my - player.y) * 0.2;
+            stars.forEach(s => { s.y += s.s * 3; if(s.y > canvas.height) s.y = -10; });
 
-            player.x += (mx - player.x) * 0.15;
-            player.y += (my - player.y) * 0.15;
-
-            // 背景移動
-            stars.forEach(s => { s.y += s.z * 2; if(s.y > canvas.height) { s.y = -10; s.x = Math.random()*canvas.width; } });
-
-            // ショット
             const shootInt = (powerUpTimer > 0) ? 2 : 4;
             if(isDown && frame % shootInt === 0) {
                 bullets.push({x: player.x, y: player.y-20, vy: -25});
@@ -145,47 +146,28 @@
             }
             if(powerUpTimer > 0) powerUpTimer--;
 
-            // 敵生成
             if(Math.random() < currentMode.spawn) {
-                const isBomb = Math.random() < 0.04;
+                const isBomb = Math.random() < 0.05;
                 const h = isBomb ? 1 : Math.floor(Math.random()*(currentMode.hp[1]-currentMode.hp[0]+1))+currentMode.hp[0];
-                enemies.push({ 
-                    x: Math.random()*canvas.width, y: -50, 
-                    type: isBomb ? 'bomb' : 'norm', 
-                    hp: h, maxHp: h, 
-                    speed: currentMode.speed + Math.random()*3, 
-                    size: isBomb ? 45 : 30+(h*1.2) 
-                });
+                enemies.push({ x: Math.random()*canvas.width, y: -50, type: isBomb?'bomb':'n', hp: h, maxHp: h, speed: currentMode.speed + Math.random()*4, size: 30+(h*1.2) });
             }
-
-            // 当たり判定
-            bullets.forEach((b, bi) => {
-                b.y += b.vy; b.x += (b.vx || 0);
-                if(b.y < -50) bullets.splice(bi, 1);
-            });
 
             enemies.forEach((e, ei) => {
                 e.y += e.speed;
-                // 自機衝突
                 if(Math.hypot(e.x-player.x, e.y-player.y) < 30 && powerUpTimer <= 0) {
-                    hp -= 1; shake = 15;
+                    hp -= 2; shake = 15; noDamage = false;
                     if(hp <= 0) finish(false);
                 }
-                // 弾衝突
                 bullets.forEach((b, bi) => {
                     if(Math.hypot(e.x-b.x, e.y-b.y) < e.size/1.5) {
-                        e.hp -= (powerUpTimer > 0 ? 3 : 1);
-                        bullets.splice(bi, 1);
-                        createParticles(b.x, b.y, "#fff", 2);
+                        e.hp -= (powerUpTimer > 0 ? 3 : 1); bullets.splice(bi, 1);
                         if(e.hp <= 0) {
-                            if(e.type === 'bomb') { explode(e.x, e.y); shake = 20; }
+                            if(e.type === 'bomb') { explode(e.x, e.y); }
                             else {
-                                combo++; comboTimer = 60;
-                                score += (e.maxHp * 100) + (combo * 10);
-                                enemies.splice(ei, 1);
-                                createParticles(e.x, e.y, currentMode.color, 15, true);
-                                if(Math.random() < 0.15) items.push({x: e.x, y: e.y, type:'heal'});
-                                if(Math.random() < 0.08) items.push({x: e.x, y: e.y, type:'power'});
+                                addScore(e.maxHp * 100); enemies.splice(ei, 1);
+                                createParticles(e.x, e.y, currentMode.color, 12);
+                                if(Math.random() < 0.1) items.push({x: e.x, y: e.y, type:'heal'});
+                                if(Math.random() < 0.05) items.push({x: e.x, y: e.y, type:'power'});
                             }
                             if(score >= currentMode.target) finish(true);
                         }
@@ -195,77 +177,52 @@
             });
 
             items.forEach((it, i) => {
-                it.y += 3;
+                it.y += 4;
                 if(Math.hypot(it.x-player.x, it.y-player.y) < 40) {
-                    if(it.type==='heal') { hp = Math.min(100, hp+25); popMsg("RECOVER", "#00ffcc"); }
-                    else { powerUpTimer = 360; popMsg("OVERDRIVE!", "#ffd400"); }
+                    if(it.type==='heal') { hp = Math.min(100, hp+20); popMsg("RECOVER", "#00ffcc"); }
+                    else { powerUpTimer = 400; popMsg("OVERDRIVE!", "#f39700"); }
                     items.splice(i, 1);
                 }
             });
 
-            particles.forEach((p, i) => { p.x += p.vx; p.y += p.vy; p.l -= 0.03; if(p.l <= 0) particles.splice(i, 1); });
+            particles.forEach((p, i) => { p.x += p.vx; p.y += p.vy; p.l -= 0.02; if(p.l <= 0) particles.splice(i, 1); });
 
-            document.getElementById('score').innerText = score.toString().padStart(6, '0');
-            document.getElementById('combo').innerText = combo;
             document.getElementById('hp-bar-fill').style.width = hp + "%";
-            document.getElementById('hp-bar-fill').style.background = hp < 30 ? "#f00" : "#fff";
+            document.getElementById('hp-bar-fill').style.background = hp < 30 ? "#f00" : (powerUpTimer>0 ? "#f39700" : "#fff");
         }
 
         function explode(x, y) {
-            createParticles(x, y, "#f00", 40, true);
-            enemies.forEach((e, i) => { if(Math.hypot(e.x-x, e.y-y) < 300) enemies.splice(i, 1); });
+            createParticles(x, y, "#f00", 30); shake = 20;
+            enemies.forEach((e, i) => { if(Math.hypot(e.x-x, e.y-y) < 250) enemies.splice(i, 1); });
         }
-
-        function createParticles(x, y, c, n, burst=false) {
-            for(let i=0; i<n; i++) {
-                particles.push({x, y, c, vx:(Math.random()-0.5)*(burst?25:10), vy:(Math.random()-0.5)*(burst?25:10), l:1});
-            }
-        }
+        function createParticles(x, y, c, n) { for(let i=0; i<n; i++) particles.push({x,y,c,vx:(Math.random()-0.5)*15,vy:(Math.random()-0.5)*15,l:1}); }
 
         const player = { x: 0, y: 0 };
         function draw() {
             ctx.setTransform(1, 0, 0, 1, (Math.random()-0.5)*shake, (Math.random()-0.5)*shake);
             ctx.fillStyle = "#000"; ctx.fillRect(0,0,canvas.width,canvas.height);
+            ctx.fillStyle = "#fff"; stars.forEach(s => ctx.fillRect(s.x, s.y, s.s, s.s));
 
-            // 星
+            // 自機
+            ctx.shadowBlur = (powerUpTimer > 0) ? 30 : 15;
+            ctx.shadowColor = (powerUpTimer > 0) ? "#f39700" : currentMode.color;
             ctx.fillStyle = "#fff";
-            stars.forEach(s => ctx.fillRect(s.x, s.y, s.z/2, s.z/2));
+            ctx.beginPath(); ctx.moveTo(player.x, player.y-25); ctx.lineTo(player.x-20, player.y+15); ctx.lineTo(player.x+20, player.y+15); ctx.fill();
 
-            // 自機（ネオン機体）
-            ctx.shadowBlur = 20; ctx.shadowColor = (powerUpTimer > 0) ? "#00dfff" : currentMode.color;
-            ctx.fillStyle = "#fff";
-            ctx.beginPath();
-            ctx.moveTo(player.x, player.y-25); ctx.lineTo(player.x-20, player.y+15);
-            ctx.lineTo(player.x, player.y+5); ctx.lineTo(player.x+20, player.y+15); ctx.fill();
-
-            // 敵（ワイヤーフレーム）
+            // 敵
             enemies.forEach(e => {
                 ctx.strokeStyle = e.type==='bomb' ? "#f00" : currentMode.color;
-                ctx.shadowColor = ctx.strokeStyle; ctx.lineWidth = 3;
-                ctx.strokeRect(e.x-e.size/2, e.y-e.size/2, e.size, e.size);
-                if(e.maxHp > 5) { // 耐久力ゲージ
-                    ctx.fillStyle = "rgba(255,255,255,0.3)";
-                    ctx.fillRect(e.x-e.size/2, e.y-e.size/2-10, e.size*(e.hp/e.maxHp), 4);
-                }
+                ctx.lineWidth = 3; ctx.strokeRect(e.x-e.size/2, e.y-e.size/2, e.size, e.size);
             });
 
-            // アイテム
             items.forEach(it => {
-                ctx.fillStyle = it.type==='heal' ? "#00ffcc" : "#ffd400";
-                ctx.shadowColor = ctx.fillStyle;
-                ctx.save(); ctx.translate(it.x, it.y); ctx.rotate(frame*0.1);
-                ctx.fillRect(-12, -12, 24, 24); ctx.restore();
+                ctx.fillStyle = it.type==='heal' ? "#00ffcc" : "#f39700";
+                ctx.fillRect(it.x-10, it.y-10, 20, 20);
             });
 
-            // 弾
-            ctx.shadowBlur = 0; ctx.fillStyle = (powerUpTimer > 0) ? "#00dfff" : "#fff";
+            ctx.shadowBlur = 0; ctx.fillStyle = (powerUpTimer > 0) ? "#f39700" : "#fff";
             bullets.forEach(b => ctx.fillRect(b.x-2, b.y-15, 4, 30));
-
-            // パーティクル
-            particles.forEach(p => {
-                ctx.globalAlpha = p.l; ctx.fillStyle = p.c;
-                ctx.fillRect(p.x, p.y, 3, 3);
-            });
+            particles.forEach(p => { ctx.globalAlpha = p.l; ctx.fillStyle = p.c; ctx.fillRect(p.x, p.y, 2, 2); });
             ctx.globalAlpha = 1; ctx.setTransform(1, 0, 0, 1, 0, 0);
         }
 
@@ -274,9 +231,16 @@
             if(isClear) {
                 const cleared = JSON.parse(localStorage.getItem('clearedStages') || '[]');
                 if(!cleared.includes(currentMode.key)) { cleared.push(currentMode.key); localStorage.setItem('clearedStages', JSON.stringify(cleared)); }
-                popMsg("MISSION CLEAR", "#00ffcc");
+                
+                // ノーミスクリアボーナス（隠しステージのみ）
+                if(currentMode.key === 'hidden' && noDamage) {
+                    popMsg("PERFECT CLEAR!!<br><span style='font-size:1rem'>BONUS: +100,000</span>", "#ffd400", 3000);
+                    addScore(100000);
+                } else {
+                    popMsg("MISSION COMPLETE", "#00ffcc");
+                }
             } else { popMsg("GAME OVER", "#f00"); }
-            setTimeout(() => { document.getElementById('overlay').style.display = 'flex'; document.getElementById('overlay').style.opacity = '1'; init(); }, 2000);
+            setTimeout(() => { document.getElementById('overlay').style.display = 'flex'; init(); }, 2500);
         }
 
         function loop() { if(!gameActive) return; update(); draw(); requestAnimationFrame(loop); }
