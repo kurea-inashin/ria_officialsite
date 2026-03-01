@@ -2,28 +2,29 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>RESONANCE: INFINITY -FIXED-</title>
+    <title>RESONANCE: INFINITY -THE LAST STRATUM-</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@400;900&display=swap');
-        body { margin: 0; overflow: hidden; background: #050505; font-family: 'Orbitron', sans-serif; color: #eee; }
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Orbitron', sans-serif; color: #fff; }
         canvas { display: block; }
-        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; padding: 25px; z-index: 5; }
-        .hud-label { font-size: 0.6rem; color: #00dfff; font-family: 'Press Start 2P', cursive; }
-        #score { font-size: 1.8rem; font-weight: 900; text-shadow: 0 0 10px #00dfff; }
-        #hp-container { width: 220px; height: 8px; border: 1px solid #444; background: rgba(0,0,0,0.5); margin-top: 5px; }
-        #hp-bar-fill { height: 100%; background: #00dfff; width: 100%; transition: width 0.2s; }
-        .overlay-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, #1a1a1a, #050505); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10; }
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; padding: 20px; z-index: 5; }
+        .hud-label { font-size: 0.5rem; color: #00dfff; font-family: 'Press Start 2P', cursive; margin-bottom: 4px; }
+        #score { font-size: 1.5rem; font-weight: 900; text-shadow: 0 0 10px #00dfff; margin-bottom: 10px; }
+        #hp-container { width: 200px; height: 6px; border: 1px solid #333; background: rgba(0,0,0,0.8); border-radius: 3px; }
+        #hp-bar-fill { height: 100%; background: linear-gradient(90deg, #00dfff, #fff); width: 100%; transition: width 0.2s; }
+        .overlay-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #050505; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10; }
         .stage-select { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
-        .menu-btn { width: 250px; padding: 15px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; font-family: 'Press Start 2P', cursive; font-size: 0.6rem; color: #aaa; text-align: center; }
-        .menu-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+        .menu-btn { width: 240px; padding: 15px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer; font-family: 'Press Start 2P', cursive; font-size: 0.55rem; color: #888; text-align: center; transition: 0.3s; }
+        .menu-btn:hover { background: rgba(255,255,255,0.05); color: #fff; border-color: #fff; }
         #btn-hidden { display: none; border-color: #f39700; color: #f39700; grid-column: span 2; }
-        #btn-death { display: none; border-color: #ff0044; color: #ff0044; grid-column: span 2; }
+        #btn-death { display: none; border-color: #ff0044; color: #ff0044; grid-column: span 2; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
     </style>
 </head>
 <body>
 
     <div id="overlay" class="overlay-screen">
-        <h1 style="font-size: 2rem; margin-bottom: 25px;">RESONANCE <span style="color:#00dfff">FIX</span></h1>
+        <h1 style="font-size: 1.8rem; margin-bottom: 20px; letter-spacing: 5px;">RESONANCE <span style="color:#00dfff">INF</span></h1>
         <div class="stage-select">
             <div id="btn-ki" class="menu-btn" style="color:#00b2e5;" onclick="start('ki')">BLUE LINE</div>
             <div id="btn-do" class="menu-btn" style="color:#da0442;" onclick="start('do')">RED LINE</div>
@@ -32,11 +33,13 @@
             <div id="btn-hidden" class="menu-btn" onclick="start('hidden')">ULTIMATE ORANGE</div>
             <div id="btn-death" class="menu-btn" onclick="start('death')">DEATH INFINITY</div>
         </div>
+        <p style="font-size: 0.4rem; color: #444; margin-top: 20px;">[ SELECT SECTOR TO DEPLOY ]</p>
     </div>
 
     <div id="ui-layer">
-        <div class="hud-label">SCORE</div>
+        <div class="hud-label">SYNC SCORE</div>
         <div id="score">000000</div>
+        <div class="hud-label">SHIELD CORE</div>
         <div id="hp-container"><div id="hp-bar-fill"></div></div>
     </div>
 
@@ -48,36 +51,32 @@
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        let gameActive = false, score = 0, hp = 100, frame = 0, powerUpTimer = 0;
-        let bullets = [], eBullets = [], enemies = [], particles = [], stars = [];
+        let gameActive = false, score = 0, hp = 100, frame = 0;
+        let bullets = [], eBullets = [], enemies = [], items = [], stars = [];
         let currentMode = null;
         let player = { x: canvas.width/2, y: canvas.height/2 };
 
         const config = {
-            ki: { color: '#00b2e5', speed: 3.5, spawn: 0.12, hp: [1, 2], target: 5000, eShot: 0.005 },
-            do: { color: '#da0442', speed: 4.8, spawn: 0.15, hp: [1, 3], target: 10000, eShot: 0.01 },
-            ai: { color: '#ffd400', speed: 2.5, spawn: 0.12, hp: [15, 25], target: 12000, eShot: 0.02 },
-            raku: { color: '#00a651', speed: 7.5, spawn: 0.45, hp: [2, 10], target: 15000, eShot: 0.01 },
-            hidden: { color: '#f39700', speed: 8.5, spawn: 0.80, hp: [20, 50], target: 10000, eShot: 0.03 },
-            death: { color: '#ff0044', speed: 11.0, spawn: 1.00, hp: [40, 110], target: 60000, eShot: 0.07 }
+            ki: { color: '#00b2e5', speed: 3.2, spawn: 0.1, hp: [1, 2], target: 5000, eShot: 0.005 },
+            do: { color: '#da0442', speed: 4.5, spawn: 0.12, hp: [1, 3], target: 10000, eShot: 0.01 },
+            ai: { color: '#ffd400', speed: 2.2, spawn: 0.1, hp: [15, 25], target: 12000, eShot: 0.02 },
+            raku: { color: '#00a651', speed: 7.0, spawn: 0.4, hp: [2, 8], target: 15000, eShot: 0.01 },
+            hidden: { color: '#f39700', speed: 8.0, spawn: 0.7, hp: [20, 45], target: 10000, eShot: 0.03 },
+            death: { color: '#ff0044', speed: 10.0, spawn: 0.9, hp: [40, 100], target: 50000, eShot: 0.08 }
         };
 
         function init() {
             const cl = JSON.parse(localStorage.getItem('clearedStages') || '[]');
             const pf = JSON.parse(localStorage.getItem('perfectStages') || '[]');
-            ['ki','do','ai','raku'].forEach(id => {
-                const b = document.getElementById('btn-'+id);
-                if(pf.includes(id)) b.style.boxShadow = "inset 0 0 10px #ffd400";
-                else if(cl.includes(id)) b.style.boxShadow = "inset 0 0 10px #00dfff";
-            });
-            if(['ki','do','ai','raku'].every(s => cl.includes(s) || pf.includes(s))) document.getElementById('btn-hidden').style.display = 'block';
+            const allN = ['ki','do','ai','raku'].every(s => cl.includes(s) || pf.includes(s));
+            if(allN) document.getElementById('btn-hidden').style.display = 'block';
             if(pf.includes('hidden')) document.getElementById('btn-death').style.display = 'block';
-            stars = []; for(let i=0; i<50; i++) stars.push({x: Math.random()*canvas.width, y: Math.random()*canvas.height, s: Math.random()*3});
+            stars = []; for(let i=0; i<60; i++) stars.push({x: Math.random()*canvas.width, y: Math.random()*canvas.height, s: Math.random()*2+1});
         }
 
         function start(modeKey) {
             currentMode = { ...config[modeKey], key: modeKey };
-            score = 0; hp = 100; frame = 0; bullets = []; eBullets = []; enemies = [];
+            score = 0; hp = 100; frame = 0; bullets = []; eBullets = []; enemies = []; items = [];
             document.getElementById('overlay').style.display = 'none';
             gameActive = true; loop();
         }
@@ -87,99 +86,116 @@
 
         function update() {
             frame++;
-            stars.forEach(s => { s.y += s.s * 2; if(s.y > canvas.height) s.y = 0; });
+            stars.forEach(s => { s.y += s.s * 4; if(s.y > canvas.height) s.y = 0; });
 
-            // 自機の攻撃
-            if(isDown && frame % 5 === 0) {
+            // 自機攻撃（DEATHなら4倍の威力）
+            if(isDown && frame % 4 === 0) {
                 const isOp = (currentMode.key === 'hidden' || currentMode.key === 'death');
                 bullets.push({x: player.x, y: player.y-10, vx: 0, vy: -20});
-                if(isOp) { // 5方向
-                    bullets.push({x: player.x, y: player.y-10, vx: -5, vy: -19});
-                    bullets.push({x: player.x, y: player.y-10, vx: 5, vy: -19});
-                    bullets.push({x: player.x, y: player.y-10, vx: -10, vy: -17});
-                    bullets.push({x: player.x, y: player.y-10, vx: 10, vy: -17});
+                if(isOp) {
+                    bullets.push({x: player.x, y: player.y-10, vx: -6, vy: -19});
+                    bullets.push({x: player.x, y: player.y-10, vx: 6, vy: -19});
+                    bullets.push({x: player.x, y: player.y-10, vx: -12, vy: -17});
+                    bullets.push({x: player.x, y: player.y-10, vx: 12, vy: -17});
                 }
             }
 
-            // 弾の移動処理（←ここが重要！）
+            // 自機弾移動 & 敵弾消去
             for(let i=bullets.length-1; i>=0; i--) {
                 bullets[i].x += bullets[i].vx;
                 bullets[i].y += bullets[i].vy;
-                if(bullets[i].y < -20) bullets.splice(i, 1);
+                if(bullets[i].y < -20) { bullets.splice(i, 1); continue; }
+
+                // DEATH限定：敵弾を撃ち落とせる
+                if(currentMode.key === 'death') {
+                    for(let j=eBullets.length-1; j>=0; j--) {
+                        if(Math.hypot(bullets[i].x - eBullets[j].x, bullets[i].y - eBullets[j].y) < 15) {
+                            eBullets.splice(j, 1); // 敵の弾を消去
+                        }
+                    }
+                }
             }
 
+            // 敵弾移動
             for(let i=eBullets.length-1; i>=0; i--) {
                 eBullets[i].x += eBullets[i].vx;
                 eBullets[i].y += eBullets[i].vy;
-                if(Math.hypot(eBullets[i].x-player.x, eBullets[i].y-player.y) < 8) {
-                    hp -= 10; eBullets.splice(i, 1);
+                if(Math.hypot(eBullets[i].x-player.x, eBullets[i].y-player.y) < 6) { // 判定をさらに小さく
+                    hp -= 8; eBullets.splice(i, 1);
                     if(hp <= 0) finish(false);
-                } else if(eBullets[i].y > canvas.height + 20) {
+                } else if(eBullets[i].y > canvas.height + 20 || eBullets[i].x < -20 || eBullets[i].x > canvas.width + 20) {
                     eBullets.splice(i, 1);
                 }
             }
 
-            // 敵の生成と移動
+            // 敵の挙動
             if(Math.random() < currentMode.spawn) {
-                enemies.push({ x: Math.random()*canvas.width, y: -30, hp: Math.floor(Math.random()*currentMode.hp[1])+currentMode.hp[0], speed: currentMode.speed });
+                enemies.push({ 
+                    x: Math.random()*canvas.width, y: -40, 
+                    hp: Math.floor(Math.random()*currentMode.hp[1])+currentMode.hp[0], 
+                    speed: currentMode.speed 
+                });
             }
 
             for(let i=enemies.length-1; i>=0; i--) {
                 let e = enemies[i];
                 e.y += e.speed;
 
-                // 敵の射撃
-                if(Math.random() < currentMode.eShot && e.y > 0 && e.y < 300) {
+                if(Math.random() < currentMode.eShot && e.y > 0 && e.y < canvas.height/2) {
                     let angle = Math.atan2(player.y - e.y, player.x - e.x);
-                    eBullets.push({ x: e.x, y: e.y, vx: Math.cos(angle)*6, vy: Math.sin(angle)*6 });
+                    let spd = currentMode.key === 'death' ? 5 : 6.5; // DEATHは少し弾を遅くして避けやすく
+                    eBullets.push({ x: e.x, y: e.y, vx: Math.cos(angle)*spd, vy: Math.sin(angle)*spd });
                 }
 
-                // 当たり判定
                 bullets.forEach((b, bi) => {
                     if(Math.hypot(e.x-b.x, e.y-b.y) < 30) {
-                        e.hp -= (currentMode.key === 'hidden' || currentMode.key === 'death') ? 3 : 1;
+                        let power = (currentMode.key === 'death') ? 4 : (currentMode.key === 'hidden' ? 2.5 : 1);
+                        e.hp -= power;
                         bullets.splice(bi, 1);
                     }
                 });
 
                 if(e.hp <= 0) {
-                    score += 100; enemies.splice(i, 1);
+                    score += 100;
+                    if(Math.random() < 0.2) items.push({x: e.x, y: e.y, type:'heal'});
+                    enemies.splice(i, 1);
                     if(score >= currentMode.target) finish(true);
-                } else if(e.y > canvas.height + 30) {
+                } else if(e.y > canvas.height + 40) {
                     enemies.splice(i, 1);
                 }
             }
+
+            items.forEach((it, i) => { it.y += 3; if(Math.hypot(it.x-player.x, it.y-player.y) < 25) { hp = Math.min(100, hp+20); items.splice(i, 1); } });
             document.getElementById('hp-bar-fill').style.width = hp + "%";
             document.getElementById('score').innerText = score.toString().padStart(6, '0');
         }
 
         function draw() {
-            ctx.fillStyle = "rgba(5, 5, 5, 0.4)";
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            
-            ctx.fillStyle = "#fff"; stars.forEach(s => ctx.fillRect(s.x, s.y, s.s, s.s));
+            ctx.fillStyle = "#000"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#444"; stars.forEach(s => ctx.fillRect(s.x, s.y, s.s, s.s));
 
-            // 自機
-            ctx.fillStyle = currentMode.color;
-            ctx.beginPath(); ctx.arc(player.x, player.y, 10, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(player.x, player.y, 3, 0, Math.PI*2); ctx.fill();
+            // 自機（階層的なオーラ）
+            ctx.shadowBlur = 10; ctx.shadowColor = currentMode.color;
+            ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(player.x, player.y, 8, 0, Math.PI*2); ctx.fill();
+            ctx.shadowBlur = 0;
 
-            // 自機弾
+            // 弾（球体）
             bullets.forEach(b => {
                 ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(b.x, b.y, 4, 0, Math.PI*2); ctx.fill();
             });
 
-            // 敵弾
             eBullets.forEach(eb => {
-                ctx.fillStyle = "#ff0044"; ctx.beginPath(); ctx.arc(eb.x, eb.y, 6, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = "#ff0044"; ctx.beginPath(); ctx.arc(eb.x, eb.y, 5, 0, Math.PI*2); ctx.fill();
                 ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(eb.x, eb.y, 2, 0, Math.PI*2); ctx.fill();
             });
 
-            // 敵
+            // 敵（路線カラーの枠線）
             enemies.forEach(e => {
-                ctx.strokeStyle = currentMode.color; ctx.lineWidth = 2;
+                ctx.strokeStyle = currentMode.color; ctx.lineWidth = 2.5;
                 ctx.strokeRect(e.x-15, e.y-15, 30, 30);
             });
+
+            items.forEach(it => { ctx.fillStyle = "#00ffcc"; ctx.fillRect(it.x-7, it.y-7, 14, 14); });
         }
 
         function finish(isClear) {
@@ -190,8 +206,8 @@
                 if(hp >= 100) pf.push(currentMode.key); else cl.push(currentMode.key);
                 localStorage.setItem('clearedStages', JSON.stringify(cl));
                 localStorage.setItem('perfectStages', JSON.stringify(pf));
-                alert("MISSION COMPLETE!");
-            } else { alert("GAME OVER"); }
+                alert("MISSION SUCCESS");
+            } else { alert("SYSTEM OVERHEAT: FAILED"); }
             location.reload();
         }
 
