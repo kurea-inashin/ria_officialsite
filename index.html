@@ -58,12 +58,12 @@
     <div id="overlay" class="overlay-screen">
         <h1 style="font-size: 2.5rem; margin-bottom: 30px; font-style: italic;">RESONANCE <span style="color:#00dfff">INF</span></h1>
         <div class="stage-select">
-            <div id="btn-ki" class="menu-btn" style="color: #00b2e5;" onclick="start('ki')">BLUE LINE</div>
-            <div id="btn-do" class="menu-btn" style="color: #da0442;" onclick="start('do')">RED LINE</div>
-            <div id="btn-ai" class="menu-btn" style="color: #ffd400;" onclick="start('ai')">YELLOW LINE</div>
-            <div id="btn-raku" class="menu-btn" style="color: #00a651;" onclick="start('raku')">GREEN LINE</div>
-            <div id="btn-hidden" class="menu-btn" onclick="start('hidden')">ULTIMATE ORANGE</div>
-            <div id="btn-death" class="menu-btn" onclick="start('death')">DEATH INFINITY</div>
+            <div id="btn-ki" class="menu-btn" style="color: #00b2e5;" onclick="start('ki')">LEVEL I</div>
+            <div id="btn-do" class="menu-btn" style="color: #da0442;" onclick="start('do')">LEVEL Ⅱ</div>
+            <div id="btn-ai" class="menu-btn" style="color: #ffd400;" onclick="start('ai')">LEVEL Ⅲ</div>
+            <div id="btn-raku" class="menu-btn" style="color: #00a651;" onclick="start('raku')">LEVEL Ⅳ</div>
+            <div id="btn-hidden" class="menu-btn" onclick="start('hidden')">LEVEL X</div>
+            <div id="btn-death" class="menu-btn" onclick="start('death')">alkfdjafdkl????</div>
         </div>
         <div style="margin-top: 40px;">
             <div class="menu-btn" style="width: auto; font-size: 0.5rem; border: none;" onclick="resetData()">[ RESET SYSTEM ]</div>
@@ -94,12 +94,12 @@
         let currentMode = null;
 
         const config = {
-            ki: { color: '#00b2e5', speed: 2.2, spawn: 0.07, hp: [1, 1], target: 5000 },
+            ki: { color: '#00b2e5', speed: 2.0, spawn: 0.07, hp: [1, 1], target: 5000 },
             do: { color: '#da0442', speed: 3.5, spawn: 0.12, hp: [1, 2], target: 10000 },
-            ai: { color: '#ffd400', speed: 1.8, spawn: 0.10, hp: [10, 20], target: 12000 },
-            raku: { color: '#00a651', speed: 6.0, spawn: 0.35, hp: [1, 5], target: 15000 },
-            hidden: { color: '#f39700', speed: 9.0, spawn: 0.75, hp: [20, 60], target: 10000 }, // スコア緩和！
-            death: { color: '#ff0044', speed: 12.0, spawn: 0.95, hp: [50, 100], target: 80000 }
+            ai: { color: '#ffd400', speed: 5.0, spawn: 0.10, hp: [10, 20], target: 15000 },
+            raku: { color: '#00a651', speed: 7.0, spawn: 0.35, hp: [1, 5], target: 20000 },
+            hidden: { color: '#f39700', speed: 9.0, spawn: 0.55, hp: [20, 60], target: 10000 }, // スコア緩和！
+            death: { color: '#ff0044', speed: 12.0, spawn: 0.80, hp: [50, 100], target: 10000 }
         };
 
         function resetData() { if(confirm("データを初期化しますか？")) { localStorage.clear(); location.reload(); } }
