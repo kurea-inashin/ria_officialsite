@@ -2,25 +2,25 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>RESONANCE: INFINITY -REBALANCED-</title>
+    <title>RESONANCE: INFINITY -PERFECT EDITION-</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@400;900&display=swap');
         
-        body { margin: 0; overflow: hidden; background: #080808; font-family: 'Orbitron', sans-serif; color: #eee; user-select: none; }
+        body { margin: 0; overflow: hidden; background: #050505; font-family: 'Orbitron', sans-serif; color: #eee; user-select: none; }
         canvas { display: block; }
         
         /* アイケア：薄いスキャンライン */
         body::after {
             content: " "; position: absolute; top: 0; left: 0; bottom: 0; right: 0;
             background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.08) 50%);
-            background-size: 100% 4px; z-index: 100; pointer-events: none; opacity: 0.4;
+            background-size: 100% 4px; z-index: 100; pointer-events: none; opacity: 0.3;
         }
 
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; padding: 25px; box-sizing: border-box; z-index: 5; }
-        .hud-label { font-size: 0.65rem; color: #00dfff; font-family: 'Press Start 2P', cursive; opacity: 0.8; letter-spacing: 1px; }
+        .hud-label { font-size: 0.65rem; color: #00dfff; font-family: 'Press Start 2P', cursive; opacity: 0.8; }
         #score { font-size: 2rem; font-weight: 900; text-shadow: 0 0 10px #00dfff; }
-        #hp-container { width: 250px; height: 10px; border: 1px solid #555; margin-top: 5px; background: rgba(0,0,0,0.5); position: relative; }
-        #hp-bar-fill { height: 100%; background: #fff; width: 100%; transition: width 0.3s; box-shadow: 0 0 8px #fff; }
+        #hp-container { width: 250px; height: 10px; border: 1px solid #555; margin-top: 5px; background: rgba(0,0,0,0.5); }
+        #hp-bar-fill { height: 100%; background: #fff; width: 100%; transition: width 0.3s; }
 
         .overlay-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, #1a1a1a, #050505); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10; text-align: center; transition: opacity 0.5s; }
         .stage-select { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
@@ -30,21 +30,25 @@
             background: rgba(255,255,255,0.03); font-family: 'Press Start 2P', cursive; font-size: 0.7rem; 
             transition: 0.3s; position: relative; color: #aaa;
         }
-        .menu-btn:hover { background: rgba(255,255,255,0.1); color: #fff; border-color: #fff; transform: translateY(-2px); }
+        .menu-btn:hover { background: rgba(255,255,255,0.1); color: #fff; border-color: #fff; }
         
-        /* クリア済み：COMPLETED表示 */
-        .menu-btn.cleared { border-color: rgba(0, 223, 255, 0.4); color: #fff; }
+        /* クリアバッジ */
         .menu-btn.cleared::after { 
             content: "COMPLETED"; position: absolute; top: -12px; right: -10px; 
-            background: #00dfff; color: #000; padding: 4px 8px; font-size: 0.5rem; transform: rotate(12deg); 
-            box-shadow: 0 0 10px #00dfff; font-weight: bold;
+            background: #00dfff; color: #000; padding: 4px 8px; font-size: 0.4rem; transform: rotate(12deg); 
+            box-shadow: 0 0 10px #00dfff;
+        }
+        /* パーフェクトクリアバッジ */
+        .menu-btn.perfect::after { 
+            content: "PERFECT !!"; position: absolute; top: -12px; right: -10px; 
+            background: #ffd400; color: #000; padding: 4px 8px; font-size: 0.4rem; transform: rotate(12deg); 
+            box-shadow: 0 0 15px #ffd400; font-weight: bold;
         }
 
         #btn-hidden { display: none; border-color: #f39700; color: #f39700; grid-column: span 2; }
         #btn-death { display: none; border-color: #ff0044; color: #ff0044; grid-column: span 2; }
 
-        #pause-screen { display: none; background: rgba(0,0,0,0.85); z-index: 110; }
-        #msg-pop { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); font-family: 'Press Start 2P', cursive; font-size: 2.5rem; pointer-events: none; display: none; z-index: 50; }
+        #msg-pop { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-family: 'Press Start 2P', cursive; font-size: 1.5rem; color: #ffd400; text-align: center; pointer-events: none; display: none; z-index: 100; line-height: 2; text-shadow: 0 0 20px #f39700; }
     </style>
 </head>
 <body>
@@ -52,7 +56,7 @@
     <div id="msg-pop"></div>
 
     <div id="overlay" class="overlay-screen">
-        <h1 style="font-size: 2.8rem; margin-bottom: 40px; font-style: italic; letter-spacing: -2px;">RESONANCE <span style="color:#00dfff">INFINITY</span></h1>
+        <h1 style="font-size: 2.5rem; margin-bottom: 30px; font-style: italic;">RESONANCE <span style="color:#00dfff">INF</span></h1>
         <div class="stage-select">
             <div id="btn-ki" class="menu-btn" style="color: #00b2e5;" onclick="start('ki')">BLUE LINE</div>
             <div id="btn-do" class="menu-btn" style="color: #da0442;" onclick="start('do')">RED LINE</div>
@@ -61,27 +65,20 @@
             <div id="btn-hidden" class="menu-btn" onclick="start('hidden')">ULTIMATE ORANGE</div>
             <div id="btn-death" class="menu-btn" onclick="start('death')">DEATH INFINITY</div>
         </div>
-        <div style="margin-top: 50px;">
-            <div class="menu-btn" style="width: auto; font-size: 0.5rem; border: none;" onclick="resetData()">[ RESET DATA ]</div>
+        <div style="margin-top: 40px;">
+            <div class="menu-btn" style="width: auto; font-size: 0.5rem; border: none;" onclick="resetData()">[ RESET SYSTEM ]</div>
         </div>
-    </div>
-
-    <div id="pause-screen" class="overlay-screen">
-        <h2 style="font-family:'Press Start 2P'; margin-bottom: 30px;">PAUSED</h2>
-        <div class="menu-btn" onclick="togglePause()">RESUME</div>
-        <div class="menu-btn" onclick="quitGame()">QUIT</div>
     </div>
 
     <div id="ui-layer">
         <div>
-            <div class="hud-label">TOTAL RESONANCE</div>
+            <div class="hud-label">SCORE</div>
             <div id="score">000000</div>
         </div>
-        <div style="margin-top: 15px;">
-            <div class="hud-label">SHIELD STABILITY</div>
+        <div style="margin-top: 10px;">
+            <div class="hud-label">SHIELD</div>
             <div id="hp-container"><div id="hp-bar-fill"></div></div>
         </div>
-        <div id="stage-name" style="font-family:'Press Start 2P'; font-size: 0.7rem; margin-top: 20px;"></div>
     </div>
 
     <canvas id="gameCanvas"></canvas>
@@ -92,31 +89,37 @@
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        let gameActive = false, isPaused = false, score = 0, hp = 100, frame = 0, powerUpTimer = 0, shake = 0;
+        let gameActive = false, score = 0, hp = 100, frame = 0, powerUpTimer = 0, shake = 0;
         let bullets = [], enemies = [], particles = [], items = [], stars = [];
         let currentMode = null;
 
-        // 難易度調整版 config
         const config = {
             ki: { color: '#00b2e5', speed: 2.2, spawn: 0.07, hp: [1, 1], target: 5000 },
             do: { color: '#da0442', speed: 3.5, spawn: 0.12, hp: [1, 2], target: 10000 },
             ai: { color: '#ffd400', speed: 1.8, spawn: 0.10, hp: [10, 20], target: 12000 },
             raku: { color: '#00a651', speed: 6.0, spawn: 0.35, hp: [1, 5], target: 15000 },
-            hidden: { color: '#f39700', speed: 8.0, spawn: 0.55, hp: [15, 45], target: 40000 }, // HPと速度を微減
-            death: { color: '#ff0044', speed: 10.0, spawn: 0.75, hp: [40, 80], target: 80000 }
+            hidden: { color: '#f39700', speed: 9.0, spawn: 0.75, hp: [20, 60], target: 10000 }, // スコア緩和！
+            death: { color: '#ff0044', speed: 12.0, spawn: 0.95, hp: [50, 100], target: 80000 }
         };
 
-        function resetData() { if(confirm("全クリアデータをリセットしますか？")) { localStorage.removeItem('clearedStages'); location.reload(); } }
+        function resetData() { if(confirm("データを初期化しますか？")) { localStorage.clear(); location.reload(); } }
 
         function init() {
             const cleared = JSON.parse(localStorage.getItem('clearedStages') || '[]');
+            const perfects = JSON.parse(localStorage.getItem('perfectStages') || '[]');
+            
             ['ki','do','ai','raku','hidden','death'].forEach(id => {
                 const b = document.getElementById('btn-'+id);
-                if(b) cleared.includes(id) ? b.classList.add('cleared') : b.classList.remove('cleared');
+                if(!b) return;
+                b.classList.remove('cleared', 'perfect');
+                if(perfects.includes(id)) b.classList.add('perfect');
+                else if(cleared.includes(id)) b.classList.add('cleared');
             });
-            const allS = ['ki','do','ai','raku'].every(s => cleared.includes(s));
-            document.getElementById('btn-hidden').style.display = (allS || cleared.includes('hidden')) ? 'block' : 'none';
-            if(cleared.includes('hidden')) document.getElementById('btn-death').style.display = 'block';
+
+            const allS = ['ki','do','ai','raku'].every(s => cleared.includes(s) || perfects.includes(s));
+            document.getElementById('btn-hidden').style.display = allS ? 'block' : 'none';
+            // DEATHは隠しを「PERFECT」でクリアした時のみ解禁！
+            document.getElementById('btn-death').style.display = perfects.includes('hidden') ? 'block' : 'none';
             
             stars = []; for(let i=0; i<60; i++) stars.push({x: Math.random()*canvas.width, y: Math.random()*canvas.height, s: Math.random()*1.5+0.5});
         }
@@ -126,24 +129,8 @@
             score = 0; hp = 100; frame = 0; powerUpTimer = 0;
             bullets = []; enemies = []; particles = []; items = [];
             document.getElementById('overlay').style.opacity = '0';
-            setTimeout(() => {
-                document.getElementById('overlay').style.display = 'none';
-                document.getElementById('stage-name').innerText = modeKey.toUpperCase() + " STAGE";
-                document.getElementById('stage-name').style.color = currentMode.color;
-                gameActive = true; isPaused = false; loop();
-            }, 500);
+            setTimeout(() => { document.getElementById('overlay').style.display = 'none'; gameActive = true; loop(); }, 500);
         }
-
-        function togglePause() {
-            if(!gameActive) return;
-            isPaused = !isPaused;
-            document.getElementById('pause-screen').style.display = isPaused ? 'flex' : 'none';
-            if(!isPaused) loop();
-        }
-
-        function quitGame() { isPaused = false; gameActive = false; document.getElementById('pause-screen').style.display = 'none'; document.getElementById('overlay').style.display = 'flex'; document.getElementById('overlay').style.opacity = '1'; init(); }
-
-        window.addEventListener('keydown', e => { if(e.key === 'Escape') togglePause(); });
 
         let mx = canvas.width/2, my = canvas.height/2, isDown = false;
         window.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
@@ -151,10 +138,8 @@
         window.addEventListener('mouseup', () => isDown = false);
 
         function update() {
-            frame++;
-            if(shake > 0) shake *= 0.85;
-            player.x += (mx - player.x) * 0.18;
-            player.y += (my - player.y) * 0.18;
+            frame++; if(shake > 0) shake *= 0.85;
+            player.x += (mx - player.x) * 0.18; player.y += (my - player.y) * 0.18;
             stars.forEach(s => { s.y += s.s * 4; if(s.y > canvas.height) s.y = -10; });
 
             const shootInt = (powerUpTimer > 0) ? 2 : 5;
@@ -172,17 +157,15 @@
                 enemies.push({ x: Math.random()*canvas.width, y: -50, hp: h, maxHp: h, speed: currentMode.speed + Math.random()*3, size: 25+(h*1.1) });
             }
 
-            // 弾の更新
             for (let i = bullets.length - 1; i >= 0; i--) {
                 bullets[i].y += bullets[i].vy; if(bullets[i].vx) bullets[i].x += bullets[i].vx;
                 if(bullets[i].y < -50) bullets.splice(i, 1);
             }
 
-            // 敵の更新
             for (let ei = enemies.length - 1; ei >= 0; ei--) {
                 let e = enemies[ei]; e.y += e.speed;
                 if(Math.hypot(e.x-player.x, e.y-player.y) < 25 && powerUpTimer <= 0) {
-                    hp -= 5; shake = 12; enemies.splice(ei, 1);
+                    hp -= 10; shake = 15; enemies.splice(ei, 1);
                     if(hp <= 0) finish(false); continue;
                 }
                 for (let bi = bullets.length - 1; bi >= 0; bi--) {
@@ -191,8 +174,8 @@
                         if(e.hp <= 0) {
                             score += e.maxHp * 100; createParticles(e.x, e.y, currentMode.color, 12);
                             document.getElementById('score').innerText = score.toString().padStart(6, '0');
-                            if(Math.random() < 0.12) items.push({x: e.x, y: e.y, type:'heal'});
-                            if(Math.random() < 0.06) items.push({x: e.x, y: e.y, type:'power'});
+                            if(Math.random() < 0.1) items.push({x: e.x, y: e.y, type:'heal'});
+                            if(Math.random() < 0.05) items.push({x: e.x, y: e.y, type:'power'});
                             enemies.splice(ei, 1);
                             if(score >= currentMode.target) finish(true);
                         }
@@ -202,53 +185,47 @@
                 if(e && e.y > canvas.height + 100) enemies.splice(ei, 1);
             }
 
-            // アイテム（回復量アップ）
             for(let i=items.length-1; i>=0; i--) {
-                items[i].y += 3.5;
+                items[i].y += 3;
                 if(Math.hypot(items[i].x-player.x, items[i].y-player.y) < 35) {
-                    if(items[i].type==='heal') hp = Math.min(100, hp+35); else powerUpTimer = 400;
+                    if(items[i].type==='heal') hp = Math.min(100, hp+25); else powerUpTimer = 400;
                     items.splice(i, 1);
-                } else if(items[i].y > canvas.height + 50) items.splice(i, 1);
+                }
             }
 
             for(let i=particles.length-1; i>=0; i--) {
                 particles[i].x += particles[i].vx; particles[i].y += particles[i].vy;
-                particles[i].l -= 0.025; if(particles[i].l <= 0) particles.splice(i, 1);
+                particles[i].l -= 0.02; if(particles[i].l <= 0) particles.splice(i, 1);
             }
 
             document.getElementById('hp-bar-fill').style.width = hp + "%";
-            document.getElementById('hp-bar-fill').style.background = hp < 30 ? "#f00" : "#fff";
+            document.getElementById('hp-bar-fill').style.background = hp < 30 ? "#f00" : "#eee";
         }
 
         const player = { x: 0, y: 0 };
         function draw() {
             ctx.setTransform(1, 0, 0, 1, (Math.random()-0.5)*shake, (Math.random()-0.5)*shake);
-            ctx.fillStyle = "rgba(8, 8, 8, 0.4)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = "#444"; stars.forEach(s => ctx.fillRect(s.x, s.y, s.s, s.s));
+            ctx.fillStyle = "rgba(5, 5, 5, 0.4)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "#333"; stars.forEach(s => ctx.fillRect(s.x, s.y, s.s, s.s));
 
-            // パワーアップサークル
             if(powerUpTimer > 0) {
                 ctx.strokeStyle = "#f39700"; ctx.lineWidth = 3; ctx.beginPath();
                 ctx.arc(player.x, player.y, 28, -Math.PI/2, (Math.PI*2 * (powerUpTimer/400)) - Math.PI/2);
                 ctx.stroke();
             }
 
-            // 自機
             ctx.shadowBlur = 15; ctx.shadowColor = (powerUpTimer > 0) ? "#f39700" : currentMode.color;
             ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(player.x, player.y, 12, 0, Math.PI*2); ctx.fill();
 
-            // 敵
             ctx.shadowBlur = 0;
             enemies.forEach(e => {
                 ctx.strokeStyle = currentMode.color; ctx.lineWidth = 2;
                 ctx.strokeRect(e.x-e.size/2, e.y-e.size/2, e.size, e.size);
             });
 
-            // 弾・アイテム
             ctx.fillStyle = "#fff"; bullets.forEach(b => ctx.fillRect(b.x-2, b.y-10, 4, 20));
             items.forEach(it => { ctx.fillStyle = it.type==='heal'?"#00ffcc":"#f39700"; ctx.fillRect(it.x-8, it.y-8, 16, 16); });
             particles.forEach(p => { ctx.globalAlpha = p.l; ctx.fillStyle = p.c; ctx.fillRect(p.x, p.y, 2, 2); });
-            
             ctx.globalAlpha = 1; ctx.setTransform(1, 0, 0, 1, 0, 0);
         }
 
@@ -256,15 +233,40 @@
 
         function finish(isClear) {
             gameActive = false;
-            alert(isClear ? "STAGE COMPLETE!" : "GAME OVER");
             if(isClear) {
-                const cleared = JSON.parse(localStorage.getItem('clearedStages') || '[]');
-                if(!cleared.includes(currentMode.key)) { cleared.push(currentMode.key); localStorage.setItem('clearedStages', JSON.stringify(cleared)); }
+                let cleared = JSON.parse(localStorage.getItem('clearedStages') || '[]');
+                let perfects = JSON.parse(localStorage.getItem('perfectStages') || '[]');
+                
+                if(hp >= 100) {
+                    if(!perfects.includes(currentMode.key)) perfects.push(currentMode.key);
+                    localStorage.setItem('perfectStages', JSON.stringify(perfects));
+                    showExtraMessage();
+                } else {
+                    if(!cleared.includes(currentMode.key)) cleared.push(currentMode.key);
+                    localStorage.setItem('clearedStages', JSON.stringify(cleared));
+                    alert("STAGE CLEAR!");
+                    backToMenu();
+                }
+            } else {
+                alert("GAME OVER");
+                backToMenu();
             }
-            quitGame();
         }
 
-        function loop() { if(!gameActive || isPaused) return; update(); draw(); requestAnimationFrame(loop); }
+        function showExtraMessage() {
+            const msg = document.getElementById('msg-pop');
+            msg.innerHTML = "PERFECT CLEAR!!<br><span style='font-size:0.8rem; color:#fff;'>NEW DATA UNLOCKED...</span>";
+            msg.style.display = 'block';
+            setTimeout(() => { msg.style.display = 'none'; backToMenu(); }, 3000);
+        }
+
+        function backToMenu() {
+            document.getElementById('overlay').style.display = 'flex';
+            document.getElementById('overlay').style.opacity = '1';
+            init();
+        }
+
+        function loop() { if(!gameActive) return; update(); draw(); requestAnimationFrame(loop); }
 
         init();
         window.addEventListener('resize', () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
