@@ -2,60 +2,59 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Extreme Shooting: Railway Map</title>
+    <title>Extreme Shooting: Neon Resonance</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@400;900&family=Noto+Sans+JP:wght@300&display=swap');
         
-        body { margin: 0; overflow: hidden; background: #00040a; font-family: 'Orbitron', 'Noto Sans JP', sans-serif; color: #fff; }
-        canvas { display: block; }
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Orbitron', 'Noto Sans JP', sans-serif; color: #fff; }
+        canvas { display: block; position: absolute; top: 0; left: 0; z-index: 1; }
 
         /* UI Layers */
-        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; padding: 20px; z-index: 5; }
-        .hud-label { font-size: 0.5rem; color: #00dfff; font-family: 'Press Start 2P', cursive; letter-spacing: 1px; }
-        #score { font-size: 1.6rem; font-weight: 900; text-shadow: 0 0 15px #00dfff; margin-bottom: 10px; }
-        #hp-container { width: 220px; height: 5px; border: 1px solid #1a3a4a; background: rgba(0,20,30,0.8); position: relative; }
-        #hp-bar-fill { height: 100%; background: linear-gradient(90deg, #00dfff, #70e1ff); width: 100%; box-shadow: 0 0 10px #00dfff; transition: width 0.3s; }
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; padding: 30px; z-index: 5; box-sizing: border-box; }
+        .hud-label { font-size: 0.6rem; color: #00dfff; font-family: 'Press Start 2P', cursive; letter-spacing: 2px; text-shadow: 0 0 10px #00dfff; }
+        #score { font-size: 2rem; font-weight: 900; text-shadow: 0 0 20px #00dfff; margin-bottom: 15px; }
+        #hp-container { width: 250px; height: 6px; border: 1px solid #1a3a4a; background: rgba(0,20,30,0.5); position: relative; backdrop-filter: blur(2px); }
+        #hp-bar-fill { height: 100%; background: linear-gradient(90deg, #00dfff, #fff); width: 100%; box-shadow: 0 0 15px #00dfff; transition: width 0.3s; }
 
-        /* Map Screen */
+        /* Home Screen */
         .overlay-screen { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            background: radial-gradient(circle at center, #0a192f 0%, #000 100%); 
-            display: flex; flex-direction: column; align-items: center; z-index: 10; 
-            overflow-y: auto; padding: 40px 0;
+            background: radial-gradient(circle at center, rgba(10, 25, 47, 0.8) 0%, rgba(0,0,0,0.95) 100%);
+            backdrop-filter: blur(10px); display: flex; flex-direction: column; align-items: center; z-index: 10; 
+            overflow-y: auto; padding: 50px 0; box-sizing: border-box;
         }
         
-        h1 { font-size: 2.5rem; letter-spacing: 10px; text-shadow: 0 0 20px #00dfff; margin-bottom: 5px; }
-        .sub-title { font-size: 0.8rem; color: #70e1ff; margin-bottom: 40px; }
+        h1 { font-size: 2.8rem; letter-spacing: 12px; text-shadow: 0 0 30px #00dfff; margin-bottom: 10px; color: #fff; font-weight: 900; }
+        .sub-title { font-size: 0.9rem; color: #70e1ff; margin-bottom: 50px; letter-spacing: 4px; }
 
         /* マップレイアウト */
         .map-container {
-            position: relative; width: 950px; height: 450px;
-            background: rgba(0, 223, 255, 0.02);
-            border: 1px solid rgba(0, 223, 255, 0.1); border-radius: 20px;
+            position: relative; width: 950px; height: 480px;
+            background: rgba(0, 223, 255, 0.03);
+            border: 1px solid rgba(0, 223, 255, 0.15); border-radius: 20px;
         }
 
         .node {
-            position: absolute; width: 150px; height: 65px;
-            background: rgba(0, 10, 20, 0.9); border: 2px solid rgba(255,255,255,0.2);
+            position: absolute; width: 160px; height: 75px;
+            background: rgba(0, 5, 15, 0.8); border: 1px solid rgba(0,223,255,0.3);
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            cursor: pointer; transition: 0.3s; z-index: 2;
+            cursor: pointer; transition: 0.4s; z-index: 2; border-radius: 4px;
         }
-        .node:hover { transform: scale(1.1); border-color: #00dfff; box-shadow: 0 0 20px rgba(0,223,255,0.3); }
-        .node-label { font-size: 0.45rem; font-family: 'Press Start 2P'; margin-bottom: 4px; }
-        .node-clear { position: absolute; top: -12px; right: -12px; font-size: 1.4rem; }
+        .node:hover { transform: scale(1.1) translateY(-5px); border-color: #fff; box-shadow: 0 0 30px rgba(0,223,255,0.4); }
+        .node-label { font-size: 0.45rem; font-family: 'Press Start 2P'; margin-bottom: 4px; color: #fff; }
+        
+        /* 難易度の星（復活） */
+        .difficulty-stars { color: #ffd400; font-size: 0.4rem; margin-top: 5px; text-shadow: 0 0 5px #ffd400; letter-spacing: 1px; }
 
-        #unlock-banner {
-            position: fixed; top: 20px; background: rgba(255, 69, 0, 0.2); border: 1px solid #ff4500;
-            padding: 10px 40px; font-size: 0.7rem; color: #ff4500; display: none; font-family: 'Press Start 2P';
-            z-index: 20;
-        }
+        .clear-status { position: absolute; top: -15px; right: -15px; font-size: 1.6rem; }
 
-        .copy-right { font-size: 0.6rem; color: #445; margin-top: 40px; letter-spacing: 2px; }
+        /* 【重要】コピーライト表示の復活 */
+        .copy-right { font-size: 0.65rem; color: #445; margin-top: 50px; letter-spacing: 3px; z-index: 20; }
 
         #complete-text { 
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            font-size: 4rem; font-weight: 900; letter-spacing: 15px; color: #fff;
-            text-shadow: 0 0 30px #00dfff; display: none; z-index: 100; pointer-events: none;
+            font-size: 5rem; font-weight: 900; letter-spacing: 20px; color: #fff;
+            text-shadow: 0 0 40px #00dfff; display: none; z-index: 100; font-family: 'Orbitron';
         }
     </style>
 </head>
@@ -64,27 +63,26 @@
     <div id="complete-text">COMPLETE</div>
 
     <div id="overlay" class="overlay-screen">
-        <div id="unlock-banner">!! ULTIMATE ONI-STAGE UNLOCKED !!</div>
         <h1>RESONANCE MAP</h1>
-        <div class="sub-title">Route 2026: Prototype Map View</div>
+        <div class="sub-title">Route 2026: Tactical View</div>
 
         <div class="map-container" id="map">
-            <div id="btn-st1" class="node" style="top:50px; left:50px; border-left: 8px solid #ffd400;" onclick="start('st1')"><div class="node-label">ST1:SOBU</div></div>
-            <div id="btn-st2" class="node" style="top:50px; left:250px; border-left: 8px solid #00b2e5;" onclick="start('st2')"><div class="node-label">ST2:KEIHIN</div></div>
-            <div id="btn-st3" class="node" style="top:150px; left:150px; border-left: 8px solid #00a651;" onclick="start('st3')"><div class="node-label">ST3:SAIKYO</div></div>
-            <div id="btn-st4" class="node" style="top:250px; left:50px; border-left: 8px solid #da0442;" onclick="start('st4')"><div class="node-label">ST4:KEIYO</div></div>
-            <div id="btn-st5" class="node" style="top:250px; left:250px; border-left: 8px solid #ff69b4;" onclick="start('st5')"><div class="node-label">ST5:PINK</div></div>
-            <div id="btn-st6" class="node" style="top:150px; left:450px; border-left: 8px solid #f39700;" onclick="start('st6')"><div class="node-label">ST6:ORANGE</div></div>
+            <div id="btn-st1" class="node" style="top:60px; left:60px; border-bottom: 5px solid #ffd400;" onclick="start('st1')"><div class="node-label">ST1:SOBU</div><div class="difficulty-stars">★☆☆☆☆</div></div>
+            <div id="btn-st2" class="node" style="top:60px; left:270px; border-bottom: 5px solid #00b2e5;" onclick="start('st2')"><div class="node-label">ST2:KEIHIN</div><div class="difficulty-stars">★☆☆☆☆</div></div>
+            <div id="btn-st3" class="node" style="top:160px; left:165px; border-bottom: 5px solid #00a651;" onclick="start('st3')"><div class="node-label">ST3:SAIKYO</div><div class="difficulty-stars">★★☆☆☆</div></div>
+            <div id="btn-st4" class="node" style="top:260px; left:60px; border-bottom: 5px solid #da0442;" onclick="start('st4')"><div class="node-label">ST4:KEIYO</div><div class="difficulty-stars">★★★☆☆</div></div>
+            <div id="btn-st5" class="node" style="top:260px; left:270px; border-bottom: 5px solid #ff69b4;" onclick="start('st5')"><div class="node-label">ST5:PINK</div><div class="difficulty-stars">★★★☆☆</div></div>
+            <div id="btn-st6" class="node" style="top:160px; left:480px; border-bottom: 5px solid #f39700;" onclick="start('st6')"><div class="node-label">ST6:ORANGE</div><div class="difficulty-stars">★★★★☆</div></div>
 
             <div id="hidden-nodes" style="display:none">
-                <div id="btn-h1" class="node" style="top:50px; left:650px; border:1px solid #00ffff;" onclick="start('h1')"><div class="node-label" style="color:#00ffff">H1:CYAN</div></div>
-                <div id="btn-h2" class="node" style="top:150px; left:650px; border:1px solid #00fa9a;" onclick="start('h2')"><div class="node-label" style="color:#00fa9a">H2:TEAL</div></div>
-                <div id="btn-h3" class="node" style="top:250px; left:650px; border:1px solid #ff0044;" onclick="start('h3')"><div class="node-label" style="color:#ff0044">H3:SCARLET</div></div>
+                <div id="btn-h1" class="node" style="top:60px; left:680px; border:1px solid #00ffff;" onclick="start('h1')"><div class="node-label" style="color:#00ffff">H1:CYAN</div><div class="difficulty-stars">★★★★☆</div></div>
+                <div id="btn-h2" class="node" style="top:160px; left:680px; border:1px solid #00fa9a;" onclick="start('h2')"><div class="node-label" style="color:#00fa9a">H2:TEAL</div><div class="difficulty-stars">★★★★★</div></div>
+                <div id="btn-h3" class="node" style="top:260px; left:680px; border:1px solid #ff0044;" onclick="start('h3')"><div class="node-label" style="color:#ff0044">H3:SCARLET</div><div class="difficulty-stars">★★★★★★</div></div>
             </div>
 
             <div id="oni-node" style="display:none">
-                <div id="btn-ultimate" class="node" style="top:135px; left:810px; width:100px; height:100px; border:4px double #ff4500; background:rgba(255,69,0,0.2)" onclick="start('ultimate')">
-                    <div class="node-label" style="color:#ff4500; font-size:0.35rem">ONI-MODE<br>CHUO</div>
+                <div id="btn-ultimate" class="node" style="top:140px; left:830px; width:100px; height:110px; border:4px double #ff4500; background:rgba(255,69,0,0.2);" onclick="start('ultimate')">
+                    <div class="node-label" style="color:#ff4500; font-size:0.35rem;">ONI-MODE<br>极:CHUO</div><div class="difficulty-stars">★★★★★★★★</div>
                 </div>
             </div>
         </div>
@@ -93,10 +91,8 @@
     </div>
 
     <div id="ui-layer">
-        <div class="hud-label">SINCERITY SCORE</div>
-        <div id="score">000000</div>
-        <div class="hud-label">HEART STABILITY</div>
-        <div id="hp-container"><div id="hp-bar-fill"></div></div>
+        <div class="hud-label">SINCERITY SCORE</div><div id="score">000000</div>
+        <div class="hud-label">HEART STABILITY</div><div id="hp-container"><div id="hp-bar-fill"></div></div>
     </div>
 
     <canvas id="gameCanvas"></canvas>
@@ -121,7 +117,7 @@
             h1: { color: '#00ffff', spawn: 0.35, hp: [15, 30], target: 20000 },
             h2: { color: '#00fa9a', spawn: 0.45, hp: [20, 40], target: 25000 },
             h3: { color: '#ff0044', spawn: 0.6, hp: [30, 60], target: 30000 },
-            ultimate: { color: '#ff4500', spawn: 1.2, hp: [100, 250], target: 150000 } // 超鬼
+            ultimate: { color: '#ff4500', spawn: 1.2, hp: [100, 250], target: 150000 }
         };
 
         function init() {
@@ -131,22 +127,14 @@
             Object.keys(config).forEach(key => {
                 const btn = document.getElementById(`btn-${key}`);
                 if (!btn) return;
-                if (pf.includes(key)) btn.innerHTML += '<span class="node-clear">🌟</span>';
-                else if (cl.includes(key)) btn.innerHTML += '<span class="node-clear">🔵</span>';
+                if (pf.includes(key)) btn.innerHTML += '<span class="clear-status">🌟</span>';
+                else if (cl.includes(key)) btn.innerHTML += '<span class="clear-status">🔵</span>';
             });
 
-            // 解禁ロジック
-            if(['st1','st2','st3','st4','st5','st6'].every(s => cl.includes(s) || pf.includes(s))) {
-                document.getElementById('hidden-nodes').style.display = 'block';
-            }
-            // 全🌟で鬼モード解禁
-            const allRequired = ['st1','st2','st3','st4','st5','st6','h1','h2','h3'];
-            if(allRequired.every(s => pf.includes(s))) {
-                document.getElementById('oni-node').style.display = 'block';
-                document.getElementById('unlock-banner').style.display = 'block';
-            }
+            if(['st1','st2','st3','st4','st5','st6'].every(s => cl.includes(s) || pf.includes(s))) document.getElementById('hidden-nodes').style.display = 'block';
+            if(['st1','st2','st3','st4','st5','st6','h1','h2','h3'].every(s => pf.includes(s))) document.getElementById('oni-node').style.display = 'block';
 
-            stars = []; for(let i=0; i<100; i++) stars.push({x: Math.random()*canvas.width, y: Math.random()*canvas.height, s: Math.random()*2});
+            stars = []; for(let i=0; i<100; i++) stars.push({x: Math.random()*canvas.width, y: Math.random()*canvas.height, s: Math.random()*2, vy: Math.random()*2+1});
         }
 
         function start(modeKey) {
@@ -161,11 +149,17 @@
 
         function update() {
             frame++;
-            stars.forEach(s => { s.y += s.s * 4; if(s.y > canvas.height) s.y = 0; });
+            stars.forEach(s => { s.y += s.vy * 4; if(s.y > canvas.height) s.y = 0; });
 
             if(isDown && frame % 4 === 0) {
                 const bSize = hp < 30 ? 20 : 6;
-                bullets.push({x: player.x, y: player.y-10, vx: 0, vy: -20, size: bSize});
+                bullets.push({x: player.x, y: player.y-10, vy: -22, size: bSize});
+            }
+
+            // 弾の更新（移動処理を確実に実行）
+            for(let i=bullets.length-1; i>=0; i--) {
+                bullets[i].y += bullets[i].vy;
+                if(bullets[i].y < -50) bullets.splice(i, 1);
             }
 
             if(Math.random() < currentMode.spawn) {
@@ -174,14 +168,11 @@
 
             for(let i=enemies.length-1; i>=0; i--) {
                 let e = enemies[i]; e.y += 4;
-                if(Math.random() < 0.03) eBullets.push({x: e.x, y: e.y, vx: 0, vy: 7});
+                if(Math.random() < 0.03) eBullets.push({x: e.x, y: e.y, vy: 7});
                 bullets.forEach((b, bi) => {
                     if(Math.hypot(e.x-b.x, e.y-b.y) < 30) {
                         e.hp--; bullets.splice(bi, 1);
-                        if(e.hp <= 0) { 
-                            score += 100; enemies.splice(i, 1); 
-                            if(score >= currentMode.target) finish(true);
-                        }
+                        if(e.hp <= 0) { score += 100; enemies.splice(i, 1); if(score >= currentMode.target) finish(true); }
                     }
                 });
                 if(e.y > canvas.height + 60) enemies.splice(i, 1);
@@ -189,10 +180,8 @@
 
             for(let i=eBullets.length-1; i>=0; i--) {
                 let eb = eBullets[i]; eb.y += eb.vy;
-                if(Math.hypot(eb.x-player.x, eb.y-player.y) < 10) {
-                    hp -= 10; eBullets.splice(i,1);
-                    if(hp <= 0) finish(false);
-                }
+                if(Math.hypot(eb.x-player.x, eb.y-player.y) < 10) { hp -= 10; eBullets.splice(i,1); if(hp <= 0) finish(false); }
+                else if(eb.y > canvas.height + 20) eBullets.splice(i, 1);
             }
 
             document.getElementById('hp-bar-fill').style.width = hp + "%";
@@ -200,12 +189,27 @@
         }
 
         function draw() {
-            ctx.fillStyle = "rgba(0, 5, 15, 0.4)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = "#1e3a5f"; stars.forEach(s => ctx.fillRect(s.x, s.y, s.s, s.s));
+            ctx.fillStyle = "rgba(0, 5, 15, 0.5)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            stars.forEach(s => { ctx.fillStyle = `rgba(255,255,255,${s.s/2})`; ctx.fillRect(s.x, s.y, s.s, s.s); });
+            
+            ctx.shadowBlur = 15; ctx.shadowColor = "#00dfff";
             ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(player.x, player.y, 8, 0, Math.PI*2); ctx.fill();
-            bullets.forEach(b => { ctx.fillStyle = "#00dfff"; ctx.beginPath(); ctx.arc(b.x, b.y, b.size, 0, Math.PI*2); ctx.fill(); });
-            eBullets.forEach(eb => { ctx.fillStyle = "#ff00ff"; ctx.beginPath(); ctx.arc(eb.x, eb.y, 5, 0, Math.PI*2); ctx.fill(); });
-            enemies.forEach(e => { ctx.strokeStyle = currentMode.color; ctx.strokeRect(e.x-15, e.y-15, 30, 30); });
+            
+            bullets.forEach(b => {
+                ctx.shadowColor = "#00dfff"; ctx.fillStyle = "#fff";
+                ctx.beginPath(); ctx.arc(b.x, b.y, b.size, 0, Math.PI*2); ctx.fill();
+            });
+
+            eBullets.forEach(eb => {
+                ctx.shadowColor = "#bf00ff"; ctx.fillStyle = "#fff";
+                ctx.beginPath(); ctx.arc(eb.x, eb.y, 5, 0, Math.PI*2); ctx.fill();
+            });
+
+            enemies.forEach(e => {
+                ctx.shadowColor = currentMode.color; ctx.strokeStyle = currentMode.color; ctx.lineWidth = 3;
+                ctx.strokeRect(e.x-15, e.y-15, 30, 30);
+            });
+            ctx.shadowBlur = 0;
         }
 
         function finish(isClear) {
@@ -218,7 +222,7 @@
                 localStorage.setItem('perfectStages', JSON.stringify([...new Set(pf)]));
                 document.getElementById('complete-text').style.display = 'block';
                 setTimeout(() => location.reload(), 2000);
-            } else { alert("GAME OVER"); location.reload(); }
+            } else { alert("HEART BROKEN"); location.reload(); }
         }
 
         function loop() { if(!gameActive) return; update(); draw(); requestAnimationFrame(loop); }
