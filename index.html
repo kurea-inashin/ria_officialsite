@@ -22,7 +22,7 @@
 <body>
 
     <div id="overlay" class="overlay-screen">
-        <h1 style="font-size: 2.2rem; margin-bottom: 30px; letter-spacing: 8px; font-weight: 900; color: #fff; text-shadow: 0 0 20px #00dfff;">美波 RESONANCE</h1>
+        <h1 style="font-size: 2.2rem; margin-bottom: 30px; letter-spacing: 8px; font-weight: 900; color: #fff; text-shadow: 0 0 20px #00dfff;">Extreme Shootting </h1>
         <div id="btn-container" style="display: flex; flex-direction: column; align-items: center;">
             <div id="btn-ki" class="menu-btn" onclick="start('ki')">BLUE LINE</div>
             <div id="btn-do" class="menu-btn" onclick="start('do')">RED LINE</div>
@@ -109,7 +109,7 @@
                 let b = bullets[i]; b.x += b.vx; b.y += b.vy;
                 if(b.y < -20) { bullets.splice(i, 1); continue; }
 
-                // 敵弾を消す（美波の歌声で闇を払うイメージ）
+                // 敵弾を消す
                 for(let j=eBullets.length-1; j>=0; j--) {
                     if(Math.hypot(b.x - eBullets[j].x, b.y - eBullets[j].y) < (b.size + 10)) {
                         eBullets.splice(j, 1);
