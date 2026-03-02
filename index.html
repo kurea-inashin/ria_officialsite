@@ -37,7 +37,9 @@
         .KY { border: 2px solid #aa0022; color: #aa0022; } /* 赤 */
         .PK { border: 2px solid #cc5588; color: #cc5588; }
         .JB { border: 2px solid #006666; color: #006666; }
-        .HA, .HB, .HC { border: 2px solid #666; color: #999; display: none; }
+       　.HA:hover { box-shadow: 0 0 20px #CD7F32; background: rgba(205, 127, 50, 0.1); }
+　　　　　.HB:hover { box-shadow: 0 0 20px #C0C0C0; background: rgba(192, 192, 192, 0.1); }
+　　　　　　.HC:hover { box-shadow: 0 0 25px #FFD700; background: rgba(255, 214, 0, 0.15); }
         .CO { border: 3px solid #cc6600; color: #cc6600; display: none; grid-column: span 3; width: 100%; } /* オレンジ */
 
         /* ホバー演出 */
@@ -106,15 +108,15 @@
 
         const config = {
             SB: { color: '#ccaa00', spawn: 0.05, hp: 2, target: 3000, g: 'warp' },
-            KT: { color: '#0088cc', spawn: 0.1, hp: 2, target: 5000, g: 'dash' },
-            SK: { color: '#008844', spawn: 0.08, hp: 5, target: 7000, g: 'shield' },
-            KY: { color: '#aa0022', spawn: 0.12, hp: 3, target: 8000, g: 'wind' },
-            PK: { color: '#cc5588', spawn: 0.12, hp: 3, target: 8000, g: 'none' },
-            JB: { color: '#006666', spawn: 0.15, hp: 5, target: 10000, g: 'none' },
-            HA: { color: '#ffffff', spawn: 0.2, hp: 12, target: 20000, g: 'mix' },
-            HB: { color: '#ffffff', spawn: 0.25, hp: 15, target: 25000, g: 'mix' },
-            HC: { color: '#ffffff', spawn: 0.3, hp: 20, target: 30000, g: 'mix' },
-            CO: { color: '#cc6600', spawn: 1.0, hp: 80, target: 373000, g: 'rush' }
+            KT: { color: '#0088cc', spawn: 0.1, hp: 4, target: 4500, g: 'dash' },
+            SK: { color: '#008844', spawn: 0.08, hp: 6, target: 6000, g: 'shield' },
+            KY: { color: '#aa0022', spawn: 0.12, hp: 7, target: 7500, g: 'wind' },
+            PK: { color: '#cc5588', spawn: 0.12, hp: 8, target: 9000, g: 'none' },
+            JB: { color: '#006666', spawn: 0.15, hp: 9, target: 10500, g: 'none' },
+            HA: { color: '#CD7F32', spawn: 0.18, hp: 12, target: 12000, g: 'mix' },
+            HB: { color: '#C0C0C0', spawn: 0.21, hp: 15, target: 17000, g: 'mix' },
+            HC: { color: '#FFD700', spawn: 0.24, hp: 17, target: 20000, g: 'mix' },
+            CO: { color: '#cc6600', spawn: 0.28, hp: 20, target: 30000, g: 'rush' }
         };
 
         function bg(c) { document.body.style.background = c; }
