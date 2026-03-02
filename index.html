@@ -2,71 +2,86 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Minami Project 2026: Official 10-Stage</title>
+    <title>Minami Project 2026　</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@700&display=swap');
         body { margin: 0; background: #000; color: #fff; font-family: 'Press Start 2P', cursive; overflow: hidden; }
         canvas { display: block; }
 
-        /* HUD: スコアとHP表示 */
-        #hud { position: absolute; top: 10px; left: 10px; z-index: 10; pointer-events: none; }
-        .stat-label { font-size: 10px; color: #00dfff; margin-bottom: 5px; }
-        #score-val { font-size: 20px; margin-bottom: 15px; }
-        #hp-bar { width: 200px; height: 12px; border: 2px solid #fff; background: #333; position: relative; }
-        #hp-fill { height: 100%; background: #00ff00; width: 100%; transition: width 0.2s; }
+        /* HUD */
+        #hud { position: absolute; top: 20px; left: 20px; z-index: 10; pointer-events: none; }
+        .hud-label { font-size: 8px; color: #00dfff; margin-bottom: 5px; letter-spacing: 2px; }
+        #score-val { font-size: 24px; font-family: 'Orbitron'; margin-bottom: 20px; text-shadow: 0 0 10px #00dfff; }
+        #hp-bar { width: 220px; height: 8px; border: 1px solid #fff; background: rgba(255,255,255,0.1); }
+        #hp-fill { height: 100%; background: linear-gradient(90deg, #00dfff, #fff); width: 100%; transition: width 0.3s; }
 
         /* メニュー画面 */
         #menu { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20; 
+            background: radial-gradient(circle at center, #001a33 0%, #000 100%);
+            display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20; 
         }
-        .mode-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; max-width: 700px; }
+        h1 { font-family: 'Orbitron'; font-size: 32px; letter-spacing: 10px; margin-bottom: 5px; color: #fff; }
+        .sub-title { font-size: 10px; color: #00dfff; margin-bottom: 40px; letter-spacing: 3px; }
+
+        .mode-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 850px; }
         .mode-btn { 
-            padding: 15px; border: 2px solid #fff; cursor: pointer; text-align: center; font-size: 9px; 
-            transition: 0.3s; position: relative; min-width: 150px;
+            width: 220px; padding: 20px; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.05);
+            cursor: pointer; text-align: center; transition: 0.3s; position: relative;
         }
-        .mode-btn:hover:not(.locked) { background: #fff; color: #000; }
-        .locked { opacity: 0.2; cursor: not-allowed; border-color: #444; color: #444; }
+        .mode-btn:hover:not(.locked) { background: rgba(0, 223, 255, 0.2); border-color: #00dfff; transform: translateY(-3px); }
+        .locked { opacity: 0.15; cursor: not-allowed; filter: grayscale(1); }
         
-        /* 指定色クラス */
-        .sobu { border-color: #ffd400; color: #ffd400; }
-        .keihin { border-color: #00b2e5; color: #00b2e5; }
-        .saikyo { border-color: #00a651; color: #00a651; }
-        .keiyo { border-color: #da0442; color: #da0442; }
-        .pink { border-color: #ff69b4; color: #ff69b4; }
-        .joban { border-color: #008080; color: #008080; }
+        .m-name { font-size: 9px; margin-bottom: 8px; display: block; }
+        .m-stars { color: #ffd400; font-size: 8px; letter-spacing: 2px; }
         
-        .hidden-mode { border-color: #fff; color: #fff; display: none; }
-        .chuo-oni { border-color: #f39700; color: #f39700; grid-column: span 3; display: none; font-size: 12px; }
+        /* 路線カラー */
+        .sobu { border-left: 5px solid #ffd400; }
+        .keihin { border-left: 5px solid #00b2e5; }
+        .saikyo { border-left: 5px solid #00a651; }
+        .keiyo { border-left: 5px solid #da0442; }
+        .pink { border-left: 5px solid #ff69b4; }
+        .joban { border-left: 5px solid #008080; }
+        .hidden-st { border: 1px double #fff; display: none; }
         
-        .clear-mark { position: absolute; top: -10px; right: -5px; font-size: 12px; color: #00ff00; }
-        .copy-right { margin-top: 40px; font-size: 8px; color: #555; letter-spacing: 1px; }
+        /* 中央線（超鬼） */
+        .chuo-oni { 
+            grid-column: span 3; border: 2px solid #f39700; background: rgba(243,151,0,0.1); 
+            display: none; animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0% {box-shadow: 0 0 10px #f39700;} 50% {box-shadow: 0 0 30px #f39700;} 100% {box-shadow: 0 0 10px #f39700;} }
+
+        .clear-tag { position: absolute; top: -10px; right: -5px; background: #00dfff; color: #000; padding: 2px 5px; font-size: 7px; font-weight: bold; }
+        .copy-right { margin-top: 50px; font-size: 9px; color: #444; letter-spacing: 2px; }
     </style>
 </head>
 <body>
 
     <div id="hud">
-        <div class="stat-label">SCORE</div><div id="score-val">000000</div>
-        <div class="stat-label">LIFE GAUGE</div><div id="hp-bar"><div id="hp-fill"></div></div>
+        <div class="hud-label"> SCORE</div><div id="score-val">000000</div>
+        <div class="hud-label">STABILITY</div><div id="hp-bar"><div id="hp-fill"></div></div>
     </div>
 
     <div id="menu">
-        <h1 style="font-size: 22px; margin-bottom: 25px; letter-spacing: 5px;">STATION SELECT</h1>
-        <div class="mode-list">
-            <div id="btn-st1" class="mode-btn sobu" onclick="start('st1')">SOBU</div>
-            <div id="btn-st2" class="mode-btn keihin" onclick="start('st2')">KEIHIN</div>
-            <div id="btn-st3" class="mode-btn saikyo" onclick="start('st3')">SAIKYO</div>
-            <div id="btn-st4" class="mode-btn keiyo" onclick="start('st4')">KEIYO</div>
-            <div id="btn-st5" class="mode-btn pink" onclick="start('st5')">PINK</div>
-            <div id="btn-st6" class="mode-btn joban" onclick="start('st6')">JOBAN</div>
+        <h1>minami</h1>
+        <div class="sub-title">Project 2026 : Official</div>
+        
+        <div class="mode-grid">
+            <div id="btn-st1" class="mode-btn sobu" onclick="start('st1')"><span class="m-name">ST1-SB</span><span class="m-stars">★☆☆☆☆</span></div>
+            <div id="btn-st2" class="mode-btn keihin" onclick="start('st2')"><span class="m-name">ST2-KH</span><span class="m-stars">★☆☆☆☆</span></div>
+            <div id="btn-st3" class="mode-btn saikyo" onclick="start('st3')"><span class="m-name">ST3-SK (GREEN)</span><span class="m-stars">★★☆☆☆</span></div>
+            <div id="btn-st4" class="mode-btn keiyo" onclick="start('st4')"><span class="m-name">ST4-KY</span><span class="m-stars">★★★☆☆</span></div>
+            <div id="btn-st5" class="mode-btn pink" onclick="start('st5')"><span class="m-name">ST5-SS</span><span class="m-stars">★★★☆☆</span></div>
+            <div id="btn-st6" class="mode-btn joban" onclick="start('st6')"><span class="m-name">ST6-UT</span><span class="m-stars">★★★★☆</span></div>
             
-            <div id="btn-h1" class="mode-btn hidden-mode" onclick="start('h1')">HIDDEN A</div>
-            <div id="btn-h2" class="mode-btn hidden-mode" onclick="start('h2')">HIDDEN B</div>
-            <div id="btn-h3" class="mode-btn hidden-mode" onclick="start('h3')">HIDDEN C</div>
+            <div id="btn-h1" class="mode-btn hidden-st" onclick="start('h1')"><span class="m-name">X-1</span><span class="m-stars">★★★★★</span></div>
+            <div id="btn-h2" class="mode-btn hidden-st" onclick="start('h2')"><span class="m-name">X-2</span><span class="m-stars">★★★★★★</span></div>
+            <div id="btn-h3" class="mode-btn hidden-st" onclick="start('h3')"><span class="m-name">X-3</span><span class="m-stars">★★★★★★★</span></div>
 
-            <div id="btn-chuo" class="mode-btn chuo-oni" onclick="start('chuo')">ULTIMATE: CHUO (ORANGE)</div>
+            <div id="btn-chuo" class="mode-btn chuo-oni" onclick="start('chuo')"><span class="m-name" style="font-size:12px">??????</span><span class="m-stars">★★★★★★★★★★</span></div>
         </div>
-        <div class="copy-right">©︎minami ALL RIGHT RECEIVED / Minami Project 2026</div>
+
+        <div class="copy-right">© minami ALL RIGHT RECEIVED (Minami Project 2026)</div>
     </div>
 
     <canvas id="game"></canvas>
@@ -77,37 +92,34 @@
         canvas.width = window.innerWidth; canvas.height = window.innerHeight;
 
         let gameActive = false, score = 0, hp = 100, frame = 0;
-        let bullets = [], eBullets = [], enemies = [];
+        let bullets = [], eBullets = [], enemies = [], ripples = [];
         let currentMode = null;
         let player = { x: canvas.width/2, y: canvas.height/2 };
 
         const config = {
-            st1: { color: '#ffd400', spawn: 0.08, hp: 1, target: 2000 },
-            st2: { color: '#00b2e5', spawn: 0.1, hp: 2, target: 3000 },
-            st3: { color: '#00a651', spawn: 0.12, hp: 3, target: 4000 },
-            st4: { color: '#da0442', spawn: 0.15, hp: 4, target: 5000 },
-            st5: { color: '#ff69b4', spawn: 0.15, hp: 4, target: 5000 },
-            st6: { color: '#008080', spawn: 0.18, hp: 5, target: 6000 },
-            h1: { color: '#ffffff', spawn: 0.3, hp: 12, target: 12000 },
-            h2: { color: '#ffffff', spawn: 0.4, hp: 15, target: 15000 },
-            h3: { color: '#ffffff', spawn: 0.5, hp: 20, target: 20000 },
-            chuo: { color: '#f39700', spawn: 1.2, hp: 150, target: 200000 } // 超鬼
+            st1: { color: '#ffd400', spawn: 0.08, hp: 1, target: 3000 },
+            st2: { color: '#00b2e5', spawn: 0.1, hp: 2, target: 5000 },
+            st3: { color: '#00a651', spawn: 0.12, hp: 3, target: 8000 },
+            st4: { color: '#da0442', spawn: 0.15, hp: 4, target: 10000 },
+            st5: { color: '#ff69b4', spawn: 0.15, hp: 4, target: 10000 },
+            st6: { color: '#008080', spawn: 0.18, hp: 5, target: 12000 },
+            h1: { color: '#ffffff', spawn: 0.3, hp: 12, target: 20000 },
+            h2: { color: '#ffffff', spawn: 0.4, hp: 15, target: 25000 },
+            h3: { color: '#ffffff', spawn: 0.5, hp: 20, target: 30000 },
+            chuo: { color: '#f39700', spawn: 1.5, hp: 200, target: 373000 }
         };
 
         function init() {
             const cleared = JSON.parse(localStorage.getItem('minami_cleared') || '[]');
             cleared.forEach(id => {
                 const btn = document.getElementById(`btn-${id}`);
-                if(btn) btn.innerHTML += '<span class="clear-mark">CLEAR</span>';
+                if(btn) btn.innerHTML += '<div class="clear-tag">COMPLETE</div>';
             });
 
-            // 隠し3ステージ解禁 (初期6つクリア)
             const initialSet = ['st1','st2','st3','st4','st5','st6'];
             if(initialSet.every(s => cleared.includes(s))) {
-                ['h1','h2','h3'].forEach(id => document.getElementById(`btn-${id}`).style.display = 'block');
+                ['h1','h2','h3'].forEach(id => document.getElementById(id).style.display = 'block');
             }
-
-            // 超鬼解禁 (全9ステージクリア)
             if([...initialSet, 'h1','h2','h3'].every(s => cleared.includes(s))) {
                 document.getElementById('btn-chuo').style.display = 'block';
             }
@@ -115,10 +127,9 @@
 
         function start(id) {
             currentMode = { ...config[id], id: id };
-            score = 0; hp = 100; frame = 0; bullets = []; eBullets = []; enemies = [];
+            score = 0; hp = 100; frame = 0; bullets = []; eBullets = []; enemies = []; ripples = [];
             document.getElementById('menu').style.display = 'none';
-            gameActive = true;
-            loop();
+            gameActive = true; loop();
         }
 
         window.addEventListener('mousemove', e => { player.x = e.clientX; player.y = e.clientY; });
@@ -126,44 +137,65 @@
 
         function update() {
             frame++;
-            if(isDown && frame % 5 === 0) bullets.push({x: player.x, y: player.y-10, vy: -15});
-            
-            for(let i=bullets.length-1; i>=0; i--) {
-                bullets[i].y += bullets[i].vy;
-                if(bullets[i].y < 0) bullets.splice(i,1);
+            if(isDown && frame % 4 === 0) {
+                const size = hp < 30 ? 25 : 6;
+                bullets.push({x: player.x, y: player.y-15, vy: -20, size: size});
             }
+            
+            bullets.forEach((b, i) => { b.y += b.vy; if(b.y < -50) bullets.splice(i, 1); });
 
-            if(Math.random() < currentMode.spawn) enemies.push({x: Math.random()*canvas.width, y: -20, hp: currentMode.hp});
+            if(Math.random() < currentMode.spawn) enemies.push({x: Math.random()*canvas.width, y: -30, hp: currentMode.hp});
 
             for(let i=enemies.length-1; i>=0; i--) {
-                let e = enemies[i]; e.y += 4;
-                if(Math.random() < 0.03) eBullets.push({x: e.x, y: e.y, vy: 6});
+                let e = enemies[i]; e.y += 5;
+                if(Math.random() < 0.05) eBullets.push({x: e.x, y: e.y, vy: 7});
                 bullets.forEach((b, bi) => {
-                    if(Math.hypot(e.x-b.x, e.y-b.y) < 20) {
+                    if(Math.hypot(e.x-b.x, e.y-b.y) < 30) {
                         e.hp--; bullets.splice(bi, 1);
-                        if(e.hp <= 0) { score += 100; enemies.splice(i,1); if(score >= currentMode.target) finish(true); }
+                        if(e.hp <= 0) { score += 100; enemies.splice(i, 1); if(score >= currentMode.target) finish(true); }
                     }
                 });
-                if(e.y > canvas.height) enemies.splice(i,1);
+                if(e.y > canvas.height + 50) enemies.splice(i, 1);
             }
 
             for(let i=eBullets.length-1; i>=0; i--) {
                 let eb = eBullets[i]; eb.y += eb.vy;
-                if(Math.hypot(eb.x-player.x, eb.y-player.y) < 12) { hp -= 10; eBullets.splice(i,1); if(hp <= 0) finish(false); }
-                else if(eb.y > canvas.height) eBullets.splice(i,1);
+                if(Math.hypot(eb.x-player.x, eb.y-player.y) < 15) {
+                    hp -= 10; eBullets.splice(i,1);
+                    ripples.push({x: player.x, y: player.y, r: 10, a: 1}); // 美波モチーフ：波紋エフェクト
+                    if(hp <= 0) finish(false);
+                } else if(eb.y > canvas.height) eBullets.splice(i, 1);
             }
 
+            ripples.forEach((r, i) => { r.r += 4; r.a -= 0.02; if(r.a <= 0) ripples.splice(i, 1); });
             document.getElementById('hp-fill').style.width = hp + "%";
             document.getElementById('score-val').innerText = score.toString().padStart(6, '0');
         }
 
         function draw() {
-            ctx.fillStyle = "rgba(0,0,0,0.3)"; ctx.fillRect(0,0,canvas.width, canvas.height);
-            ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(player.x, player.y, 10, 0, Math.PI*2); ctx.fill();
-            ctx.fillStyle = "#00dfff"; bullets.forEach(b => ctx.fillRect(b.x-2, b.y, 4, 12));
-            ctx.fillStyle = "#ff00ff"; eBullets.forEach(eb => { ctx.beginPath(); ctx.arc(eb.x, eb.y, 5, 0, Math.PI*2); ctx.fill(); });
-            ctx.strokeStyle = currentMode.color; ctx.lineWidth = 3;
+            ctx.fillStyle = "rgba(0, 10, 20, 0.4)"; ctx.fillRect(0,0,canvas.width, canvas.height);
+            
+            // 自機：雨粒（Drop）モチーフ
+            ctx.shadowBlur = 15; ctx.shadowColor = "#00dfff";
+            ctx.fillStyle = "#fff";
+            ctx.beginPath();
+            ctx.moveTo(player.x, player.y - 15);
+            ctx.bezierCurveTo(player.x + 10, player.y + 5, player.x + 10, player.y + 15, player.x, player.y + 15);
+            ctx.bezierCurveTo(player.x - 10, player.y + 15, player.x - 10, player.y + 5, player.x, player.y - 15);
+            ctx.fill();
+
+            // 被弾波紋
+            ripples.forEach(r => {
+                ctx.strokeStyle = `rgba(0, 223, 255, ${r.a})`;
+                ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, Math.PI*2); ctx.stroke();
+            });
+
+            ctx.fillStyle = "#00dfff"; bullets.forEach(b => ctx.fillRect(b.x-b.size/2, b.y, b.size, b.size*2));
+            ctx.fillStyle = "#ff00ff"; eBullets.forEach(eb => { ctx.beginPath(); ctx.arc(eb.x, eb.y, 6, 0, Math.PI*2); ctx.fill(); });
+            
+            ctx.strokeStyle = currentMode.color; ctx.lineWidth = 4;
             enemies.forEach(e => ctx.strokeRect(e.x-15, e.y-15, 30, 30));
+            ctx.shadowBlur = 0;
         }
 
         function finish(isClear) {
@@ -172,8 +204,8 @@
                 let cleared = JSON.parse(localStorage.getItem('minami_cleared') || '[]');
                 cleared.push(currentMode.id);
                 localStorage.setItem('minami_cleared', JSON.stringify([...new Set(cleared)]));
-                alert("MISSION COMPLETE!");
-            } else { alert("GAME OVER"); }
+                alert("MISSION SUCCESS");
+            } else { alert("SYSTEM FAILURE"); }
             location.reload();
         }
 
