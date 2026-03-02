@@ -2,51 +2,66 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Extreme Shooting: Resonance Edition</title>
+    <title>Extreme Shooting Prototype</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@400;900&family=Noto+Sans+JP:wght@300&display=swap');
         
         body { margin: 0; overflow: hidden; background: #00040a; font-family: 'Orbitron', 'Noto Sans JP', sans-serif; color: #fff; }
         canvas { display: block; }
 
+        /* UI Layers */
         #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; padding: 20px; z-index: 5; }
-        .hud-label { font-size: 0.5rem; color: #00dfff; font-family: 'Press Start 2P', cursive; }
-        #score { font-size: 1.6rem; font-weight: 900; text-shadow: 0 0 15px #00dfff; }
-        #hp-container { width: 220px; height: 6px; border: 1px solid #1a3a4a; background: rgba(0,20,30,0.8); margin-top:5px; }
-        #hp-bar-fill { height: 100%; background: linear-gradient(90deg, #00dfff, #70e1ff); width: 100%; transition: width 0.3s; }
+        .hud-label { font-size: 0.5rem; color: #00dfff; font-family: 'Press Start 2P', cursive; letter-spacing: 1px; }
+        #score { font-size: 1.6rem; font-weight: 900; text-shadow: 0 0 15px #00dfff; margin-bottom: 10px; }
+        #hp-container { width: 220px; height: 5px; border: 1px solid #1a3a4a; background: rgba(0,20,30,0.8); position: relative; }
+        #hp-bar-fill { height: 100%; background: linear-gradient(90deg, #00dfff, #70e1ff); width: 100%; box-shadow: 0 0 10px #00dfff; transition: width 0.3s; }
 
+        /* Home Screen */
         .overlay-screen { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
             background: radial-gradient(circle at center, #0a192f 0%, #000 100%); 
-            display: flex; flex-direction: column; align-items: center; z-index: 10; padding: 40px 0;
+            display: flex; flex-direction: column; align-items: center; z-index: 10; 
+            overflow-y: auto; padding: 40px 0;
         }
         
-        h1 { font-size: 2rem; letter-spacing: 5px; text-shadow: 0 0 20px #00dfff; margin:0; }
-        .sub-title { font-size: 0.7rem; color: #70e1ff; margin-bottom: 20px; }
+        h1 { font-size: 2.2rem; letter-spacing: 8px; text-shadow: 0 0 20px #00dfff; margin-bottom: 10px; }
+        .sub-title { font-size: 0.8rem; color: #70e1ff; margin-bottom: 30px; font-weight: 300; }
 
+        /* 解禁通知バナー */
         #unlock-banner {
-            background: rgba(255, 255, 255, 0.1); border: 1px solid #fff;
-            padding: 10px; margin-bottom: 15px; font-size: 0.5rem; color: #fff; display: none;
-            font-family: 'Press Start 2P', cursive;
+            background: rgba(0, 223, 255, 0.2); border: 1px solid #00dfff;
+            padding: 10px 20px; margin-bottom: 20px; font-size: 0.6rem;
+            color: #00dfff; display: none; font-family: 'Press Start 2P', cursive;
         }
 
-        .stage-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+        .stage-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; max-width: 600px; }
         
         .menu-btn { 
-            width: 240px; padding: 12px; border: 1px solid rgba(255,255,255,0.2); 
-            cursor: pointer; font-family: 'Press Start 2P', cursive; font-size: 0.45rem; 
-            color: #fff; background: rgba(255,255,255,0.05); transition: 0.2s; position: relative;
+            width: 260px; padding: 15px; border: 1px solid rgba(0, 223, 255, 0.2); 
+            cursor: pointer; font-family: 'Press Start 2P', cursive; font-size: 0.5rem; 
+            color: #fff; text-align: center; background: rgba(0, 223, 255, 0.05);
+            transition: 0.3s; position: relative;
         }
-        .menu-btn:hover { background: rgba(255,255,255,0.1); border-color: #fff; }
-        
-        /* クリアマーク */
-        .clear-mark { position: absolute; top: -8px; right: -8px; font-size: 1rem; text-shadow: 0 0 5px #000; }
+        .menu-btn:hover { background: rgba(0, 223, 255, 0.15); border-color: #00dfff; transform: translateY(-2px); }
+        .stars { color: #ffd400; display: block; margin-top: 5px; font-size: 0.4rem; }
 
-        #hidden-area, #ultimate-area { display: none; margin-top: 20px; text-align:center; }
+        /* クリアマーク用 */
+        .clear-status { position: absolute; top: 5px; right: 5px; font-size: 0.8rem; }
+
+        .how-to { 
+            background: rgba(255,255,255,0.05); padding: 20px; border-radius: 8px; 
+            max-width: 500px; margin: 30px 0; font-size: 0.7rem; line-height: 1.8; color: #ccc;
+        }
+        
+        .copy-right { font-size: 0.6rem; color: #445; margin-top: 20px; letter-spacing: 2px; }
+
+        #hidden-area, #ultimate-area { display: none; margin-top: 20px; border-top: 1px solid #1a3a4a; padding-top: 20px; }
+
         #complete-text { 
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            font-size: 4rem; font-weight: 900; color: #fff; text-shadow: 0 0 30px #00dfff; 
-            display: none; z-index: 100; font-family: 'Orbitron';
+            font-size: 4rem; font-weight: 900; letter-spacing: 15px; color: #fff;
+            text-shadow: 0 0 30px #00dfff; display: none; z-index: 100; pointer-events: none;
+            font-family: 'Orbitron', sans-serif;
         }
     </style>
 </head>
@@ -55,38 +70,50 @@
     <div id="complete-text">COMPLETE</div>
 
     <div id="overlay" class="overlay-screen">
-        <h1>RESONANCE SHOOTING</h1>
-        <div class="sub-title">Color of Lines Edition</div>
+        <h1>Extreme Shooting</h1>
+        <div class="sub-title">Prototype Version</div>
 
-        <div id="unlock-banner">NEW SECTOR UNLOCKED.</div>
+        <div id="unlock-banner">NEW AREA DETECTED...</div>
 
         <div class="stage-grid">
-            <div id="btn-st1" class="menu-btn" style="border-left: 8px solid #ffd400;" onclick="start('st1')">SOBU: YELLOW</div>
-            <div id="btn-st2" class="menu-btn" style="border-left: 8px solid #00b2e5;" onclick="start('st2')">KEIHIN: BLUE</div>
-            <div id="btn-st3" class="menu-btn" style="border-left: 8px solid #00a651;" onclick="start('st3')">SAIKYO: GREEN</div>
-            <div id="btn-st4" class="menu-btn" style="border-left: 8px solid #da0442;" onclick="start('st4')">KEIYO: RED</div>
+            <div id="btn-st1" class="menu-btn" style="border-left: 5px solid #ffd400;" onclick="start('st1')">ST1:YELLOW RAIN<span class="stars">★☆☆☆☆</span></div>
+            <div id="btn-st2" class="menu-btn" style="border-left: 5px solid #00b2e5;" onclick="start('st2')">ST2:BLUE SIGNAL<span class="stars">★☆☆☆☆</span></div>
+            <div id="btn-st3" class="menu-btn" style="border-left: 5px solid #00a651;" onclick="start('st3')">ST3:GREEN DAWN<span class="stars">★★☆☆☆</span></div>
+            <div id="btn-st4" class="menu-btn" style="border-left: 5px solid #da0442;" onclick="start('st4')">ST4:RED REGRET<span class="stars">★★★☆☆</span></div>
+            <div id="btn-st5" class="menu-btn" style="border-left: 5px solid #ff69b4;" onclick="start('st5')">ST5:PINK MEMORY<span class="stars">★★★☆☆</span></div>
+            <div id="btn-st6" class="menu-btn" style="border-left: 5px solid #f39700;" onclick="start('st6')">ST6:ORANGE SUNSET<span class="stars">★★★★☆</span></div>
         </div>
 
         <div id="hidden-area">
-            <div class="hud-label" style="margin: 15px 0;">- EXPERIMENTAL SECTOR -</div>
+            <div class="hud-label" style="text-align: center; margin-bottom: 10px;">- HIDDEN SECTOR -</div>
             <div class="stage-grid">
-                <div id="btn-h1" class="menu-btn" style="color:#00ffff; border-color:#00ffff" onclick="start('h1')">CYAN FLASH</div>
-                <div id="btn-h2" class="menu-btn" style="color:#ff00ff; border-color:#ff00ff" onclick="start('h2')">MAGENTA RAIN</div>
+                <div id="btn-h1" class="menu-btn" style="color:#00ffff; border-color:#00ffff" onclick="start('h1')">H1:CYAN FLOAT<span class="stars">★★★★☆</span></div>
+                <div id="btn-h2" class="menu-btn" style="color:#00fa9a; border-color:#00fa9a" onclick="start('h2')">H2:TEAL MIST<span class="stars">★★★★★</span></div>
+                <div id="btn-h3" class="menu-btn" style="color:#ff0044; border-color:#ff0044" onclick="start('h3')">H3:DEATH SCARLET<span class="stars">★★★★★★</span></div>
             </div>
         </div>
 
         <div id="ultimate-area">
-            <div id="btn-ultimate" class="menu-btn" style="width:500px; color:#f39700; border:2px solid #f39700; background:rgba(243,151,0,0.1)" onclick="start('ultimate')">
-                ULTIMATE: CHUO ORANGE (DEATH)
+            <div id="btn-ultimate" class="menu-btn" style="width:540px; color:#bf00ff; border:2px solid #bf00ff; background:rgba(191,0,255,0.1)" onclick="start('ultimate')">
+                ULTIMATE <span class="stars">★★★★★★★★</span>
             </div>
         </div>
 
-        <div class="copy-right" style="margin-top:30px; color:#555;">© 2026 RAILWAY RESONANCE</div>
+        <div class="how-to">
+            <b style="color:#00dfff">【HOW TO PLAY】</b><br>
+            ・MOUSE: 自機の移動 / CLICK: 蒼いショットを発射<br>
+            ・GIMMICK: 敵の一部は倒すと弾を撒き散らし、弾速が途中で変化します。<br>
+            ・SPECIAL: HP 30%以下でショットが巨大化。
+        </div>
+
+        <div class="copy-right">© minami ALL RIGHT RECEIVED (Minami Project 2026)</div>
     </div>
 
     <div id="ui-layer">
-        <div class="hud-label">SCORE</div><div id="score">000000</div>
-        <div class="hud-label" style="margin-top:10px;">HEART</div><div id="hp-container"><div id="hp-bar-fill"></div></div>
+        <div class="hud-label">SINCERITY SCORE</div>
+        <div id="score">000000</div>
+        <div class="hud-label">HEART STABILITY</div>
+        <div id="hp-container"><div id="hp-bar-fill"></div></div>
     </div>
 
     <canvas id="gameCanvas"></canvas>
@@ -102,31 +129,39 @@
         let player = { x: canvas.width/2, y: canvas.height/2 };
 
         const config = {
-            st1: { color: '#ffd400', spawn: 0.05, target: 3000, bSpd: 4, aim: 0 },
-            st2: { color: '#00b2e5', spawn: 0.07, target: 5000, bSpd: 5, aim: 0.2 },
-            st3: { color: '#00a651', spawn: 0.09, target: 8000, bSpd: 6, aim: 0.4 },
-            st4: { color: '#da0442', spawn: 0.12, target: 10000, bSpd: 7, aim: 0.6 },
-            h1: { color: '#00ffff', spawn: 0.2, target: 15000, bSpd: 9, aim: 0.8 },
-            h2: { color: '#ff00ff', spawn: 0.25, target: 20000, bSpd: 10, aim: 1.0 },
-            ultimate: { color: '#f39700', spawn: 0.5, target: 50000, bSpd: 13, aim: 1.5 }
+            st1: { color: '#ffd400', spawn: 0.08, hp: [1, 2], target: 3000, eShot: 0.005 },
+            st2: { color: '#00b2e5', spawn: 0.1, hp: [1, 3], target: 5000, eShot: 0.008 },
+            st3: { color: '#00a651', spawn: 0.12, hp: [2, 5], target: 8000, eShot: 0.01 },
+            st4: { color: '#da0442', spawn: 0.15, hp: [3, 8], target: 10000, eShot: 0.015 },
+            st5: { color: '#ff69b4', spawn: 0.18, hp: [5, 12], target: 12000, eShot: 0.02 },
+            st6: { color: '#f39700', spawn: 0.22, hp: [8, 20], target: 15000, eShot: 0.025 },
+            h1: { color: '#00ffff', spawn: 0.35, hp: [15, 30], target: 10000, eShot: 0.03 },
+            h2: { color: '#00fa9a', spawn: 0.45, hp: [20, 40], target: 12000, eShot: 0.04 },
+            h3: { color: '#ff0044', spawn: 0.6, hp: [30, 60], target: 20000, eShot: 0.05 },
+            ultimate: { color: '#bf00ff', spawn: 0.9, hp: [50, 150], target: 80000, eShot: 0.08 }
         };
 
         function init() {
             const cl = JSON.parse(localStorage.getItem('clearedStages') || '[]');
             const pf = JSON.parse(localStorage.getItem('perfectStages') || '[]');
             
-            // マークの描画
-            Object.keys(config).forEach(key => {
+            // クリアマーク表示
+            [...Object.keys(config)].forEach(key => {
                 const btn = document.getElementById(`btn-${key}`);
-                if(!btn) return;
-                if(pf.includes(key)) btn.innerHTML += '<span class="clear-mark">🌟</span>';
-                else if(cl.includes(key)) btn.innerHTML += '<span class="clear-mark">🔵</span>';
+                if (btn) {
+                    if (pf.includes(key)) btn.innerHTML += '<span class="clear-status">🌟</span>';
+                    else if (cl.includes(key)) btn.innerHTML += '<span class="clear-status">🔵</span>';
+                }
             });
 
-            // 解禁ロジック
-            if(['st1','st2','st3','st4'].every(s => cl.includes(s) || pf.includes(s))) document.getElementById('hidden-area').style.display = 'block';
-            if(['h1','h2'].every(s => cl.includes(s) || pf.includes(s))) document.getElementById('ultimate-area').style.display = 'block';
-
+            if(['st1','st2','st3','st4','st5','st6'].every(s => cl.includes(s) || pf.includes(s))) {
+                document.getElementById('hidden-area').style.display = 'block';
+                document.getElementById('unlock-banner').style.display = 'block';
+            }
+            if(['h1','h2','h3'].every(s => pf.includes(s))) {
+                document.getElementById('ultimate-area').style.display = 'block';
+                document.getElementById('unlock-banner').innerText = "ULTIMATE ACCESS GRANTED.";
+            }
             stars = []; for(let i=0; i<80; i++) stars.push({x: Math.random()*canvas.width, y: Math.random()*canvas.height, s: Math.random()*1.5+0.5});
         }
 
@@ -139,7 +174,10 @@
             gameActive = true; loop();
         }
 
-        window.addEventListener('mousemove', e => { player.x = e.clientX; player.y = e.clientY; });
+        window.addEventListener('mousemove', e => { 
+            if(isClearing) return;
+            player.x = e.clientX; player.y = e.clientY;
+        });
         let isDown = false; window.addEventListener('mousedown', () => isDown = true); window.addEventListener('mouseup', () => isDown = false);
 
         function update() {
@@ -148,62 +186,54 @@
                 return;
             }
             frame++;
-            stars.forEach(s => { s.y += s.s * 5; if(s.y > canvas.height) s.y = 0; });
+            stars.forEach(s => { s.y += s.s * 6; if(s.y > canvas.height) s.y = 0; });
 
             if(isDown && frame % 4 === 0) {
-                bullets.push({x: player.x, y: player.y-10, vx: 0, vy: -20, size: (hp<30?15:6)});
+                const isOp = (currentMode.key.startsWith('h') || currentMode.key === 'ultimate');
+                const bSize = hp < 30 ? 15 : 6;
+                const bDmg = hp < 30 ? 8 : (isOp ? 5 : 2);
+                const addB = (vx, vy) => bullets.push({x: player.x, y: player.y-10, vx, vy, size: bSize, dmg: bDmg});
+                addB(0, -22);
+                if(isOp || hp < 30) { addB(-6, -21); addB(6, -21); }
             }
 
-            // 敵生成（ギミック込み）
-            if(Math.random() < currentMode.spawn) {
-                const tr = Math.random();
-                let type = 'normal';
-                if(tr < 0.1) type = 'accel'; // 加速弾を撃つ
-                else if(tr < 0.2) type = 'divide'; // 分裂する
-                else if(tr < 0.3) type = 'sine'; // 蛇行する
-                enemies.push({ x: Math.random()*canvas.width, y: -50, hp: 5, type: type, angle: 0 });
+            for(let i=bullets.length-1; i>=0; i--) {
+                let b = bullets[i]; b.x += b.vx; b.y += b.vy;
+                if(b.y < -20) bullets.splice(i, 1);
             }
 
-            // 敵挙動
-            for(let i=enemies.length-1; i>=0; i--) {
-                let e = enemies[i];
-                e.y += 3;
-                if(e.type === 'sine') { e.angle += 0.1; e.x += Math.sin(e.angle)*8; }
-
-                if(Math.random() < 0.02) {
-                    let angle = Math.atan2(player.y - e.y, player.x - e.x);
-                    eBullets.push({ 
-                        x: e.x, y: e.y, 
-                        vx: Math.cos(angle)*currentMode.bSpd, 
-                        vy: Math.sin(angle)*currentMode.bSpd,
-                        accel: (e.type === 'accel')
-                    });
-                }
-
-                bullets.forEach((b, bi) => {
-                    if(Math.hypot(e.x-b.x, e.y-b.y) < 30) {
-                        e.hp--; bullets.splice(bi, 1);
-                        if(e.hp <= 0) {
-                            if(e.type === 'divide') { // 分裂ギミック
-                                for(let j=0; j<8; j++) eBullets.push({x:e.x, y:e.y, vx:Math.cos(j)*5, vy:Math.sin(j)*5});
-                            }
-                            score += 100; enemies.splice(i,1);
-                            if(score >= currentMode.target) finish(true);
-                        }
-                    }
-                });
-                if(e.y > canvas.height + 50) enemies.splice(i, 1);
-            }
-
-            // 敵弾挙動
             for(let i=eBullets.length-1; i>=0; i--) {
                 let eb = eBullets[i];
-                if(eb.accel && frame % 30 === 0) { eb.vx *= 1.5; eb.vy *= 1.5; } // 加速
+                if(eb.accel && frame % 20 === 0) { eb.vx *= 1.2; eb.vy *= 1.2; } // 加速ギミック
                 eb.x += eb.vx; eb.y += eb.vy;
-                if(Math.hypot(eb.x-player.x, eb.y-player.y) < 8) {
-                    hp -= 10; eBullets.splice(i,1);
+                if(Math.hypot(eb.x-player.x, eb.y-player.y) < 6) {
+                    hp -= 8; eBullets.splice(i, 1);
                     if(hp <= 0) finish(false);
-                } else if(eb.y > canvas.height) eBullets.splice(i,1);
+                } else if(eb.y > canvas.height + 20) eBullets.splice(i, 1);
+            }
+
+            if(Math.random() < currentMode.spawn) {
+                const tr = Math.random();
+                let type = tr < 0.1 ? 'big' : (tr < 0.2 ? 'divide' : 'normal'); // 分裂ギミック追加
+                enemies.push({ x: Math.random()*canvas.width, y: -50, hp: Math.floor(Math.random()*currentMode.hp[1]) + currentMode.hp[0], type: type });
+            }
+
+            for(let i=enemies.length-1; i>=0; i--) {
+                let e = enemies[i]; e.y += 4;
+                e.size = e.type === 'big' ? 60 : 30;
+                if(Math.random() < currentMode.eShot && e.y < canvas.height/2) {
+                    let a = Math.atan2(player.y - e.y, player.x - e.x);
+                    eBullets.push({ x: e.x, y: e.y, vx: Math.cos(a)*5, vy: Math.sin(a)*5, accel: (Math.random() < 0.3) });
+                }
+                bullets.forEach(b => { if(Math.hypot(e.x-b.x, e.y-b.y) < e.size) e.hp -= b.dmg; });
+                if(e.hp <= 0) {
+                    score += 100;
+                    if(e.type === 'divide') { // 分裂ギミック
+                        for(let d=0; d<360; d+=60) { let r=d*Math.PI/180; eBullets.push({x:e.x,y:e.y,vx:Math.cos(r)*4,vy:Math.sin(r)*4}); }
+                    }
+                    enemies.splice(i, 1);
+                    if(score >= currentMode.target) finish(true);
+                } else if(e.y > canvas.height + 60) enemies.splice(i, 1);
             }
 
             document.getElementById('hp-bar-fill').style.width = hp + "%";
@@ -211,18 +241,14 @@
         }
 
         function draw() {
-            ctx.fillStyle = "rgba(0, 8, 20, 0.4)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "rgba(0, 5, 15, 0.4)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.fillStyle = "#1e3a5f"; stars.forEach(s => ctx.fillRect(s.x, s.y, s.s, s.s));
-            
-            if(currentMode.key === 'ultimate') { // 警告エフェクト
-                ctx.strokeStyle = `rgba(243, 151, 0, ${Math.sin(frame*0.1)*0.2})`;
-                ctx.lineWidth = 10; ctx.strokeRect(0,0,canvas.width,canvas.height);
+            if(!isClearing) {
+                ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(player.x, player.y, 8, 0, Math.PI*2); ctx.fill();
             }
-
-            ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(player.x, player.y, 8, 0, Math.PI*2); ctx.fill();
-            bullets.forEach(b => { ctx.fillStyle = "#00dfff"; ctx.beginPath(); ctx.arc(b.x, b.y, b.size, 0, Math.PI*2); ctx.fill(); });
-            eBullets.forEach(eb => { ctx.fillStyle = currentMode.color; ctx.beginPath(); ctx.arc(eb.x, eb.y, 4, 0, Math.PI*2); ctx.fill(); });
-            enemies.forEach(e => { ctx.strokeStyle = "#fff"; ctx.strokeRect(e.x-15, e.y-15, 30, 30); });
+            bullets.forEach(b => { ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(b.x, b.y, b.size, 0, Math.PI*2); ctx.fill(); });
+            eBullets.forEach(eb => { ctx.fillStyle = "#bf00ff"; ctx.beginPath(); ctx.arc(eb.x, eb.y, 5, 0, Math.PI*2); ctx.fill(); });
+            enemies.forEach(e => { ctx.strokeStyle = currentMode.color; ctx.strokeRect(e.x - e.size/2, e.y - e.size/2, e.size, e.size); });
         }
 
         function finish(isClear) {
@@ -236,8 +262,8 @@
                     localStorage.setItem('clearedStages', JSON.stringify([...new Set(cl)]));
                     localStorage.setItem('perfectStages', JSON.stringify([...new Set(pf)]));
                     location.reload();
-                }, 2000);
-            } else { alert("GAME OVER"); location.reload(); }
+                }, 3000);
+            } else { alert("HEART BROKEN"); location.reload(); }
         }
 
         function loop() { if(!gameActive) return; update(); draw(); requestAnimationFrame(loop); }
