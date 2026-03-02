@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Minami Project 2026: Chromatic Resonance</title>
+    <title>Minami Project 2026: Metal Edition</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+JP:wght@300;700&display=swap');
         
@@ -21,40 +21,44 @@
 
         .mode-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 40px; }
         
-        /* ボタン基本スタイル */
+        /* ボタン基本スタイル：ここを共通化して枠を維持 */
         .mode-btn { 
             width: 160px; height: 70px; background: rgba(0,0,0,0.5); 
             cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; border-radius: 4px;
+            border: 2px solid #334; /* デフォルトの枠線 */
         }
         .m-id { font-size: 11px; margin-bottom: 8px; font-weight: bold; }
         .m-stars { font-size: 7px; opacity: 0.8; }
 
-        /* ステージ別カラー（あなたの指定色） */
-        .SB { border: 2px solid #ccaa00; color: #ccaa00; } /* 黄 */
-        .KT { border: 2px solid #0088cc; color: #0088cc; } /* 青 */
-        .SK { border: 2px solid #008844; color: #008844; } /* 緑 */
-        .KY { border: 2px solid #aa0022; color: #aa0022; } /* 赤 */
-        .PK { border: 2px solid #cc5588; color: #cc5588; }
-        .JB { border: 2px solid #006666; color: #006666; }
-       　.HA:hover { box-shadow: 0 0 20px #CD7F32; background: rgba(205, 127, 50, 0.1); }
-　　　　　.HB:hover { box-shadow: 0 0 20px #C0C0C0; background: rgba(192, 192, 192, 0.1); }
-　　　　　　.HC:hover { box-shadow: 0 0 25px #FFD700; background: rgba(255, 214, 0, 0.15); }
-        .CO { border: 3px solid #cc6600; color: #cc6600; display: none; grid-column: span 3; width: 100%; } /* オレンジ */
+        /* --- 標準ステージカラー --- */
+        .SB { border-color: #ccaa00; color: #ccaa00; } 
+        .KT { border-color: #0088cc; color: #0088cc; } 
+        .SK { border-color: #008844; color: #008844; } 
+        .KY { border-color: #aa0022; color: #aa0022; } 
+        .PK { border-color: #cc5588; color: #cc5588; }
+        .JB { border-color: #006666; color: #006666; }
 
-        /* ホバー演出 */
+        /* --- 隠しステージ：銅・銀・金 --- */
+        .HA { border-color: #CD7F32; color: #CD7F32; display: none; } /* 銅 */
+        .HB { border-color: #C0C0C0; color: #C0C0C0; display: none; } /* 銀 */
+        .HC { border-color: #FFD700; color: #FFD700; display: none; } /* 金 */
+        
+        /* --- 究極ステージ --- */
+        .CO { border: 3px solid #cc6600; color: #cc6600; display: none; grid-column: span 3; width: 100%; }
+
+        /* --- ホバー演出（光の共鳴） --- */
         .mode-btn:hover { transform: scale(1.08) translateY(-5px); background: rgba(255,255,255,0.1); }
         .SB:hover { box-shadow: 0 0 20px #ccaa00; }
         .KT:hover { box-shadow: 0 0 20px #0088cc; }
         .SK:hover { box-shadow: 0 0 20px #008844; }
         .KY:hover { box-shadow: 0 0 20px #aa0022; }
+        .HA:hover { box-shadow: 0 0 20px #CD7F32; }
+        .HB:hover { box-shadow: 0 0 20px #C0C0C0; }
+        .HC:hover { box-shadow: 0 0 25px #FFD700; }
         .CO:hover { box-shadow: 0 0 30px #cc6600; }
 
-        /* クリア済みスタンプ */
-        .cleared::after { content: "COMPLETE"; position: absolute; bottom: -12px; font-size: 7px; color: #fff; background: #40a0ff; padding: 2px 5px; }
-
         #guide { max-width: 600px; padding: 20px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03); font-family: 'Noto Sans JP'; font-size: 12px; line-height: 1.8; color: #88a0b0; }
-        .guide-h { font-family: 'Press Start 2P'; font-size: 9px; color: #fff; margin-bottom: 10px; text-align: center; }
         .copy-right { margin-top: 30px; font-size: 8px; color: #222; }
     </style>
 </head>
@@ -66,7 +70,6 @@
 
     <div id="menu">
         <h1>MINAMI PROJECT 2026</h1>
-        
         <div class="mode-grid" id="grid">
             <div id="btn-SB" class="mode-btn SB" onmouseover="bg('#1a1800')" onmouseout="bg('#000810')" onclick="start('SB')"><span class="m-id">STーSB</span><span class="m-stars">★☆☆☆☆</span></div>
             <div id="btn-KT" class="mode-btn KT" onmouseover="bg('#00101a')" onmouseout="bg('#000810')" onclick="start('KT')"><span class="m-id">STーKT</span><span class="m-stars">★☆☆☆☆</span></div>
@@ -75,28 +78,22 @@
             <div id="btn-PK" class="mode-btn PK" onmouseover="bg('#1a001a')" onmouseout="bg('#000810')" onclick="start('PK')"><span class="m-id">STーPK</span><span class="m-stars">★★★☆☆</span></div>
             <div id="btn-JB" class="mode-btn JB" onmouseover="bg('#001515')" onmouseout="bg('#000810')" onclick="start('JB')"><span class="m-id">STーJB</span><span class="m-stars">★★★★☆</span></div>
             
-            <div id="btn-HA" class="mode-btn HA" onclick="start('HA')"><span class="m-id">STーHA</span><span class="m-stars">★★★★★</span></div>
-            <div id="btn-HB" class="mode-btn HB" onclick="start('HB')"><span class="m-id">STーHB</span><span class="m-stars">★★★★★★</span></div>
-            <div id="btn-HC" class="mode-btn HC" onclick="start('HC')"><span class="m-id">STーHC</span><span class="m-stars">★★★★★★★</span></div>
+            <div id="btn-HA" class="mode-btn HA" onmouseover="bg('#1a1005')" onmouseout="bg('#000810')" onclick="start('HA')"><span class="m-id">STーHA</span><span class="m-stars">★★★★★</span></div>
+            <div id="btn-HB" class="mode-btn HB" onmouseover="bg('#1a1a1a')" onmouseout="bg('#000810')" onclick="start('HB')"><span class="m-id">STーHB</span><span class="m-stars">★★★★★★</span></div>
+            <div id="btn-HC" class="mode-btn HC" onmouseover="bg('#1a1500')" onmouseout="bg('#000810')" onclick="start('HC')"><span class="m-id">STーHC</span><span class="m-stars">★★★★★★★</span></div>
             
-            <div id="btn-CO" class="mode-btn CO" onmouseover="bg('#221100')" onmouseout="bg('#000810')" onclick="start('CO')"><span class="m-id">STーCO: ULTIMATE</span><span class="m-stars">★★★★★★★★★★</span></div>
+            <div id="btn-CO" class="mode-btn CO" onmouseover="bg('#221100')" onmouseout="bg('#000810')" onclick="start('CO')"><span class="m-id">ULTIMATE: STーCO</span><span class="m-stars">★★★★★★★★★★</span></div>
         </div>
-
-    <div id="guide">
-            <div class="guide-h">RESONANCE GUIDE</div>
-            <div class="guide-text">
-                あなたは<b>「一滴の雫」</b>。マウスを動かし、降り注ぐノイズから逃れなさい。<br>
-                左クリックを長押しすれば、あなたの<b>「想い」</b>が弾け、歪んだ音を打ち消します。<br>
-                ステージごとに異なる「揺らぎ」があなたを翻弄するでしょう。<br>
-                すべての記憶を繋ぎ、最後に現れる<b>「橙の深淵」</b>を超えた時、真実が共鳴します。
-            </div>
+        <div id="guide">
+            マウスで「雫」を導き、左クリックで「想い」を放ちなさい。<br>
+            全記録を塗り替えた時、銅・銀・金、そして橙の深淵が現れます。
         </div>
-
-        <div class="copy-right">©︎MINAMI PROJECT 2026 / RESONANCE RAIN</div>
+        <div class="copy-right">MINAMI PROJECT 2026 / Chromatic Resonance</div>
     </div>
     <canvas id="game"></canvas>
 
     <script>
+        // --- 以前のスクリプト（ロジック）をそのまま継続 ---
         const canvas = document.getElementById('game');
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth; canvas.height = window.innerHeight;
@@ -108,15 +105,15 @@
 
         const config = {
             SB: { color: '#ccaa00', spawn: 0.05, hp: 2, target: 3000, g: 'warp' },
-            KT: { color: '#0088cc', spawn: 0.1, hp: 4, target: 4500, g: 'dash' },
-            SK: { color: '#008844', spawn: 0.08, hp: 6, target: 6000, g: 'shield' },
-            KY: { color: '#aa0022', spawn: 0.12, hp: 7, target: 7500, g: 'wind' },
-            PK: { color: '#cc5588', spawn: 0.12, hp: 8, target: 9000, g: 'none' },
-            JB: { color: '#006666', spawn: 0.15, hp: 9, target: 10500, g: 'none' },
-            HA: { color: '#CD7F32', spawn: 0.18, hp: 12, target: 12000, g: 'mix' },
-            HB: { color: '#C0C0C0', spawn: 0.21, hp: 15, target: 17000, g: 'mix' },
-            HC: { color: '#FFD700', spawn: 0.24, hp: 17, target: 20000, g: 'mix' },
-            CO: { color: '#cc6600', spawn: 0.28, hp: 20, target: 30000, g: 'rush' }
+            KT: { color: '#0088cc', spawn: 0.1, hp: 2, target: 5000, g: 'dash' },
+            SK: { color: '#008844', spawn: 0.08, hp: 5, target: 7000, g: 'shield' },
+            KY: { color: '#aa0022', spawn: 0.12, hp: 3, target: 8000, g: 'wind' },
+            PK: { color: '#cc5588', spawn: 0.12, hp: 3, target: 8000, g: 'none' },
+            JB: { color: '#006666', spawn: 0.15, hp: 5, target: 10000, g: 'none' },
+            HA: { color: '#CD7F32', spawn: 0.2, hp: 12, target: 20000, g: 'mix' },
+            HB: { color: '#C0C0C0', spawn: 0.25, hp: 15, target: 25000, g: 'mix' },
+            HC: { color: '#FFD700', spawn: 0.3, hp: 20, target: 30000, g: 'mix' },
+            CO: { color: '#cc6600', spawn: 1.0, hp: 80, target: 373000, g: 'rush' }
         };
 
         function bg(c) { document.body.style.background = c; }
@@ -125,15 +122,12 @@
             const cl = JSON.parse(localStorage.getItem('minami_cleared') || '[]');
             cl.forEach(id => {
                 const b = document.getElementById(`btn-${id}`);
-                if(b) {
-                    b.classList.add('cleared');
-                    b.style.background = b.style.borderColor.replace(')', ', 0.15)').replace('rgb', 'rgba');
-                }
+                if(b) b.style.backgroundColor = 'rgba(255,255,255,0.1)';
             });
             if(['SB','KT','SK','KY','PK','JB'].every(s => cl.includes(s))) {
                 ['btn-HA','btn-HB','btn-HC'].forEach(id => document.getElementById(id).style.display = 'flex');
             }
-            if(['SB','KT','SK','KY','PK','JB','HA','HB','HC'].every(s => cl.includes(s))) {
+            if(['SB','KT','SK','KY','PK','JB', 'HA', 'HB', 'HC'].every(s => cl.includes(s))) {
                 document.getElementById('btn-CO').style.display = 'flex';
             }
         }
