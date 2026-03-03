@@ -1,294 +1,263 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <title>MINAMI SHOOTING 2026 - THE ULTIMATE EDITION</title>
-    <style>
-        body { background: #000; color: #fff; font-family: 'Arial Black', sans-serif; margin: 0; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        #game-container { position: relative; width: 900px; height: 700px; border: 5px solid #222; background: #000; box-shadow: 0 0 50px rgba(255,0,0,0.2); }
-        canvas { display: block; }
-        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
-        .active { display: flex; }
-        
-        /* UIパーツ */
-        h1 { font-size: 32px; color: #f00; text-shadow: 0 0 20px #f00; margin-bottom: 5px; }
-        .status-text { font-size: 12px; color: #666; margin-bottom: 20px; }
-        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 15px; }
-        
-        /* ボタンデザイン */
-        .btn { padding: 12px; background: rgba(255,255,255,0.05); border: 2px solid #444; color: #fff; cursor: pointer; width: 240px; transition: 0.3s; position: relative; font-size: 14px; text-align: left; }
-        .btn:hover:not(:disabled) { background: #fff; color: #000; box-shadow: 0 0 15px #fff; }
-        .btn:disabled { opacity: 0.2; cursor: not-allowed; border-color: #222; }
-        
-        /* バッジ表示 */
-        .badge-container { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); display: flex; gap: 5px; }
-        .badge-clear { color: #0f0; font-weight: bold; font-size: 10px; }
-        .badge-nomiss { color: #ffd700; font-weight: bold; font-size: 16px; text-shadow: 0 0 8px #ffd700; }
-
-        /* HUD */
-        #hud { position: absolute; top: 20px; left: 20px; font-family: monospace; line-height: 1.6; pointer-events: none; }
-        .hp-outer { width: 200px; height: 12px; background: #222; border: 1px solid #fff; border-radius: 6px; overflow: hidden; }
-        #hp-inner { width: 100%; height: 100%; background: linear-gradient(90deg, #f00, #ff4400); transition: 0.2s; }
-        #nm-status { color: #ffd700; font-weight: bold; display: none; }
-    </style>
+<meta charset="UTF-8">
+<title>MINAMI SHOOTING GAME PROJECT 2026</title>
+<style>
+body{
+    margin:0;
+    background:#071a2f;
+    color:white;
+    font-family:sans-serif;
+    text-align:center;
+}
+canvas{
+    background:#0d2b4d;
+    display:none;
+    margin:auto;
+    border:2px solid #1e90ff;
+}
+.menu{
+    padding:20px;
+}
+button{
+    padding:10px 20px;
+    margin:5px;
+    background:#1e90ff;
+    border:none;
+    color:white;
+    cursor:pointer;
+}
+button.locked{
+    background:gray;
+}
+#ui{
+    position:absolute;
+    top:10px;
+    left:10px;
+    text-align:left;
+}
+.footer{
+    margin-top:20px;
+    font-size:12px;
+}
+</style>
 </head>
 <body>
 
-<div id="game-container">
-    <canvas id="gameCanvas" width="900" height="700"></canvas>
-    
-    <div id="hud">
-        SCORE: <span id="ui-score">0</span> / <span id="ui-target">0</span><br>
-        COIN: <span id="ui-coin">0</span><br>
-        <div id="nm-status">★ NO MISS ACTIVE ★</div>
-        HP: <div class="hp-outer"><div id="hp-inner"></div></div>
-    </div>
+<div class="menu" id="menu">
+<h1>MINAMI SHOOTING GAME PROJECT 2026</h1>
+<div id="stageSelect"></div>
+</div>
 
-    <div id="menu-screen" class="overlay active">
-        <h1>MINAMI SHOOTING 2026</h1>
-        <div class="status-text">MISSION SELECT: CLEAR 1-9 TO UNLOCK OTHER. NO MISS ALL TO UNLOCK SPECIAL.</div>
-        
-        <div style="color:#ff0000; font-size:14px; margin-bottom:5px;">■ ST=KY LINE (KEIYO)</div>
-        <div id="ky-grid" class="grid"></div>
+<canvas id="game" width="800" height="600"></canvas>
+<div id="ui"></div>
 
-        <div style="color:#00aaff; font-size:14px; margin-bottom:5px; margin-top:10px;">■ OTHER LINES (HIDDEN)</div>
-        <div id="other-grid" class="grid"></div>
-
-        <div style="color:#ff8c00; font-size:14px; margin-bottom:5px; margin-top:10px;">■ SPECIAL (UNKNOWN)</div>
-        <div id="special-grid" class="grid"></div>
-
-        <div style="margin-top:20px; display:flex; gap:10px;">
-            <button class="btn" onclick="openShop()" style="text-align:center; width:120px;">SHOP</button>
-            <button class="btn" onclick="resetData()" style="text-align:center; width:120px; border-color:#222; color:#444;">RESET</button>
-        </div>
-    </div>
+<div class="footer">
+© 2026 MINAMI SHOOTING GAME PROJECT
+All Rights Reserved.
 </div>
 
 <script>
-/**
- * 🛠️ CORE SYSTEM: NO REDUCTION, FULL LOGIC
- */
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
 
-// セーブデータ構造
-const SAVE_KEY = "minami_ultra_2026_save";
-let userData = JSON.parse(localStorage.getItem(SAVE_KEY)) || {
-    coins: 0,
-    weapon: 'normal',
-    // 各ステージの記録: { id: string, cleared: bool, noMiss: bool }
-    records: []
-};
+let player, bullets, enemies, enemyBullets;
+let score=0, hp=4, coin=0;
+let currentStage=1;
+let stageUnlocked=[true,true,true,true,true,true,true,true,true,false,false,false,false];
+let stageNoMissClear=[false,false,false,false,false,false,false,false,false,false,false,false,false];
+let noMiss=true;
 
-function save() { localStorage.setItem(SAVE_KEY, JSON.stringify(userData)); }
+let mouseX=400, mouseY=500;
+let mouseDown=false;
+let fireCooldown=0;
 
-// 全13ステージ定義
-const STAGES = {
-    ky: Array.from({length: 9}, (_, i) => ({ id: `ST=KY-0${i+1}`, color: '#ff0000', diff: i+1 })),
-    other: [
-        { id: 'ST=KT', name: 'ST=KT (京浜東北)', color: '#00aaff', diff: 11 },
-        { id: 'ST=SB', name: 'ST=SB (総武)', color: '#ffff00', diff: 12 },
-        { id: 'ST=SK', name: 'ST=SK (埼京)', color: '#00ff00', diff: 13 }
-    ],
-    special: { id: 'ST=CN', name: 'ST=CN (中央線)', color: '#ff8c00', diff: 20 }
-};
+const stageData=[
+{level:2,target:5000},
+{level:3,target:8000},
+{level:4,target:11000},
+{level:5,target:15000},
+{level:6,target:18000},
+{level:7,target:22000},
+{level:8,target:26000},
+{level:9,target:30000},
+{level:10,target:35000},
+{level:12,target:45000},
+{level:14,target:60000},
+{level:16,target:80000},
+{level:20,target:120000}
+];
 
-let game = {
-    state: 'menu',
-    hp: 100, score: 0, target: 0, coins: 0,
-    p: { x: 450, y: 620 },
-    bullets: [], enemies: [], eb: [],
-    frame: 0,
-    noMissFlag: true, // この周回で被弾したか
-    currentStage: null
-};
+function initPlayer(){
+player={x:400,y:500,size:15,speed:5};
+}
 
-// 入力系
-window.addEventListener('mousemove', e => {
-    const r = canvas.getBoundingClientRect();
-    game.p.x = e.clientX - r.left;
-    game.p.y = e.clientY - r.top;
+function spawnEnemy(){
+let level=stageData[currentStage-1].level;
+enemies.push({
+x:Math.random()*760+20,
+y:-20,
+size:15,
+hp:level,
+speed:1+level*0.15,
+cool:0
 });
-window.addEventListener('mousedown', () => {
-    if(game.state !== 'play') return;
-    const bSpeed = -18;
-    game.bullets.push({x: game.p.x, y: game.p.y-15, vx: 0, vy: bSpeed});
-    if(userData.weapon === 'wide') {
-        game.bullets.push({x: game.p.x, y: game.p.y-10, vx: -5, vy: bSpeed+2});
-        game.bullets.push({x: game.p.x, y: game.p.y-10, vx: 5, vy: bSpeed+2});
+}
+
+function drawPlayer(){
+ctx.fillStyle="cyan";
+ctx.fillRect(player.x,player.y,player.size,player.size);
+}
+
+function drawUI(){
+document.getElementById("ui").innerHTML=
+"SCORE: "+score+
+"<br>HP: "+hp+
+"<br>COIN: "+coin;
+}
+
+function update(){
+ctx.clearRect(0,0,800,600);
+
+player.x = mouseX - player.size/2;
+player.y = mouseY - player.size/2;
+
+drawPlayer();
+
+// ===== 自動連射 =====
+if(mouseDown){
+    if(fireCooldown<=0){
+        bullets.push({
+            x:player.x+player.size/2-2,
+            y:player.y
+        });
+        fireCooldown=15-Math.min(stageData[currentStage-1].level,10);
     }
+}
+if(fireCooldown>0) fireCooldown--;
+
+// ===== プレイヤー弾 =====
+bullets.forEach((b,i)=>{
+b.y-=8;
+ctx.fillStyle="yellow";
+ctx.fillRect(b.x,b.y,5,10);
+if(b.y<0) bullets.splice(i,1);
 });
 
-function initMenu() {
-    const kyClearedCount = STAGES.ky.filter(s => isCleared(s.id)).length;
-    const allOtherClearedAndNoMiss = [...STAGES.ky, ...STAGES.other].every(s => isNoMiss(s.id));
+// ===== 敵 =====
+enemies.forEach((e,ei)=>{
+e.y+=e.speed;
+ctx.fillStyle="red";
+ctx.fillRect(e.x,e.y,e.size,e.size);
 
-    renderGrid('ky-grid', STAGES.ky, true);
-    renderGrid('other-grid', STAGES.other, kyClearedCount >= 9);
-    renderGrid('special-grid', [STAGES.special], allOtherClearedAndNoMiss);
+if(e.cool<=0){
+enemyBullets.push({x:e.x+7,y:e.y+15});
+e.cool=60-stageData[currentStage-1].level;
+}
+e.cool--;
+
+bullets.forEach((b,bi)=>{
+if(b.x<e.x+e.size && b.x+5>e.x && b.y<e.y+e.size && b.y+10>e.y){
+e.hp--;
+bullets.splice(bi,1);
+if(e.hp<=0){
+score+=100*stageData[currentStage-1].level;
+coin+=5;
+enemies.splice(ei,1);
+}
+}
+});
+
+if(e.y>600) enemies.splice(ei,1);
+});
+
+// ===== 敵弾 =====
+enemyBullets.forEach((b,bi)=>{
+b.y+=5;
+ctx.fillStyle="white";
+ctx.fillRect(b.x,b.y,4,8);
+
+if(b.x<player.x+player.size &&
+b.x+4>player.x &&
+b.y<player.y+player.size &&
+b.y+8>player.y){
+hp--;
+noMiss=false;
+enemyBullets.splice(bi,1);
+if(hp<=0) endGame(false);
+}
+});
+
+if(Math.random()<0.02) spawnEnemy();
+
+drawUI();
+
+if(score>=stageData[currentStage-1].target){
+endGame(true);
 }
 
-function renderGrid(elementId, stageList, unlocked) {
-    const el = document.getElementById(elementId);
-    el.innerHTML = '';
-    stageList.forEach(s => {
-        const b = document.createElement('button');
-        b.className = 'btn';
-        if(!unlocked) b.disabled = true;
-        
-        const rec = userData.records.find(r => r.id === s.id);
-        b.innerHTML = `
-            ${s.name || s.id}
-            <div class="badge-container">
-                ${rec?.cleared ? '<span class="badge-clear">済</span>' : ''}
-                ${rec?.noMiss ? '<span class="badge-nomiss">★</span>' : ''}
-            </div>
-        `;
-        b.style.borderColor = unlocked ? s.color : '#222';
-        b.onclick = () => startStage(s);
-        el.appendChild(b);
-    });
+requestAnimationFrame(update);
 }
 
-function isCleared(id) { return userData.records.some(r => r.id === id && r.cleared); }
-function isNoMiss(id) { return userData.records.some(r => r.id === id && r.noMiss); }
-
-function startStage(s) {
-    game.currentStage = s;
-    game.state = 'play';
-    game.hp = 100; game.score = 0; game.frame = 0;
-    game.target = 2000 + (s.diff * 1000);
-    game.noMissFlag = true;
-    game.bullets = []; game.enemies = []; game.eb = [];
-    document.getElementById('menu-screen').classList.remove('active');
-    document.getElementById('nm-status').style.display = 'block';
+function startStage(n){
+currentStage=n;
+score=0; hp=4; bullets=[]; enemies=[]; enemyBullets=[];
+noMiss=true;
+document.getElementById("menu").style.display="none";
+canvas.style.display="block";
+initPlayer();
+update();
 }
 
-function update() {
-    if(game.state !== 'play') return;
-    game.frame++;
+function endGame(clear){
+canvas.style.display="none";
+document.getElementById("menu").style.display="block";
 
-    // 敵スポーン
-    if(game.frame % Math.max(5, 35 - game.currentStage.diff) === 0) {
-        game.enemies.push({
-            x: Math.random() * 860 + 20,
-            y: -40,
-            hp: 3 + Math.floor(game.currentStage.diff / 2),
-            vy: 2 + (game.currentStage.diff * 0.2),
-            type: game.currentStage.id
-        });
-    }
+if(clear){
+alert("STAGE CLEAR!");
+stageNoMissClear[currentStage-1]=noMiss;
 
-    // 自機弾
-    game.bullets.forEach((b, i) => {
-        b.x += b.vx; b.y += b.vy;
-        if(b.y < -50) game.bullets.splice(i, 1);
-    });
-
-    // 敵
-    game.enemies.forEach((e, i) => {
-        e.y += e.vy;
-        // 路線別特殊移動
-        if(e.type === 'ST=KT') e.x += Math.sin(game.frame * 0.05) * 3;
-        if(e.type === 'ST=SK') { if(game.frame % 100 < 5) e.vy = 10; else e.vy = 2; }
-        if(e.type === 'ST=CN' && game.frame % 20 === 0) {
-            game.eb.push({x: e.x, y: e.y, vx: (game.p.x - e.x) * 0.02, vy: 7});
-        }
-
-        // 射撃
-        if(game.frame % 70 === 0) game.eb.push({x: e.x, y: e.y, vx: 0, vy: 5 + game.currentStage.diff * 0.1});
-
-        // 衝突
-        game.bullets.forEach((b, bi) => {
-            if(Math.hypot(e.x-b.x, e.y-b.y) < 25) {
-                e.hp--; game.bullets.splice(bi, 1);
-                if(e.hp <= 0) {
-                    game.score += 150; userData.coins += 5;
-                    game.enemies.splice(i, 1);
-                }
-            }
-        });
-        if(e.y > 750) game.enemies.splice(i, 1);
-    });
-
-    // 敵弾
-    game.eb.forEach((eb, i) => {
-        eb.x += eb.vx; eb.y += eb.vy;
-        if(Math.hypot(eb.x - game.p.x, eb.y - game.p.y) < 15) {
-            game.hp -= 20; game.noMissFlag = false;
-            game.eb.splice(i, 1);
-            document.getElementById('nm-status').style.display = 'none';
-        }
-        if(eb.y > 750) game.eb.splice(i, 1);
-    });
-
-    // クリア・失敗
-    if(game.hp <= 0) { alert("MISSION FAILED"); endSession(false); }
-    if(game.score >= game.target) { alert(game.noMissFlag ? "PERFECT NO MISS!" : "STAGE CLEARED"); endSession(true); }
-
-    updateUI();
+// 9面クリアでシークレット解放
+if(stageUnlocked.slice(0,9).every(v=>v)){
+stageUnlocked[9]=true;
+stageUnlocked[10]=true;
+stageUnlocked[11]=true;
 }
 
-function endSession(cleared) {
-    if(cleared) {
-        let rec = userData.records.find(r => r.id === game.currentStage.id);
-        if(!rec) {
-            rec = { id: game.currentStage.id, cleared: true, noMiss: game.noMissFlag };
-            userData.records.push(rec);
-        } else {
-            rec.cleared = true;
-            if(game.noMissFlag) rec.noMiss = true;
-        }
-    }
-    save();
-    game.state = 'menu';
-    initMenu();
-    document.getElementById('menu-screen').classList.add('active');
+// 全ノーミスでFINAL解放
+if(stageNoMissClear.slice(0,12).every(v=>v)){
+stageUnlocked[12]=true;
+}
+}else{
+alert("GAME OVER");
+}
+createStageButtons();
 }
 
-function draw() {
-    ctx.clearRect(0,0,900,700);
-    if(game.state !== 'play') return;
-    // 自機
-    ctx.fillStyle = '#fff'; ctx.beginPath();
-    ctx.moveTo(game.p.x, game.p.y-18); ctx.lineTo(game.p.x-15, game.p.y+15); ctx.lineTo(game.p.x+15, game.p.y+15); ctx.fill();
-    // 弾
-    ctx.fillStyle = '#0ff'; game.bullets.forEach(b => ctx.fillRect(b.x-2, b.y-15, 4, 20));
-    // 敵
-    game.enemies.forEach(e => {
-        ctx.fillStyle = game.currentStage.color;
-        ctx.fillRect(e.x-18, e.y-18, 36, 36);
-        ctx.strokeStyle = '#fff'; ctx.strokeRect(e.x-18, e.y-18, 36, 36);
-    });
-    // 敵弾
-    ctx.fillStyle = '#f44'; game.eb.forEach(eb => {
-        ctx.beginPath(); ctx.arc(eb.x, eb.y, 6, 0, Math.PI*2); ctx.fill();
-    });
+function createStageButtons(){
+let html="";
+for(let i=1;i<=13;i++){
+let locked=!stageUnlocked[i-1];
+html+=`<button class="${locked?'locked':''}"
+${locked?'disabled':''}
+onclick="startStage(${i})">
+STAGE ${i}
+</button>`;
+}
+document.getElementById("stageSelect").innerHTML=html;
 }
 
-function updateUI() {
-    document.getElementById('ui-score').innerText = game.score;
-    document.getElementById('ui-target').innerText = game.target;
-    document.getElementById('ui-coin').innerText = userData.coins;
-    document.getElementById('hp-inner').style.width = game.hp + "%";
-}
+canvas.addEventListener("mousemove",e=>{
+const rect=canvas.getBoundingClientRect();
+mouseX=e.clientX-rect.left;
+mouseY=e.clientY-rect.top;
+});
 
-function openShop() {
-    const cost = 2000;
-    if(userData.coins >= cost && userData.weapon !== 'wide') {
-        userData.coins -= cost; userData.weapon = 'wide'; save(); alert("WIDE SHOT PURCHASED"); initMenu();
-    } else if(userData.weapon === 'wide') {
-        alert("ALREADY PURCHASED");
-    } else {
-        alert(`NEED ${cost} COINS`);
-    }
-}
+canvas.addEventListener("mousedown",()=>{mouseDown=true;});
+canvas.addEventListener("mouseup",()=>{mouseDown=false;});
 
-function resetData() { if(confirm("DELETE ALL DATA?")) { localStorage.clear(); location.reload(); } }
-
-initMenu();
-(function loop(){ update(); draw(); requestAnimationFrame(loop); })();
-
+createStageButtons();
 </script>
 </body>
 </html>
