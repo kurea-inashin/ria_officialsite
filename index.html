@@ -1,181 +1,176 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<title>MINAMI PROJECT 2026 - FULL COLOR</title>
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-<style>
-    body{ margin:0; background:#000; color:white; font-family:'Press Start 2P', monospace; overflow:hidden; }
-    .hidden{ display:none; }
-    .center{ text-align:center; }
-    h1{ margin-top:20px; font-size:22px; color: #ff0044; }
-    .info-box{ width:750px; margin:15px auto; padding:10px; background:rgba(255,255,255,0.05); border-radius:10px; font-size:9px; line-height:1.5; border: 1px solid #444; }
-    .grid-label { text-align:center; font-size:10px; margin-top:15px; color: #aaa; }
-    .grid{ display:grid; grid-template-columns:repeat(3, 230px); gap:12px; justify-content:center; margin-top:8px; }
-    .stage{ padding:12px; border-radius:8px; border:2px solid; background:#000; cursor:pointer; transition:0.2s; text-align:center; position:relative; }
-    .stage:hover:not(.locked){ transform:scale(1.03); box-shadow:0 0 10px currentColor; }
-    .locked { opacity: 0.1; cursor: not-allowed; border-color: #222 !important; }
-    
-    /* 路線カラー */
-    .red{ color:#ff0044; border-color:#ff0044; } 
-    .blue{ color:#00c8ff; border-color:#00c8ff; } 
-    .yellow{ color:#ffd400; border-color:#ffd400; } 
-    .green{ color:#00ff8c; border-color:#00ff8c; } 
-    .orange{ color:#ff8c00; border-color:#ff8c00; }
+    <meta charset="UTF-8">
+    <title>COLOR RESONANCE SHOOTING</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body { margin: 0; background: #000; color: #fff; font-family: 'Press Start 2P', cursive; overflow: hidden; }
+        .hidden { display: none; }
+        #menu { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; }
+        h1 { font-size: 30px; margin-bottom: 50px; text-shadow: 0 0 20px #fff; }
+        
+        .mode-select { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+        .mode-btn { width: 300px; padding: 20px; border: 4px solid; background: #000; color: #fff; cursor: pointer; position: relative; font-family: inherit; font-size: 12px; transition: 0.2s; }
+        .mode-btn:hover:not(.locked) { transform: scale(1.05); background: rgba(255,255,255,0.1); }
+        .mode-btn.locked { opacity: 0.2; cursor: not-allowed; border-color: #444 !important; }
 
-    .star { font-size:9px; color: #333; margin-top:5px; display:block; }
-    .star.active { color: #ffd700; }
-    .clear-mark { position: absolute; top: 2px; right: 5px; font-size: 8px; color: #0f0; }
+        /* カラー定義 */
+        .red { border-color: #ff0000; color: #ff0000; }     /* 京葉色 */
+        .blue { border-color: #0088ff; color: #0088ff; }    /* 京浜東北色 */
+        .yellow { border-color: #ffff00; color: #ffff00; }  /* 総武色 */
+        .green { border-color: #00ff00; color: #00ff00; }   /* 埼京色 */
+        .orange { border-color: #ff8800; color: #ff8800; }  /* 中央色（隠し） */
 
-    #gameCanvas{ background:#000; display:block; margin:0 auto; border: 2px solid #333; cursor: none; }
-    .hud { position: absolute; top: 15px; left: 15px; font-size: 9px; pointer-events: none; }
-    .hp-bar-bg { width: 150px; height: 12px; background: #333; border: 1px solid #fff; margin-top: 5px; }
-    #hp-fill { width: 100%; height: 100%; background: #0f0; transition: 0.2s; }
-</style>
+        .status { position: absolute; bottom: 5px; right: 10px; font-size: 8px; }
+        #game-container { position: relative; width: 800px; height: 600px; margin: 0 auto; }
+        canvas { background: #050505; border: 4px solid #333; display: block; }
+        
+        .hud { position: absolute; top: 10px; left: 10px; font-size: 10px; line-height: 2; pointer-events: none; }
+        .hp-outer { width: 200px; height: 15px; border: 2px solid #fff; background: #222; }
+        #hp-inner { width: 100%; height: 100%; background: #0f0; transition: 0.1s; }
+    </style>
 </head>
 <body>
 
 <div id="menu">
-    <h1 class="center">MINAMI PROJECT 2026</h1>
-    <div class="info-box center">
-        京葉線(KY)9ステージ制覇で他路線解禁 / 全12ステージ★(NO MISS)で中央線出現<br>
-        [操作] マウス移動 / 左クリック連打
+    <h1>SHOOTING 2026</h1>
+    <div class="mode-select">
+        <button class="mode-btn red" onclick="start('red')">RED MODE<br><span>(EASY)</span><div class="status" id="st-red">NEW</div></button>
+        <button class="mode-btn blue" onclick="start('blue')">BLUE MODE<br><span>(NORMAL)</span><div class="status" id="st-blue">NEW</div></button>
+        <button class="mode-btn yellow" onclick="start('yellow')">YELLOW MODE<br><span>(HARD)</span><div class="status" id="st-yellow">NEW</div></button>
+        <button class="mode-btn green" onclick="start('green')">GREEN MODE<br><span>(EXPERT)</span><div class="status" id="st-green">NEW</div></button>
     </div>
-
-    <div class="grid-label">■ ST=KY (KEIYO)</div>
-    <div id="ky-grid" class="grid"></div>
-
-    <div class="grid-label">■ OTHER (KT / SB / SK)</div>
-    <div id="other-grid" class="grid"></div>
-
-    <div class="grid-label">■ SPECIAL (HIDDEN)</div>
-    <div id="special-grid" class="grid"></div>
-    
-    <div class="center" style="margin-top:20px;">
-        <button onclick="resetData()" style="background:none; border:none; color:#444; font-size:8px; cursor:pointer;">[RESET DATA]</button>
+    <div style="margin-top: 40px;">
+        <button id="special-btn" class="mode-btn orange locked" onclick="start('orange')">ULTRA ORANGE<br><span>(HIDDEN STAGE)</span></button>
     </div>
 </div>
 
 <div id="game" class="hidden">
-    <div class="hud">
-        SCORE: <span id="score-val">0</span> / <span id="target-val">0</span><br>
-        HP: <div class="hp-bar-bg"><div id="hp-fill"></div></div>
-        <span id="nm-label" style="color:#ffd700;">★ NO MISS ACTIVE</span>
+    <div id="game-container">
+        <div class="hud">
+            SCORE: <span id="ui-score">0</span> / TARGET: <span id="ui-target">0</span><br>
+            HP: <div class="hp-outer"><div id="hp-inner"></div></div>
+        </div>
+        <canvas id="cv" width="800" height="600"></canvas>
     </div>
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
 </div>
 
 <script>
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
+const cv = document.getElementById("cv");
+const ctx = cv.getContext("2d");
 
-const SAVE_KEY = "minami_v3_save";
-let data = JSON.parse(localStorage.getItem(SAVE_KEY)) || { cleared: [] };
-const save = () => localStorage.setItem(SAVE_KEY, JSON.stringify(data));
-
-const KY = Array.from({length: 9}, (_, i) => ({ id: `ST=KY-0${i+1}`, color: 'red', diff: i+1 }));
-const OTHER = [
-    { id: 'ST=KT', name: 'ST=KT(京浜東北)', color: 'blue', diff: 11 },
-    { id: 'ST=SB', name: 'ST=SB(総武)', color: 'yellow', diff: 12 },
-    { id: 'ST=SK', name: 'ST=SK(埼京)', color: 'green', diff: 13 }
-];
-const SPECIAL = { id: 'ST=CN', name: 'ST=CN(中央線)', color: 'orange', diff: 20 };
-
-let player = { x:400, y:500 }, bullets = [], enemies = [], eb = [];
-let hp = 100, score = 0, target = 0, currentStage = null, noMiss = true, gameOver = false;
-
-function initMenu(){
-    const kyGrid = document.getElementById("ky-grid"); kyGrid.innerHTML = "";
-    KY.forEach(s => kyGrid.appendChild(createStageEl(s, true)));
-
-    const kyClearedAll = KY.every(s => data.cleared.find(c => c.id === s.id));
-    const otherGrid = document.getElementById("other-grid"); otherGrid.innerHTML = "";
-    OTHER.forEach(s => otherGrid.appendChild(createStageEl(s, kyClearedAll)));
-
-    const allStars = [...KY, ...OTHER].every(s => data.cleared.find(c => c.id === s.id && c.star));
-    const specialGrid = document.getElementById("special-grid"); specialGrid.innerHTML = "";
-    specialGrid.appendChild(createStageEl(SPECIAL, allStars));
+// セーブデータ
+let save = JSON.parse(localStorage.getItem("shooting_2026_personal")) || { red:0, blue:0, yellow:0, green:0, orange:0 };
+function updateMenu() {
+    const modes = ['red','blue','yellow','green','orange'];
+    modes.forEach(m => {
+        const el = document.getElementById("st-"+m);
+        if(el) el.innerText = save[m] ? "CLEARED" : "NEW";
+    });
+    // 全モードクリアでオレンジ解禁
+    if(save.red && save.blue && save.yellow && save.green) {
+        document.getElementById("special-btn").classList.remove("locked");
+    }
 }
 
-function createStageEl(s, unlocked){
-    const div = document.createElement("div");
-    div.className = `stage ${s.color} ${unlocked ? '' : 'locked'}`;
-    const rec = data.cleared.find(c => c.id === s.id);
-    div.innerHTML = `${s.name || s.id} <span class="star ${rec?.star ? 'active' : ''}">★ NO MISS</span>`;
-    if(rec) div.innerHTML += `<div class="clear-mark">済</div>`;
-    if(unlocked) div.onclick = () => startGame(s);
-    return div;
-}
+let p = { x:400, y:500 }, bullets = [], enemies = [], eb = [], hp = 100, score = 0, target = 0, playing = false, currentMode = "";
 
-function startGame(s){
-    currentStage = s; score = 0; hp = 100; noMiss = true; target = 1500 + s.diff * 500;
-    bullets = []; enemies = []; eb = []; gameOver = false;
+function start(mode) {
+    if(mode === 'orange' && !(save.red && save.blue && save.yellow && save.green)) return;
+    currentMode = mode; playing = true; hp = 100; score = 0;
+    bullets = []; enemies = []; eb = [];
+    target = mode === 'orange' ? 10000 : 3000;
+    document.getElementById("ui-target").innerText = target;
     document.getElementById("menu").classList.add("hidden");
     document.getElementById("game").classList.remove("hidden");
-    document.getElementById("target-val").innerText = target;
-    updateHUD();
-    requestAnimationFrame(gameLoop);
+    loop();
 }
 
-function updateHUD(){
-    document.getElementById("score-val").innerText = score;
-    const hpFill = document.getElementById("hp-fill");
-    hpFill.style.width = hp + "%";
-    hpFill.style.background = hp < 40 ? "#f00" : "#0f0";
-    document.getElementById("nm-label").style.opacity = noMiss ? "1" : "0";
-}
-
-canvas.addEventListener("mousemove", e => {
-    let r = canvas.getBoundingClientRect();
-    player.x = e.clientX - r.left; player.y = e.clientY - r.top;
+cv.addEventListener("mousemove", e => {
+    let r = cv.getBoundingClientRect();
+    p.x = e.clientX - r.left; p.y = e.clientY - r.top;
 });
-canvas.addEventListener("mousedown", () => { if(!gameOver) bullets.push({x:player.x, y:player.y-15}); });
+cv.addEventListener("mousedown", () => {
+    if(!playing) return;
+    bullets.push({x:p.x, y:p.y-10, vx:0, vy:-10});
+    if(currentMode === 'orange') {
+        bullets.push({x:p.x, y:p.y-10, vx:-2, vy:-10});
+        bullets.push({x:p.x, y:p.y-10, vx:2, vy:-10});
+    }
+});
 
-function update(){
-    bullets.forEach((b, i) => { b.y -= 12; if(b.y < -10) bullets.splice(i,1); });
+function update() {
+    bullets.forEach((b, i) => { b.x += b.vx; b.y += b.vy; if(b.y < -20) bullets.splice(i,1); });
     
-    if(Math.random() < 0.02 + currentStage.diff * 0.005) {
-        enemies.push({ x: Math.random()*760+20, y: -20, speed: 2 + currentStage.diff*0.25, hp: 1 + Math.floor(currentStage.diff/5) });
+    // 敵スポーン
+    let spawnRate = {red:0.02, blue:0.04, yellow:0.06, green:0.08, orange:0.12}[currentMode];
+    if(Math.random() < spawnRate) {
+        enemies.push({ x:Math.random()*760+20, y:-30, hp:currentMode==='orange'?5:2, v:currentMode==='orange'?6:3 });
     }
 
     enemies.forEach((e, i) => {
-        e.y += e.speed;
-        // 当たり判定
-        if(Math.hypot(e.x-player.x, e.y-player.y) < 20) {
-            hp -= 2; noMiss = false; updateHUD();
-            if(hp <= 0) { gameOver = true; alert("GAME OVER..."); backToMenu(); }
+        e.y += e.v;
+        // 敵の弾
+        if(Math.random() < (currentMode === 'orange' ? 0.05 : 0.01)) {
+            eb.push({x:e.x, y:e.y, v:5});
         }
-        // 弾ヒット
+        // 自機への当たり判定
+        if(Math.hypot(e.x-p.x, e.y-p.y) < 20) {
+            hp -= 10; enemies.splice(i,1);
+            if(hp <= 0) endGame(false);
+        }
+        // 弾への当たり判定
         bullets.forEach((b, bi) => {
-            if(Math.hypot(e.x-b.x, e.y-b.y) < 20) { e.hp--; bullets.splice(bi,1); if(e.hp<=0){ score += 100; enemies.splice(i,1); updateHUD(); } }
+            if(Math.hypot(e.x-b.x, e.y-b.y) < 20) {
+                e.hp--; bullets.splice(bi,1);
+                if(e.hp <= 0) { score += 100; enemies.splice(i,1); }
+            }
         });
         if(e.y > 650) enemies.splice(i,1);
     });
 
-    if(score >= target) {
-        let rec = data.cleared.find(c => c.id === currentStage.id);
-        if(!rec) { rec = {id: currentStage.id, star: noMiss}; data.cleared.push(rec); }
-        else if(noMiss) rec.star = true;
-        save(); gameOver = true; alert("MISSION CLEAR!"); backToMenu();
-    }
+    eb.forEach((b, i) => {
+        b.y += b.v;
+        if(Math.hypot(b.x-p.x, b.y-p.y) < 15) { hp -= 5; eb.splice(i,1); if(hp <= 0) endGame(false); }
+        if(b.y > 650) eb.splice(i,1);
+    });
+
+    document.getElementById("hp-inner").style.width = hp + "%";
+    document.getElementById("ui-score").innerText = score;
+    if(score >= target) endGame(true);
 }
 
-function draw(){
+function draw() {
     ctx.clearRect(0,0,800,600);
     // プレイヤー
-    ctx.fillStyle="#fff"; ctx.beginPath(); ctx.moveTo(player.x, player.y-10); ctx.lineTo(player.x-10, player.y+10); ctx.lineTo(player.x+10, player.y+10); ctx.fill();
+    ctx.fillStyle = "#fff";
+    ctx.beginPath(); ctx.moveTo(p.x, p.y-12); ctx.lineTo(p.x-12, p.y+12); ctx.lineTo(p.x+12, p.y+12); ctx.fill();
     // 弾
-    ctx.fillStyle="#0ff"; bullets.forEach(b => ctx.fillRect(b.x-2, b.y, 4, 12));
+    ctx.fillStyle = "#0ff"; bullets.forEach(b => ctx.fillRect(b.x-2, b.y-8, 4, 10));
     // 敵
-    ctx.fillStyle = {red:'#ff0044', blue:'#00c8ff', yellow:'#ffd400', green:'#00ff8c', orange:'#ff8c00'}[currentStage.color];
-    enemies.forEach(e => { ctx.fillRect(e.x-12, e.y-12, 24, 24); ctx.strokeStyle="#fff"; ctx.strokeRect(e.x-12, e.y-12, 24, 24); });
+    ctx.fillStyle = {red:'#f00', blue:'#08f', yellow:'#ff0', green:'#0f0', orange:'#f80'}[currentMode];
+    enemies.forEach(e => { ctx.fillRect(e.x-15, e.y-15, 30, 30); ctx.strokeStyle="#fff"; ctx.strokeRect(e.x-15, e.y-15, 30, 30); });
+    // 敵弾
+    ctx.fillStyle = "#f0f"; eb.forEach(b => { ctx.beginPath(); ctx.arc(b.x, b.y, 5, 0, Math.PI*2); ctx.fill(); });
 }
 
-function gameLoop(){ if(!gameOver){ update(); draw(); requestAnimationFrame(gameLoop); } }
-function backToMenu(){ document.getElementById("menu").classList.remove("hidden"); document.getElementById("game").classList.add("hidden"); initMenu(); }
-function resetData(){ if(confirm("RESETS ALL DATA?")){ localStorage.removeItem(SAVE_KEY); location.reload(); } }
+function endGame(win) {
+    playing = false;
+    if(win) {
+        save[currentMode] = 1;
+        localStorage.setItem("shooting_2026_personal", JSON.stringify(save));
+        alert("CLEAR!");
+    } else {
+        alert("GAME OVER");
+    }
+    document.getElementById("menu").classList.remove("hidden");
+    document.getElementById("game").classList.add("hidden");
+    updateMenu();
+}
 
-initMenu();
+function loop() { if(playing) { update(); draw(); requestAnimationFrame(loop); } }
+updateMenu();
 </script>
 </body>
 </html>
