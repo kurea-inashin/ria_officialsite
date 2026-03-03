@@ -2,206 +2,608 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>GIMMICK SHOOTER 2026</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MINAMI SHOOTING PROJECT 2026</title>
     <style>
-        body { background: #000; color: #fff; font-family: 'Courier New', Courier, monospace; margin: 0; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        #game-container { position: relative; width: 800px; height: 600px; border: 2px solid #555; background: radial-gradient(circle, #111 0%, #000 100%); cursor: crosshair; }
-        canvas { display: block; }
-        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.9); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
-        .active { display: flex; }
-        .btn { padding: 15px 30px; margin: 10px; border: 1px solid #fff; background: transparent; color: #fff; cursor: pointer; font-size: 18px; width: 300px; transition: 0.3s; position: relative; }
-        .btn:hover { background: #fff; color: #000; }
-        .cleared::after { content: " [CLEARED]"; color: #0f0; font-size: 12px; position: absolute; right: 10px; }
-        #hud { position: absolute; top: 15px; left: 15px; pointer-events: none; }
-        #hp-bar { width: 200px; height: 8px; border: 1px solid #fff; margin-top: 5px; }
-        #hp-fill { width: 100%; height: 100%; background: #f00; transition: 0.3s; }
-        #combo { position: absolute; top: 15px; right: 15px; font-size: 24px; color: #ff0; }
+        /* --- 全体デザイン --- */
+        body { 
+            background-color: #000814; /* 深い宇宙の青 */
+            color: #fff; 
+            font-family: 'Segoe UI', 'Helvetica Neue', sans-serif; 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh;
+            overflow: hidden; /* 画面からはみ出さない */
+        }
+
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 600px;
+            border: 4px solid #003366; /* 鉄をイメージした濃い青 */
+            box-shadow: 0 0 30px #00d4ff; /* ゲーミング発光 */
+            background-color: #000;
+            overflow: hidden;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        /* --- UI (HUD) --- */
+        .hud {
+            position: absolute;
+            color: #fff;
+            font-family: 'Courier New', monospace; /* レトロ感 */
+            font-size: 14px;
+            pointer-events: none; /* ゲーム操作を邪魔しない */
+            z-index: 10;
+        }
+
+        /* 左上：カウンター類 */
+        #hud-left {
+            top: 15px;
+            left: 15px;
+            background: rgba(0, 20, 40, 0.8);
+            padding: 10px;
+            border-radius: 8px;
+            border-left: 5px solid #00d4ff;
+        }
+
+        .hp-bar-bg {
+            width: 150px;
+            height: 12px;
+            background-color: #333;
+            border-radius: 6px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+
+        #hp-bar-fill {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #ff416c, #ff4b2b); /* 体力ゲージ */
+            transition: width 0.3s ease;
+        }
+
+        /* 右下：アイテムスロット */
+        #hud-right {
+            bottom: 15px;
+            right: 15px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .item-slot {
+            width: 60px;
+            height: 60px;
+            background: rgba(0, 51, 102, 0.9);
+            border: 2px solid #00d4ff;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.2s;
+            pointer-events: auto; /* クリック可能 */
+        }
+
+        .item-slot:hover {
+            background: rgba(0, 212, 255, 0.3);
+            transform: scale(1.05);
+        }
+
+        .item-slot .icon {
+            font-size: 24px;
+            margin-bottom: 2px;
+        }
+
+        .item-slot .count {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ff4b2b;
+            color: #fff;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        /* --- メニュー画面・ショップ画面 --- */
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 8, 20, 0.95);
+            display: none; /* 通常は非表示 */
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .overlay.active {
+            display: flex;
+        }
+
+        h1, h2 {
+            color: #00d4ff;
+            text-shadow: 0 0 15px #00d4ff;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            margin: 10px;
+            background: transparent;
+            border: 2px solid #00d4ff;
+            color: #00d4ff;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 25px;
+            transition: background 0.3s, color 0.3s, box-shadow 0.3s;
+            width: 300px;
+            text-align: center;
+        }
+
+        .btn:hover {
+            background: #00d4ff;
+            color: #000;
+            box-shadow: 0 0 20px #00d4ff;
+        }
+
+        /* ショップのアイテムグリッド */
+        .shop-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        /* フッター */
+        footer {
+            margin-top: 15px;
+            font-size: 12px;
+            color: #444;
+            letter-spacing: 2px;
+        }
+
     </style>
 </head>
 <body>
 
 <div id="game-container">
     <canvas id="gameCanvas" width="800" height="600"></canvas>
-    <div id="hud">
-        SCORE: <span id="s-val">0</span><br>
-        COIN: <span id="c-val">0</span>
-        <div id="hp-bar"><div id="hp-fill"></div></div>
-    </div>
-    <div id="combo"></div>
 
-    <div id="m-screen" class="overlay active">
-        <h1>GIMMICK SHOOTER 2026</h1>
-        <button class="btn" onclick="openStages()">MISSION SELECT</button>
-        <button class="btn" onclick="openShop()">SHOP & UPGRADE</button>
-        <button class="btn" onclick="resetData()" style="border:none; color:#555; font-size:10px;">RESET DATA</button>
+    <div id="hud-left" class="hud">
+        SCORE: <span id="score-val">000000</span><br>
+        HP: 
+        <div class="hp-bar-bg">
+            <div id="hp-bar-fill"></div>
+        </div>
+        COIN: 🪙 <span id="coin-val">0</span>
     </div>
 
-    <div id="st-screen" class="overlay">
-        <h2>SELECT LEVEL</h2>
-        <div id="st-list"></div>
-        <div id="extra-stage"></div>
-        <button class="btn" onclick="back()">BACK</button>
+    <div id="hud-right" class="hud">
+        <div class="item-slot" onclick="openShop()">
+            <span class="icon">🛒</span>
+            <span>SHOP</span>
+        </div>
+        <div class="item-slot" id="weapon-slot">
+            <span class="icon">🔫</span>
+            <span id="weapon-name">NORMAL</span>
+        </div>
+        <div class="item-slot" id="heal-slot" onclick="useHeal()">
+            <span class="icon">🧪</span>
+            <span>HEAL</span>
+            <div class="count" id="heal-count">1</div>
+        </div>
     </div>
 
-    <div id="sh-screen" class="overlay">
-        <h2>SHOP</h2>
-        <p>COIN: <span id="sh-c">0</span></p>
-        <button class="btn" onclick="buy('wide')">WIDE SHOT (500🪙)</button>
-        <button class="btn" onclick="buy('heal')">FULL REPAIR (200🪙)</button>
-        <button class="btn" onclick="back()">BACK</button>
+    <div id="menu-screen" class="overlay active">
+        <h1>MINAMI SHOOTING 2026</h1>
+        <button class="btn" onclick="startKyStage()">MISSION START (京葉線エリア)</button>
+        <button class="btn" onclick="showHelp()">HOW TO PLAY</button>
+        <div style="font-size: 10px; color: #555; margin-top: 50px;">
+            ST=KY PROTOTYPE V1.0 | DATA AUTOSAVED
+        </div>
+    </div>
+
+    <div id="shop-screen" class="overlay">
+        <h2>ITEM SHOP</h2>
+        <p>所持コイン: <span id="shop-coin-val">0</span> 🪙</p>
+        <div class="shop-grid">
+            <button class="btn" onclick="buyItem('wide', 500)">WIDE SHOT (500🪙)</button>
+            <button class="btn" onclick="buyItem('heal', 200)">REPAIR KIT (200🪙)</button>
+            <button class="btn" onclick="buyItem('skin', 1000)">ORANGE SKIN (1000🪙)</button>
+        </div>
+        <button class="btn" onclick="closeShop()">BACK TO MENU</button>
     </div>
 </div>
 
+<footer>© 2026 MINAMI SHOOTING GAME PROJECT.</footer>
+
 <script>
+/**
+ * --- GAME LOGIC ( "真面目な"実装 ) ---
+ */
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// --- セーブ機能 ---
-const load = () => JSON.parse(localStorage.getItem('gs2026_save')) || { coins: 0, cleared: [], weapon: 'normal' };
-let user = load();
-const save = () => localStorage.setItem('gs2026_save', JSON.stringify(user));
+// 画面解像度
+const WIDTH = 800;
+const HEIGHT = 600;
 
-let game = {
-    state: 'menu', score: 0, hp: 100, combo: 0, comboT: 0, frame: 0,
-    p: { x: 400, y: 550 }, bullets: [], enemies: [], eb: [], stage: null
+// ゲームの状態管理
+const STATE = {
+    MENU: 'menu',
+    PLAYING: 'playing',
+    SHOP: 'shop',
+    GAMEOVER: 'gameover'
 };
 
-const LEVELS = [
-    { id: 'L1', name: 'LEVEL 1: SPLIT', color: '#ff4444', diff: 1 },
-    { id: 'L2', name: 'LEVEL 2: WARP', color: '#4444ff', diff: 2 },
-    { id: 'L3', name: 'LEVEL 3: GRAVITY', color: '#ffff44', diff: 3 },
-    { id: 'L4', name: 'LEVEL 4: BURST', color: '#44ff44', diff: 4 }
-];
+// --- セーブデータ構造 ---
+let savedData = {
+    coins: 0,
+    weapon: 'normal',
+    heals: 1,
+    skin: '#fff', // 自機の色
+    unlockedKy: 1 // どこまで京葉線ステージが進んだか
+};
 
-// マウス操作
-window.addEventListener('mousemove', (e) => {
-    const r = canvas.getBoundingClientRect();
-    game.p.x = e.clientX - r.left; game.p.y = e.clientY - r.top;
-});
-window.addEventListener('mousedown', () => {
-    if(game.state !== 'play') return;
-    game.bullets.push({x: game.p.x, y: game.p.y, vx: 0, vy: -15});
-    if(user.weapon === 'wide') {
-        game.bullets.push({x: game.p.x, y: game.p.y, vx: -4, vy: -13}, {x: game.p.x, y: game.p.y, vx: 4, vy: -13});
-    }
-});
-
-function openStages() {
-    toggle('st-screen');
-    const list = document.getElementById('st-list');
-    list.innerHTML = '';
-    LEVELS.forEach(l => {
-        const b = document.createElement('button');
-        b.className = 'btn' + (user.cleared.includes(l.id) ? ' cleared' : '');
-        b.style.borderColor = l.color;
-        b.innerText = l.name;
-        b.onclick = () => start(l);
-        list.appendChild(b);
-    });
-    const extra = document.getElementById('extra-stage');
-    extra.innerHTML = '';
-    if(user.cleared.length >= 4) {
-        const b = document.createElement('button');
-        b.className = 'btn' + (user.cleared.includes('LX') ? ' cleared' : '');
-        b.style.borderColor = '#ff8800'; b.innerText = "ULTRA MODE (STRESS)";
-        b.onclick = () => start({id:'LX', color:'#ff8800', diff:8});
-        extra.appendChild(b);
+// ローカルストレージからロード
+function loadGame() {
+    const data = localStorage.getItem('minami_shooting_save');
+    if (data) {
+        savedData = JSON.parse(data);
     }
 }
 
-function start(l) {
-    game.stage = l; game.state = 'play'; game.hp = 100; game.score = 0;
-    game.bullets = []; game.enemies = []; game.eb = [];
-    toggle('');
+// ローカルストレージにセーブ
+function saveGame() {
+    localStorage.setItem('minami_shooting_save', JSON.stringify(savedData));
 }
 
-function update() {
-    if(game.state !== 'play') return;
-    game.frame++;
-    if(game.comboT > 0) game.comboT--; else game.combo = 0;
-
-    // 敵生成
-    if(game.frame % Math.max(10, 40 - game.stage.diff*4) === 0) {
-        game.enemies.push({ x: Math.random()*760+20, y: -30, hp: 3+game.stage.diff, type: game.stage.id });
-    }
-
-    game.bullets.forEach((b, i) => { b.y += b.vy; b.x += b.vx; if(b.y < -20) game.bullets.splice(i,1); });
-
-    game.enemies.forEach((e, i) => {
-        // --- エグいギミック ---
-        if(e.type === 'L1') e.y += 3; 
-        if(e.type === 'L2' && game.frame % 60 === 0) { e.x = Math.random()*760+20; } // ワープ
-        if(e.type === 'L3') { // 重力：弾を曲げる
-            game.bullets.forEach(b => { if(Math.hypot(e.x-b.x, e.y-b.y) < 100) b.x += (e.x-b.x)*0.05; });
-            e.y += 2;
+// 京葉線（赤）のギミック定義（エグい）
+const GIMMICK_KY = {
+    color: '#ff0000',
+    enemySpeed: 3,
+    spawnRate: 60, // 60フレームに1回
+    bossHp: 50,
+    special: () => {
+        // 京葉線スペシャル：敵が3連続で突進
+        if (game.frame % 180 === 0) {
+            for (let i = 0; i < 3; i++) {
+                game.enemies.push({
+                    x: WIDTH * Math.random(),
+                    y: -50 - (i * 40),
+                    hp: 2,
+                    type: 'rush' // 高速突進タイプ
+                });
+            }
         }
-        if(e.type === 'LX') { e.y += 5; if(game.frame % 30 === 0) game.eb.push({x:e.x, y:e.y}); }
-        else { e.y += 2; if(game.frame % 80 === 0) game.eb.push({x:e.x, y:e.y}); }
+    }
+};
 
-        game.bullets.forEach((b, bi) => {
-            if(Math.hypot(e.x-b.x, e.y-b.y) < 25) {
-                e.hp--; game.bullets.splice(bi,1);
-                if(e.hp <= 0) {
-                    game.combo++; game.comboT = 60;
-                    game.score += 100 * game.combo;
-                    user.coins += game.combo;
-                    // L1ギミック: 分裂弾
-                    if(e.type === 'L1') { for(let j=0; j<3; j++) game.eb.push({x:e.x, y:e.y, vx:Math.random()*6-3, vy:Math.random()*6}); }
-                    game.enemies.splice(i,1);
-                    save();
+// ゲーム全体のメインオブジェクト
+let game = {
+    state: STATE.MENU,
+    frame: 0,
+    score: 0,
+    hp: 100,
+    coins: savedData.coins,
+    player: {
+        x: WIDTH / 2,
+        y: HEIGHT - 80,
+        size: 20,
+        speed: 7
+    },
+    bullets: [],
+    enemies: [],
+    enemyBullets: [],
+    keys: {} // キー入力の状態
+};
+
+// UI更新
+function updateUi() {
+    document.getElementById('score-val').innerText = game.score.toString().padStart(6, '0');
+    document.getElementById('coin-val').innerText = game.coins;
+    document.getElementById('hp-bar-fill').style.width = game.hp + "%";
+    document.getElementById('heal-count').innerText = savedData.heals;
+    document.getElementById('weapon-name').innerText = savedData.weapon.toUpperCase();
+    
+    // ショップ画面のコイン表示
+    if (game.state === STATE.SHOP) {
+        document.getElementById('shop-coin-val').innerText = game.coins;
+    }
+}
+
+// 画面切り替え
+function toggleScreen(screenId) {
+    // 全てのオーバーレイを非表示
+    document.querySelectorAll('.overlay').forEach(el => el.classList.remove('active'));
+    
+    // 指定された画面を表示
+    if (screenId) {
+        document.getElementById(screenId).classList.add('active');
+    }
+}
+
+// --- メニュー操作 ---
+function startKyStage() {
+    game.state = STATE.PLAYING;
+    game.hp = 100;
+    game.score = 0;
+    game.coins = savedData.coins;
+    game.bullets = [];
+    game.enemies = [];
+    game.enemyBullets = [];
+    toggleScreen(null); // ゲーム画面へ
+    updateUi();
+}
+
+function showHelp() {
+    alert("【操作方法】\n移動: マウスまたはWASDキー\n射撃: クリックまたはスペースキー\n\n京葉線（赤）エリアの全10ステージを制覇せよ。\n敵を倒してコインを稼ぎ、ショップで強化！");
+}
+
+// --- ショップ操作 ---
+function openShop() {
+    if (game.state === STATE.PLAYING) return; // プレイ中は開けない
+    game.state = STATE.SHOP;
+    updateUi();
+    toggleScreen('shop-screen');
+}
+
+function closeShop() {
+    game.state = STATE.MENU;
+    toggleScreen('menu-screen');
+}
+
+function buyItem(itemType, price) {
+    if (game.coins >= price) {
+        game.coins -= price;
+        savedData.coins = game.coins; // セーブデータに反映
+
+        if (itemType === 'wide') {
+            savedData.weapon = 'wide';
+        } else if (itemType === 'heal') {
+            savedData.heals++;
+        } else if (itemType === 'skin') {
+            savedData.skin = '#ff8c00'; // 中央線オレンジスキン
+        }
+
+        saveGame(); // 即座にセーブ
+        updateUi();
+        alert("購入しました！");
+    } else {
+        alert("コインが足りません！のら。");
+    }
+}
+
+// --- ゲーム中のアイテム使用 ---
+function useHeal() {
+    if (game.state !== STATE.PLAYING) return;
+    
+    if (savedData.heals > 0 && game.hp < 100) {
+        savedData.heals--;
+        game.hp = Math.min(100, game.hp + 50); // HPを50回復
+        saveGame();
+        updateUi();
+    }
+}
+
+// --- 入力処理 ---
+window.addEventListener('keydown', e => game.keys[e.key] = true);
+window.addEventListener('keyup', e => game.keys[e.key] = false);
+
+// マウス移動
+canvas.addEventListener('mousemove', e => {
+    const rect = canvas.getBoundingClientRect();
+    game.player.x = e.clientX - rect.left;
+    //game.player.y = e.clientY - rect.top; // 上下移動は制限してもいい
+});
+
+// マウスクリック（射撃）
+canvas.addEventListener('mousedown', playerShoot);
+// スペースキー（射撃）
+window.addEventListener('keydown', e => { if (e.key === ' ') playerShoot(); });
+
+function playerShoot() {
+    if (game.state !== STATE.PLAYING) return;
+
+    // ノーマルショット
+    game.bullets.push({ x: game.player.x, y: game.player.y - 20, vy: -15 });
+
+    // ワイドショット（ショップで購入）
+    if (savedData.weapon === 'wide') {
+        game.bullets.push({ x: game.player.x, y: game.player.y - 15, vy: -14, vx: -3 });
+        game.bullets.push({ x: game.player.x, y: game.player.y - 15, vy: -14, vx: 3 });
+    }
+}
+
+// --- メインループ ---
+function mainLoop() {
+    if (game.state === STATE.PLAYING) {
+        update();
+        draw();
+    } else if (game.state === STATE.MENU || game.state === STATE.SHOP) {
+        // メニュー背景の描画（何か動かしてもいい）
+        ctx.fillStyle = '#000814';
+        ctx.fillRect(0, 0, WIDTH, HEIGHT);
+    }
+    
+    game.frame++;
+    requestAnimationFrame(mainLoop);
+}
+
+// --- アップデート（計算） ---
+function update() {
+    // 敵の生成（京葉線ギミック準拠）
+    if (game.frame % GIMMICK_KY.spawnRate === 0) {
+        game.enemies.push({
+            x: WIDTH * Math.random(),
+            y: -30,
+            hp: 3,
+            type: 'normal'
+        });
+    }
+
+    // 京葉線スペシャルギミック起動
+    GIMMICK_KY.special();
+
+    // 自機弾の移動
+    game.bullets.forEach((b, i) => {
+        b.y += b.vy;
+        b.x += (b.vx || 0);
+        if (b.y < -20) game.bullets.splice(i, 1); // 画面外
+    });
+
+    // 敵の移動と射撃
+    game.enemies.forEach((e, i) => {
+        if (e.type === 'normal') {
+            e.y += GIMMICK_KY.enemySpeed;
+            // 京葉線ギミック：たまに弾を撃つ
+            if (game.frame % 120 === 0 && Math.random() < 0.3) {
+                game.enemyBullets.push({ x: e.x, y: e.y + 15, vy: 5 });
+            }
+        } else if (e.type === 'rush') {
+            e.y += GIMMICK_KY.enemySpeed * 2.5; // 高速突進
+        }
+
+        // 画面外
+        if (e.y > HEIGHT + 50) game.enemies.splice(i, 1);
+    });
+
+    // 敵弾の移動
+    game.enemyBullets.forEach((eb, i) => {
+        eb.y += eb.vy;
+        if (eb.y > HEIGHT + 20) game.enemyBullets.splice(i, 1);
+    });
+
+    // --- 当たり判定（真面目な実装） ---
+
+    // 1. 自機弾 -> 敵
+    game.bullets.forEach((b, bi) => {
+        game.enemies.forEach((e, ei) => {
+            if (Math.hypot(b.x - e.x, b.y - e.y) < 25) { // 半径25px
+                e.hp--;
+                game.bullets.splice(bi, 1); // 弾消滅
+                if (e.hp <= 0) {
+                    game.score += 100;
+                    game.coins += 2; // 京葉線エリアはコイン渋め
+                    game.enemies.splice(ei, 1); // 敵消滅
+                    updateUi();
+                    
+                    // ステージクリア判定（スコア5000でクリアとする）
+                    if (game.score >= 5000) {
+                        endStage(true);
+                    }
                 }
             }
         });
-        if(e.y > 650) game.enemies.splice(i,1);
     });
 
-    game.eb.forEach((eb, i) => {
-        eb.x += eb.vx || 0; eb.y += eb.vy || 4;
-        if(Math.hypot(eb.x-game.p.x, eb.y-game.p.y) < 15) { game.hp -= 10; game.eb.splice(i,1); }
-        if(eb.y > 650) game.eb.splice(i,1);
+    // 2. 敵弾 -> 自機
+    game.enemyBullets.forEach((eb, bi) => {
+        if (Math.hypot(eb.x - game.player.x, eb.y - game.player.y) < 20) {
+            game.hp -= 15; // 京葉線の弾は痛い
+            game.enemyBullets.splice(bi, 1);
+            updateUi();
+            if (game.hp <= 0) {
+                endStage(false); // ゲームオーバー
+            }
+        }
     });
 
-    if(game.hp <= 0) { alert("GAME OVER"); game.state = 'menu'; toggle('m-screen'); }
-    if(game.score >= 5000) {
-        if(!user.cleared.includes(game.stage.id)) user.cleared.push(game.stage.id);
-        save(); alert("MISSION CLEAR!"); game.state = 'menu'; toggle('m-screen');
+    // 3. 敵本体 -> 自機（衝突）
+    game.enemies.forEach((e, ei) => {
+        if (Math.hypot(e.x - game.player.x, e.y - game.player.y) < 30) {
+            game.hp -= 30; // 衝突は大ダメージ
+            game.enemies.splice(ei, 1);
+            updateUi();
+            if (game.hp <= 0) {
+                endStage(false);
+            }
+        }
+    });
+}
+
+// ステージ終了処理
+function endStage(isClear) {
+    game.state = STATE.MENU;
+    
+    // データ保存
+    savedData.coins = game.coins;
+    if (isClear) {
+        alert("STAGE CLEAR!\n京葉線エリア「済」マーク点灯！\nコインを保存しましたのら。");
+        savedData.clearedKy = 1; // 済マーク（本来は配列管理）
+    } else {
+        alert("GAME OVER...\nコインは保存されますのら。");
     }
-    updateUI();
+    
+    saveGame();
+    updateUi();
+    toggleScreen('menu-screen');
 }
 
+// --- 描画（真面目な実装） ---
 function draw() {
-    ctx.clearRect(0,0,800,600);
-    if(game.state !== 'play') return;
-    // 自機
-    ctx.strokeStyle = '#fff'; ctx.strokeRect(game.p.x-10, game.p.y-10, 20, 20);
-    // 弾
-    ctx.fillStyle = '#fff'; game.bullets.forEach(b => ctx.fillRect(b.x-1, b.y-10, 2, 10));
-    // 敵
-    game.enemies.forEach(e => {
-        ctx.strokeStyle = game.stage.color;
-        ctx.strokeRect(e.x-15, e.y-15, 30, 30);
-        if(e.type === 'L3') { ctx.beginPath(); ctx.arc(e.x, e.y, 40, 0, Math.PI*2); ctx.stroke(); }
+    // 画面クリア
+    ctx.fillStyle = '#000810'; // 宇宙の濃紺
+    ctx.fillRect(0, 0, WIDTH, HEIGHT);
+
+    // 京葉線エリアの背景演出（赤い粒子）
+    for (let i = 0; i < 5; i++) {
+        ctx.fillStyle = 'rgba(255, 0, 0, 0.2)';
+        ctx.fillRect(WIDTH * Math.random(), HEIGHT * Math.random(), 2, 2);
+    }
+
+    // 自機の描画（セーブデータのスキン色）
+    ctx.fillStyle = savedData.skin;
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = GIMMICK_KY.color; // 京葉線（赤）の光
+    ctx.fillRect(game.player.x - 15, game.player.y - 15, 30, 30);
+    ctx.shadowBlur = 0; // 光リセット
+
+    // 自機弾の描画
+    ctx.fillStyle = '#0ff'; // 水色の弾
+    game.bullets.forEach(b => {
+        ctx.fillRect(b.x - 2, b.y - 10, 4, 15);
     });
-    // 敵弾
-    ctx.fillStyle = '#f00'; game.eb.forEach(eb => ctx.beginPath(); ctx.arc(eb.x, eb.y, 3, 0, Math.PI*2); ctx.fill(););
+
+    // 敵の描画
+    game.enemies.forEach(e => {
+        ctx.fillStyle = GIMMICK_KY.color; // 京葉線の敵は赤い
+        if (e.type === 'rush') ctx.fillStyle = '#fff'; // 突進は白
+        ctx.fillRect(e.x - 15, e.y - 15, 30, 30);
+    });
+
+    // 敵弾の描画
+    ctx.fillStyle = '#ff4b2b'; // オレンジがかった赤
+    game.enemyBullets.forEach(eb => {
+        ctx.beginPath();
+        ctx.arc(eb.x, eb.y, 6, 0, Math.PI * 2);
+        ctx.fill();
+    });
 }
 
-function updateUI() {
-    document.getElementById('s-val').innerText = game.score;
-    document.getElementById('c-val').innerText = user.coins;
-    document.getElementById('hp-fill').style.width = game.hp + "%";
-    document.getElementById('combo').innerText = game.combo > 1 ? game.combo + " COMBO" : "";
-}
-function toggle(id) { document.querySelectorAll('.overlay').forEach(e => e.classList.remove('active')); if(id) document.getElementById(id).classList.add('active'); }
-function back() { toggle('m-screen'); }
-function openShop() { toggle('sh-screen'); document.getElementById('sh-c').innerText = user.coins; }
-function buy(t) {
-    if(t==='wide' && user.coins >= 500) { user.coins -= 500; user.weapon = 'wide'; save(); openShop(); }
-    if(t==='heal' && user.coins >= 200) { user.coins -= 200; game.hp = 100; save(); openShop(); }
-}
-function resetData() { localStorage.clear(); location.reload(); }
-function loop() { update(); draw(); requestAnimationFrame(loop); }
-loop();
+// --- ゲーム開始 ---
+loadGame(); // セーブデータロード
+updateUi(); // UI初期化
+mainLoop(); // ループ開始
+
 </script>
 </body>
 </html>
