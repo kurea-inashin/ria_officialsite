@@ -4,68 +4,75 @@
     <meta charset="UTF-8">
     <title>Minami Project 2026</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+JP:wght@300;700&display=swap');
-        body { margin: 0; background: #000810; color: #e0e0e0; font-family: 'Press Start 2P', cursive; overflow: hidden; }
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+JP:wght@700&display=swap');
+        body { margin: 0; background: #000; color: #fff; font-family: 'Press Start 2P', cursive; overflow: hidden; }
         canvas { display: block; }
-        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,10,0.95); display: flex; flex-direction: column; align-items: center; z-index: 20; overflow-y: auto; padding-bottom: 50px; }
-        h1 { font-size: 18px; margin: 30px 0; color: #fff; text-shadow: 0 0 10px #00ffff; }
-        .section-title { font-size: 12px; color: #888; margin: 20px 0 10px; border-bottom: 1px solid #334; width: 80%; text-align: center; }
+
+        /* UI Screens */
+        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,10,0.95); display: flex; flex-direction: column; align-items: center; z-index: 20; padding-top: 40px; }
         .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 90%; max-width: 600px; }
-        .item-btn, .action-btn { background: #050515; border: 2px solid #223; padding: 10px; cursor: pointer; text-align: center; border-radius: 4px; transition: 0.2s; }
-        .item-btn:hover, .action-btn:hover { background: #112; border-color: #0ff; }
-        .item-btn.equipped { background: #004433; border-color: #00ffcc; }
+        
+        /* Buttons */
+        .btn { background: #000810; border: 2px solid #333; padding: 12px; cursor: pointer; text-align: center; border-radius: 4px; transition: 0.2s; }
+        .btn:hover { border-color: #0ff; }
+        
         .item-name { font-size: 8px; display: block; margin-bottom: 5px; }
-        .item-price { font-size: 7px; color: #ffd700; }
-        .star-rating { font-size: 7px; color: #ffd700; margin-top: 4px; }
-        .manual-text { font-family: 'Noto Sans JP'; font-size: 12px; line-height: 1.8; background: #000; padding: 20px; border: 1px solid #222; max-width: 500px; }
+        .item-status { font-size: 7px; color: #888; }
+
+        /* Manual Text */
+        .manual-box { font-family: 'Noto Sans JP'; font-size: 13px; line-height: 1.8; background: #111; padding: 25px; border: 1px solid #333; max-width: 500px; margin: 20px; text-align: left; }
+
+        /* HUD */
         #hud { position: absolute; top: 20px; left: 20px; z-index: 10; pointer-events: none; }
         #score-val { font-size: 20px; color: #fff; }
-        #hp-bar { width: 200px; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; margin-top: 10px; border: 1px solid #333; }
-        #hp-fill { height: 100%; background: linear-gradient(90deg, #ff0044, #fff); width: 100%; transition: width 0.2s; }
-        .copy-right { margin-top: 50px; font-size: 9px; color: #334; letter-spacing: 1px; }
+        #hp-bar { width: 200px; height: 8px; background: #222; border: 1px solid #fff; margin-top: 10px; }
+        #hp-fill { height: 100%; background: #fff; width: 100%; }
+
+        .copy-right { position: absolute; bottom: 20px; font-size: 8px; color: #444; }
     </style>
 </head>
 <body>
 
     <div id="hud">
         <div id="score-val">000000</div>
-        <div id="coin-val" style="color:#ffd700; font-size:12px; margin-top:5px;">COINS: 0</div>
+        <div id="coin-info" style="color:#ffd700; font-size:12px; margin-top:5px;">COINS: 0</div>
         <div id="hp-bar"><div id="hp-fill"></div></div>
     </div>
 
     <div id="menu" class="overlay">
         <h1>MINAMI PROJECT 2026</h1>
-        <div class="action-btn" style="width:220px; margin-bottom:20px;" onclick="showScreen('how-to-screen')">HOW TO PLAY</div>
-        <div class="section-title">SELECT SECTOR</div>
+        <div class="btn" style="width:200px; margin-bottom:30px;" onclick="showUI('how-to')">HOW TO PLAY</div>
+        
+        <div style="font-size:10px; color:#666; margin-bottom:10px;">- SELECT STAGE -</div>
         <div class="grid" id="stage-grid"></div>
-        <div class="section-title">EQUIPMENT & SHOP</div>
-        <div class="grid" id="shop-grid">
-            <div id="shop-Default" class="item-btn" onclick="buy('skin','Default',0)"><span class="item-name">雫 (DF)</span><span class="item-price">OWNED</span></div>
-            <div id="shop-Train" class="item-btn" onclick="buy('skin','Train',3000)"><span class="item-name">電車 (EX)</span><span class="item-price">3000 C</span></div>
-            <div id="shop-AutoHeal" class="item-btn" onclick="buy('item','AutoHeal',5000)"><span class="item-name">自動回復</span><span class="item-price">5000 C</span></div>
+
+        <div style="font-size:10px; color:#666; margin-top:30px; margin-bottom:10px;">- SHOP -</div>
+        <div class="grid">
+            <div class="btn" onclick="buyItem('AutoHeal', 5000)"><span class="item-name">AUTO HEAL</span><span class="item-status" id="status-AutoHeal">5000 C</span></div>
+            <div class="btn" onclick="buyItem('Burst', 8000)"><span class="item-name">BURST CORE</span><span class="item-status" id="status-Burst">8000 C</span></div>
         </div>
+
         <div class="copy-right">© 2026 MINAMI ALL RIGHTS RESERVED / Chromatic Resonance</div>
     </div>
 
-    <div id="how-to-screen" class="overlay" style="display:none;">
-        <h1>MANUAL</h1>
-        <div class="manual-text">
-            【操作】マウス移動 / 左クリック：射撃 / スペース：必殺技<br><br>
+    <div id="how-to" class="overlay" style="display:none">
+        <h1>HOW TO PLAY</h1>
+        <div class="manual-box">
+            【操作】<br>
+            ・マウス移動：自機操作<br>
+            ・左クリック：攻撃<br>
+            ・スペース：必殺バースト（購入時）<br><br>
             【ギミック】<br>
-            ST=SB: Warp(瞬間移動) / ST=KT: Dash(急加速)<br>
-            ST=SK: Shield(高耐久) / ST=KY: Wind(蛇行)<br><br>
-            全路線を制覇したとき、中央線(ST=CO)への道が開かれる。
+            各路線ごとに特殊な挙動（瞬間移動、蛇行、急加速、盾）が発生します。<br>
+            全ステージクリアで「ST=CO」が解放されます。
         </div>
-        <div class="action-btn" style="margin-top:30px; width:150px;" onclick="showScreen('menu')">RETURN</div>
+        <div class="btn" style="width:120px" onclick="showUI('menu')">BACK</div>
     </div>
 
-    <div id="result-screen" class="overlay" style="display:none;">
-        <h1 id="result-title">FAILED</h1>
-        <div id="result-stats" style="margin-bottom:30px; color:#ffd700;"></div>
-        <div class="grid" style="grid-template-columns: 1fr 1fr; width: 400px;">
-            <div class="action-btn" onclick="continueGame()">CONTINUE<br><span style="font-size:7px;">(500 Coins)</span></div>
-            <div class="action-btn" onclick="location.reload()">RESTART</div>
-        </div>
+    <div id="result" class="overlay" style="display:none">
+        <h1 id="res-title">FAILED</h1>
+        <div class="btn" style="width:240px; margin-bottom:15px;" onclick="doContinue()">CONTINUE (500 COINS)</div>
+        <div class="btn" style="width:240px;" onclick="location.reload()">RESTART</div>
     </div>
 
     <canvas id="game"></canvas>
@@ -75,147 +82,150 @@
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth; canvas.height = window.innerHeight;
 
-        let saveData = JSON.parse(localStorage.getItem('minami_v2_save') || '{"coins":0, "owned":["Default"], "equippedSkin":"Default", "items":[], "cleared":{}}');
+        let saveData = JSON.parse(localStorage.getItem('minami_2026_vFinal') || '{"coins":0, "items":[], "cleared":[]}');
         let gameActive = false, score = 0, hp = 100, frame = 0;
-        let bullets = [], eBullets = [], enemies = [], ripples = [], particles = [];
-        let player = { x: canvas.width/2, y: canvas.height/2 };
+        let player = { x: 0, y: 0 }, bullets = [], eBullets = [], enemies = [], particles = [], ripples = [];
         let currentMode = null;
 
+        // 提示されたコードのパラメータとギミック
         const config = {
-            SB: { color: '#ffff00', spawn: 0.05, hp: 2, target: 3000, g: 'warp', power: 1, bSize: 6, stars: 1 },
-            KT: { color: '#0088cc', spawn: 0.07, hp: 2, target: 5000, g: 'dash', power: 1, bSize: 6, stars: 1 },
-            SK: { color: '#00ff44', spawn: 0.08, hp: 8, target: 10000, g: 'shield', power: 2, bSize: 8, stars: 4 },
-            KY: { color: '#ff0044', spawn: 0.15, hp: 3, target: 10000, g: 'wind', power: 1, bSize: 6, stars: 5 },
-            CO: { color: '#ff6600', spawn: 1.50, hp: 100, target: 373000, g: 'rush', power: 20, bSize: 20, stars: 50 }
+            SB: { color: '#ffff00', spawn: 0.05, hp: 2, target: 3000, g: 'warp' },
+            KT: { color: '#0088cc', spawn: 0.07, hp: 3, target: 5000, g: 'dash' },
+            SK: { color: '#00ff44', spawn: 0.08, hp: 10, target: 8000, g: 'shield' },
+            KY: { color: '#ff0044', spawn: 0.15, hp: 4, target: 10000, g: 'wind' },
+            CO: { color: '#ff6600', spawn: 1.5, hp: 150, target: 373000, g: 'rush' }
         };
 
-        function showScreen(id) {
+        function showUI(id) {
             document.querySelectorAll('.overlay').forEach(el => el.style.display = 'none');
-            document.getElementById(id).style.display = 'flex';
+            if(id !== 'none') document.getElementById(id).style.display = 'flex';
         }
 
         function initUI() {
             const grid = document.getElementById('stage-grid'); grid.innerHTML = '';
+            const allCleared = Object.keys(config).filter(k=>k!=='CO').every(k=>saveData.cleared.includes(k));
+            
             Object.keys(config).forEach(id => {
+                if(id === 'CO' && !allCleared) return;
                 const btn = document.createElement('div');
-                btn.className = `item-btn ${id}`; btn.style.borderColor = config[id].color;
-                btn.innerHTML = `<span class="item-name">ST=${id}</span><span class="star-rating">${'★'.repeat(Math.ceil(config[id].stars/10)||1)}</span><span class="item-price">${saveData.cleared[id] || 'NEW'}</span>`;
-                btn.onclick = () => start(id); grid.appendChild(btn);
+                btn.className = 'btn';
+                btn.style.color = config[id].color;
+                btn.innerHTML = `<span class="item-name">ST=${id}</span><span class="item-status">${saveData.cleared.includes(id)?'CLEARED':'NEW'}</span>`;
+                btn.onclick = () => startGame(id);
+                grid.appendChild(btn);
             });
-            document.getElementById('coin-val').innerText = `COINS: ${saveData.coins}`;
+            document.getElementById('coin-info').innerText = `COINS: ${saveData.coins}`;
+            saveData.items.forEach(i => { document.getElementById('status-'+i).innerText = 'EQUIPPED'; });
         }
 
-        function buy(type, name, price) {
-            if(!saveData.owned.includes(name) && !saveData.items.includes(name)) {
-                if(saveData.coins >= price) { 
-                    saveData.coins -= price; 
-                    if(type === 'skin') saveData.owned.push(name); else saveData.items.push(name);
-                } else { alert("Insufficient Coins"); return; }
+        function buyItem(id, price) {
+            if(!saveData.items.includes(id) && saveData.coins >= price) {
+                saveData.coins -= price; saveData.items.push(id);
+                localStorage.setItem('minami_2026_vFinal', JSON.stringify(saveData)); initUI();
             }
-            if(type === 'skin') saveData.equippedSkin = name;
-            localStorage.setItem('minami_v2_save', JSON.stringify(saveData)); initUI();
         }
 
-        function start(id) {
-            currentMode = { ...config[id], id: id };
+        function startGame(id) {
+            currentMode = { ...config[id], id };
             score = 0; hp = 100; frame = 0;
-            enemies = []; bullets = []; eBullets = []; ripples = []; particles = [];
-            document.querySelectorAll('.overlay').forEach(el => el.style.display = 'none');
-            gameActive = true; loop();
+            bullets = []; eBullets = []; enemies = []; particles = []; ripples = [];
+            showUI('none'); gameActive = true; loop();
         }
 
-        function continueGame() {
+        function doContinue() {
             if(saveData.coins >= 500) {
                 saveData.coins -= 500; hp = 100; eBullets = [];
-                document.getElementById('result-screen').style.display = 'none';
-                gameActive = true; loop();
+                showUI('none'); gameActive = true; loop();
             }
         }
 
-        window.addEventListener('mousemove', e => { player.x = e.clientX; player.y = e.clientY; });
-        let isDown = false; 
-        window.addEventListener('mousedown', () => isDown = true); 
-        window.addEventListener('mouseup', () => isDown = false);
+        window.onmousemove = e => { player.x = e.clientX; player.y = e.clientY; };
+        let isShooting = false;
+        window.onmousedown = () => isShooting = true; window.onmouseup = () => isShooting = false;
+        window.onkeydown = e => {
+            if(e.code === 'Space' && saveData.items.includes('Burst')) {
+                ripples.push({x: player.x, y: player.y, r: 0, a: 1, burst: true});
+                enemies.forEach(en => { en.hp -= 30; if(en.hp<=0) score+=100; });
+                enemies = enemies.filter(en => en.hp > 0);
+            }
+        };
 
-        function update() {
+        function loop() {
+            if(!gameActive) return;
             frame++;
             if(saveData.items.includes('AutoHeal') && frame % 120 === 0 && hp < 100) hp++;
-            if(isDown && frame % 5 === 0) bullets.push({x: player.x, y: player.y-10, vy: -15, size: currentMode.bSize, pwr: currentMode.power});
-            
-            bullets.forEach((b, i) => { b.y += b.vy; if(b.y < -30) bullets.splice(i, 1); });
 
-            // 敵の生成とギミック
+            if(isShooting && frame % 5 === 0) bullets.push({x: player.x, y: player.y-15, v: -18});
+            bullets.forEach((b, i) => { b.y += b.v; if(b.y < -30) bullets.splice(i, 1); });
+
             if(Math.random() < currentMode.spawn) {
-                enemies.push({ x: Math.random()*canvas.width, y: -50, hp: currentMode.hp, vx: (Math.random()-0.5)*4, vy: 2, t: 0, g: currentMode.g });
+                enemies.push({ x: Math.random()*canvas.width, y: -50, hp: currentMode.hp, t: 0, g: currentMode.g });
             }
 
             enemies.forEach((e, i) => {
                 e.t++;
-                // 【ギミックロジック復元】
+                // ギミック（提示されたロジックそのまま）
                 if(e.g === 'warp' && e.t % 80 === 0) {
-                    ripples.push({x: e.x, y: e.y, r: 10, a: 1});
-                    e.x = Math.random()*canvas.width; e.y += 40;
+                    ripples.push({x: e.x, y: e.y, r: 10, a: 0.5, burst: false});
+                    e.x = Math.random()*canvas.width; e.y += 50;
                 } else if(e.g === 'wind') {
-                    e.x += Math.sin(e.t * 0.05) * 10; e.y += 1;
+                    e.x += Math.sin(e.t * 0.1) * 10; e.y += 2;
                 } else if(e.g === 'dash' && e.t > 40) {
-                    e.y += 10;
+                    e.y += 12;
+                } else if(e.g === 'shield') {
+                    e.y += 1;
                 } else if(e.g === 'rush') {
-                    e.y += 12; e.x += Math.sin(e.t) * 20;
+                    e.y += 15; e.x += Math.sin(e.t) * 15;
                 } else {
-                    e.y += e.vy; e.x += e.vx;
+                    e.y += 3;
                 }
 
-                // 【敵の攻撃復元】
-                if(e.t % 90 === 0) eBullets.push({x: e.x, y: e.y, vy: 6});
+                // 敵の弾（復活）
+                if(e.t % 90 === 0) eBullets.push({x: e.x, y: e.y, v: 6});
 
                 bullets.forEach((b, bi) => {
                     if(Math.hypot(e.x-b.x, e.y-b.y) < 25) {
-                        e.hp -= b.pwr; bullets.splice(bi, 1);
-                        if(e.hp <= 0) { 
-                            score += 100; 
-                            if(Math.random()<0.4) particles.push({x: e.x, y: e.y, vx: (Math.random()-0.5)*5, vy: (Math.random()-0.5)*5});
-                            enemies.splice(i, 1); 
+                        e.hp -= 1; bullets.splice(bi, 1);
+                        if(e.hp <= 0) {
+                            score += 100;
+                            if(Math.random()<0.4) particles.push({x:e.x, y:e.y, vx:(Math.random()-0.5)*6, vy:(Math.random()-0.5)*6});
+                            enemies.splice(i, 1);
                             if(score >= currentMode.target) finish(true);
                         }
                     }
                 });
-                if(Math.hypot(e.x-player.x, e.y-player.y) < 25) hp -= 1;
-                if(e.y > canvas.height + 50) enemies.splice(i,1);
+                if(Math.hypot(e.x-player.x, e.y-player.y) < 25) hp -= 0.5;
             });
 
             eBullets.forEach((eb, i) => {
-                eb.y += eb.vy;
-                if(Math.hypot(eb.x-player.x, eb.y-player.y) < 15) { hp -= 8; eBullets.splice(i,1); }
-                if(eb.y > canvas.height) eBullets.splice(i,1);
+                eb.y += eb.v;
+                if(Math.hypot(eb.x-player.x, eb.y-player.y) < 15) { hp -= 10; eBullets.splice(i, 1); }
+                else if(eb.y > canvas.height) eBullets.splice(i, 1);
             });
 
-            particles.forEach((p, i) => {
-                let dx = player.x - p.x, dy = player.y - p.y, dist = Math.hypot(dx, dy);
-                if(dist < 200) { p.x += dx/15; p.y += dy/15; }
-                if(dist < 20) { saveData.coins += 10; particles.splice(i, 1); }
+            particles.forEach((part, i) => {
+                let dx = player.x - part.x, dy = player.y - part.y, d = Math.hypot(dx, dy);
+                if(d < 200) { part.x += dx/10; part.y += dy/10; }
+                if(d < 20) { saveData.coins += 10; particles.splice(i, 1); }
             });
 
             if(hp <= 0) finish(false);
             document.getElementById('hp-fill').style.width = hp + "%";
             document.getElementById('score-val').innerText = score.toString().padStart(6, '0');
+            document.getElementById('coin-info').innerText = `COINS: ${saveData.coins}`;
         }
 
         function draw() {
-            ctx.fillStyle = "rgba(0, 5, 15, 0.5)"; ctx.fillRect(0,0,canvas.width, canvas.height);
+            ctx.fillStyle = "rgba(0, 0, 10, 0.4)"; ctx.fillRect(0,0,canvas.width, canvas.height);
             // 自機
-            ctx.save(); ctx.translate(player.x, player.y);
-            if(saveData.equippedSkin === 'Train') {
-                ctx.fillStyle = "#fff"; ctx.fillRect(-10, -15, 20, 30);
-                ctx.fillStyle = "#333"; ctx.fillRect(-10, -5, 20, 3);
-            } else {
-                ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.moveTo(0,-15); ctx.lineTo(12,10); ctx.lineTo(-12,10); ctx.closePath(); ctx.fill();
-            }
-            ctx.restore();
-
-            bullets.forEach(b => { ctx.fillStyle = "#0ff"; ctx.fillRect(b.x-b.size/2, b.y, b.size, b.size*2); });
-            eBullets.forEach(eb => { ctx.fillStyle = "#f04"; ctx.beginPath(); ctx.arc(eb.x, eb.y, 5, 0, Math.PI*2); ctx.fill(); });
-            enemies.forEach(e => { ctx.strokeStyle = currentMode.color; ctx.lineWidth=3; ctx.strokeRect(e.x-15, e.y-15, 30, 30); });
-            particles.forEach(p => { ctx.fillStyle="#ffd700"; ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI*2); ctx.fill(); });
+            ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(player.x, player.y, 10, 0, Math.PI*2); ctx.fill();
+            // 弾
+            bullets.forEach(b => { ctx.fillStyle = "#fff"; ctx.fillRect(b.x-2, b.y, 4, 10); });
+            eBullets.forEach(eb => { ctx.fillStyle = "#f00"; ctx.beginPath(); ctx.arc(eb.x, eb.y, 5, 0, Math.PI*2); ctx.fill(); });
+            // 敵
+            enemies.forEach(e => { ctx.strokeStyle = currentMode.color; ctx.lineWidth = 2; ctx.strokeRect(e.x-15, e.y-15, 30, 30); });
+            // パーティクル・エフェクト
+            particles.forEach(part => { ctx.fillStyle = "#ffd700"; ctx.beginPath(); ctx.arc(part.x, part.y, 3, 0, Math.PI*2); ctx.fill(); });
             ripples.forEach((r, i) => {
                 ctx.strokeStyle = `rgba(0, 255, 255, ${r.a})`; ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, Math.PI*2); ctx.stroke();
                 r.r += 2; r.a -= 0.02; if(r.a <= 0) ripples.splice(i, 1);
@@ -224,11 +234,11 @@
 
         function finish(isClear) {
             gameActive = false;
-            if(isClear) { 
-                saveData.cleared[currentMode.id] = "COMPLETE"; 
-                alert("SECTOR CLEARED"); location.reload(); 
-            } else { showScreen('result-screen'); }
-            localStorage.setItem('minami_v2_save', JSON.stringify(saveData));
+            if(isClear) {
+                if(!saveData.cleared.includes(currentMode.id)) saveData.cleared.push(currentMode.id);
+                alert("STAGE CLEAR!"); location.reload();
+            } else { showUI('result'); }
+            localStorage.setItem('minami_2026_vFinal', JSON.stringify(saveData));
         }
 
         function loop() { if(!gameActive) return; update(); draw(); requestAnimationFrame(loop); }
