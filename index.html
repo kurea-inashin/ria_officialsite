@@ -2,262 +2,263 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>MINAMI SHOOTING GAME PROJECT 2026</title>
+<title>MINAMI PROJECT 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
 <style>
 body{
     margin:0;
-    background:#071a2f;
+    background:#000;
     color:white;
-    font-family:sans-serif;
+    font-family:'Press Start 2P', monospace;
+    overflow:hidden;
+}
+
+.hidden{ display:none; }
+
+.center{
     text-align:center;
 }
-canvas{
-    background:#0d2b4d;
-    display:none;
-    margin:auto;
-    border:2px solid #1e90ff;
+
+/* タイトル */
+h1{
+    margin-top:40px;
+    letter-spacing:6px;
+    font-size:28px;
 }
-.menu{
+
+/* 説明パネル */
+.info-box{
+    width:600px;
+    margin:30px auto;
     padding:20px;
+    background:rgba(255,255,255,0.05);
+    border-radius:15px;
+    text-align:left;
+    line-height:1.8em;
 }
-button{
+
+/* グリッド */
+.grid{
+    display:grid;
+    grid-template-columns:repeat(3, 260px);
+    gap:25px;
+    justify-content:center;
+    margin-top:40px;
+}
+
+.stage{
+    padding:25px;
+    border-radius:15px;
+    border:3px solid;
+    background:#000;
+    cursor:pointer;
+    transition:0.3s;
+    text-align:center;
+}
+
+.stage:hover{
+    transform:scale(1.05);
+    box-shadow:0 0 20px currentColor;
+}
+
+.stage span{
+    display:block;
+    margin-top:15px;
+    font-size:12px;
+}
+
+.yellow{ color:#ffd400; border-color:#ffd400; }
+.blue{ color:#00c8ff; border-color:#00c8ff; }
+.green{ color:#00ff8c; border-color:#00ff8c; }
+.red{ color:#ff0044; border-color:#ff0044; }
+.pink{ color:#ff66aa; border-color:#ff66aa; }
+.cyan{ color:#00ffff; border-color:#00ffff; }
+.purple{ color:#c000ff; border-color:#c000ff; }
+.gray{ color:#888; border-color:#888; }
+
+hr{
+    margin:60px auto;
+    width:70%;
+    border:1px solid #222;
+}
+
+.footer{
+    margin:40px 0;
+    font-size:12px;
+    color:#444;
+    text-align:center;
+}
+
+/* ゲーム画面 */
+#gameCanvas{
+    background:#000;
+    display:block;
+    margin:0 auto;
+}
+
+.backBtn{
+    position:absolute;
+    top:20px;
+    left:20px;
     padding:10px 20px;
-    margin:5px;
-    background:#1e90ff;
-    border:none;
+    border:2px solid white;
+    background:none;
     color:white;
     cursor:pointer;
+    font-family:'Press Start 2P';
 }
-button.locked{
-    background:gray;
-}
-#ui{
-    position:absolute;
-    top:10px;
-    left:10px;
-    text-align:left;
-}
-.footer{
-    margin-top:20px;
-    font-size:12px;
+.backBtn:hover{
+    box-shadow:0 0 10px white;
 }
 </style>
 </head>
+
 <body>
 
-<div class="menu" id="menu">
-<h1>MINAMI SHOOTING GAME PROJECT 2026</h1>
-<div id="stageSelect"></div>
+<!-- ===== メニュー ===== -->
+<div id="menu">
+
+<h1 class="center">MINAMI PROJECT 2026</h1>
+
+<div class="info-box">
+【操作方法】<br>
+・マウス移動：霊（白機）を操る<br>
+・左クリック：想い（弾）を放つ<br>
+・敵に当たると終了
 </div>
 
-<canvas id="game" width="800" height="600"></canvas>
-<div id="ui"></div>
+<div class="grid">
+<div class="stage yellow" onclick="startGame(1)">ST-SB<span>★★★★★</span></div>
+<div class="stage blue" onclick="startGame(2)">ST-KT<span>★★★★★</span></div>
+<div class="stage green" onclick="startGame(3)">ST-SK<span>★★★★★</span></div>
 
+<div class="stage red" onclick="startGame(4)">ST-KY<span>★★★★★</span></div>
+<div class="stage pink" onclick="startGame(5)">ST-PK<span>★★★★★</span></div>
+<div class="stage cyan" onclick="startGame(6)">ST-JB<span>★★★★★</span></div>
+
+<div class="stage purple" onclick="startGame(7)">ST-HM<span>★★★★★</span></div>
+<div class="stage gray" onclick="startGame(8)">ST-KS<span>★★★★★</span></div>
+<div class="stage blue" onclick="startGame(9)">ST-TY<span>★★★★★</span></div>
+</div>
+
+<hr>
 <div class="footer">
-© 2026 MINAMI SHOOTING GAME PROJECT
-All Rights Reserved.
+©MINAMI PROJECT 2026 / Chromatic Resonance
 </div>
+
+</div>
+
+
+<!-- ===== ゲーム画面 ===== -->
+<div id="game" class="hidden">
+<button class="backBtn" onclick="backToMenu()">BACK</button>
+<canvas id="gameCanvas" width="800" height="600"></canvas>
+</div>
+
 
 <script>
-const canvas = document.getElementById("game");
-const ctx = canvas.getContext("2d");
+let canvas = document.getElementById("gameCanvas");
+let ctx = canvas.getContext("2d");
 
-let player, bullets, enemies, enemyBullets;
-let score=0, hp=4, coin=0;
-let currentStage=1;
-let stageUnlocked=[true,true,true,true,true,true,true,true,true,false,false,false,false];
-let stageNoMissClear=[false,false,false,false,false,false,false,false,false,false,false,false,false];
-let noMiss=true;
+let player = { x:400, y:500, size:8 };
+let bullets = [];
+let enemies = [];
+let gameOver = false;
+let stageLevel = 1;
 
-let mouseX=400, mouseY=500;
-let mouseDown=false;
-let fireCooldown=0;
+function startGame(level){
+    stageLevel = level;
+    document.getElementById("menu").classList.add("hidden");
+    document.getElementById("game").classList.remove("hidden");
 
-const stageData=[
-{level:2,target:5000},
-{level:3,target:8000},
-{level:4,target:11000},
-{level:5,target:15000},
-{level:6,target:18000},
-{level:7,target:22000},
-{level:8,target:26000},
-{level:9,target:30000},
-{level:10,target:35000},
-{level:12,target:45000},
-{level:14,target:60000},
-{level:16,target:80000},
-{level:20,target:120000}
-];
+    bullets = [];
+    enemies = [];
+    gameOver = false;
 
-function initPlayer(){
-player={x:400,y:500,size:15,speed:5};
+    spawnEnemy();
+    requestAnimationFrame(gameLoop);
 }
+
+function backToMenu(){
+    document.getElementById("menu").classList.remove("hidden");
+    document.getElementById("game").classList.add("hidden");
+}
+
+canvas.addEventListener("mousemove", e=>{
+    let rect = canvas.getBoundingClientRect();
+    player.x = e.clientX - rect.left;
+    player.y = e.clientY - rect.top;
+});
+
+canvas.addEventListener("click", ()=>{
+    bullets.push({x:player.x, y:player.y});
+});
 
 function spawnEnemy(){
-let level=stageData[currentStage-1].level;
-enemies.push({
-x:Math.random()*760+20,
-y:-20,
-size:15,
-hp:level,
-speed:1+level*0.15,
-cool:0
-});
-}
-
-function drawPlayer(){
-ctx.fillStyle="cyan";
-ctx.fillRect(player.x,player.y,player.size,player.size);
-}
-
-function drawUI(){
-document.getElementById("ui").innerHTML=
-"SCORE: "+score+
-"<br>HP: "+hp+
-"<br>COIN: "+coin;
+    enemies.push({
+        x:Math.random()*760+20,
+        y:-20,
+        speed:2 + stageLevel*0.5
+    });
 }
 
 function update(){
-ctx.clearRect(0,0,800,600);
+    bullets.forEach(b=> b.y -= 6);
+    enemies.forEach(e=> e.y += e.speed);
 
-player.x = mouseX - player.size/2;
-player.y = mouseY - player.size/2;
+    enemies.forEach(e=>{
+        if(Math.hypot(e.x-player.x, e.y-player.y) < 15){
+            gameOver = true;
+        }
+    });
 
-drawPlayer();
+    enemies = enemies.filter(e=> e.y < 650);
 
-// ===== 自動連射 =====
-if(mouseDown){
-    if(fireCooldown<=0){
-        bullets.push({
-            x:player.x+player.size/2-2,
-            y:player.y
-        });
-        fireCooldown=15-Math.min(stageData[currentStage-1].level,10);
+    if(Math.random() < 0.02*stageLevel){
+        spawnEnemy();
     }
 }
-if(fireCooldown>0) fireCooldown--;
 
-// ===== プレイヤー弾 =====
-bullets.forEach((b,i)=>{
-b.y-=8;
-ctx.fillStyle="yellow";
-ctx.fillRect(b.x,b.y,5,10);
-if(b.y<0) bullets.splice(i,1);
-});
+function draw(){
+    ctx.clearRect(0,0,800,600);
 
-// ===== 敵 =====
-enemies.forEach((e,ei)=>{
-e.y+=e.speed;
-ctx.fillStyle="red";
-ctx.fillRect(e.x,e.y,e.size,e.size);
+    // プレイヤー
+    ctx.fillStyle="white";
+    ctx.beginPath();
+    ctx.arc(player.x, player.y, player.size, 0, Math.PI*2);
+    ctx.fill();
 
-if(e.cool<=0){
-enemyBullets.push({x:e.x+7,y:e.y+15});
-e.cool=60-stageData[currentStage-1].level;
-}
-e.cool--;
+    // 弾
+    bullets.forEach(b=>{
+        ctx.fillRect(b.x-2,b.y-8,4,8);
+    });
 
-bullets.forEach((b,bi)=>{
-if(b.x<e.x+e.size && b.x+5>e.x && b.y<e.y+e.size && b.y+10>e.y){
-e.hp--;
-bullets.splice(bi,1);
-if(e.hp<=0){
-score+=100*stageData[currentStage-1].level;
-coin+=5;
-enemies.splice(ei,1);
-}
-}
-});
+    // 敵
+    ctx.fillStyle="red";
+    enemies.forEach(e=>{
+        ctx.beginPath();
+        ctx.arc(e.x,e.y,10,0,Math.PI*2);
+        ctx.fill();
+    });
 
-if(e.y>600) enemies.splice(ei,1);
-});
-
-// ===== 敵弾 =====
-enemyBullets.forEach((b,bi)=>{
-b.y+=5;
-ctx.fillStyle="white";
-ctx.fillRect(b.x,b.y,4,8);
-
-if(b.x<player.x+player.size &&
-b.x+4>player.x &&
-b.y<player.y+player.size &&
-b.y+8>player.y){
-hp--;
-noMiss=false;
-enemyBullets.splice(bi,1);
-if(hp<=0) endGame(false);
-}
-});
-
-if(Math.random()<0.02) spawnEnemy();
-
-drawUI();
-
-if(score>=stageData[currentStage-1].target){
-endGame(true);
+    if(gameOver){
+        ctx.fillStyle="white";
+        ctx.font="20px 'Press Start 2P'";
+        ctx.fillText("GAME OVER",250,300);
+    }
 }
 
-requestAnimationFrame(update);
+function gameLoop(){
+    if(!gameOver){
+        update();
+        draw();
+        requestAnimationFrame(gameLoop);
+    }else{
+        draw();
+    }
 }
-
-function startStage(n){
-currentStage=n;
-score=0; hp=4; bullets=[]; enemies=[]; enemyBullets=[];
-noMiss=true;
-document.getElementById("menu").style.display="none";
-canvas.style.display="block";
-initPlayer();
-update();
-}
-
-function endGame(clear){
-canvas.style.display="none";
-document.getElementById("menu").style.display="block";
-
-if(clear){
-alert("STAGE CLEAR!");
-stageNoMissClear[currentStage-1]=noMiss;
-
-// 9面クリアでシークレット解放
-if(stageUnlocked.slice(0,9).every(v=>v)){
-stageUnlocked[9]=true;
-stageUnlocked[10]=true;
-stageUnlocked[11]=true;
-}
-
-// 全ノーミスでFINAL解放
-if(stageNoMissClear.slice(0,12).every(v=>v)){
-stageUnlocked[12]=true;
-}
-}else{
-alert("GAME OVER");
-}
-createStageButtons();
-}
-
-function createStageButtons(){
-let html="";
-for(let i=1;i<=13;i++){
-let locked=!stageUnlocked[i-1];
-html+=`<button class="${locked?'locked':''}"
-${locked?'disabled':''}
-onclick="startStage(${i})">
-STAGE ${i}
-</button>`;
-}
-document.getElementById("stageSelect").innerHTML=html;
-}
-
-canvas.addEventListener("mousemove",e=>{
-const rect=canvas.getBoundingClientRect();
-mouseX=e.clientX-rect.left;
-mouseY=e.clientY-rect.top;
-});
-
-canvas.addEventListener("mousedown",()=>{mouseDown=true;});
-canvas.addEventListener("mouseup",()=>{mouseDown=false;});
-
-createStageButtons();
 </script>
+
 </body>
 </html>
