@@ -1,51 +1,43 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ja">
 <head>
     <meta charset="UTF-8">
     <title>Minami Project 2026</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+JP:wght@300;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+JP:wght@300&display=swap');
         
-        /* 1. 背景をさらに暗いミステリアスな青へ */
-        body { margin: 0; background: #00040a; color: #e0e0e0; font-family: 'Press Start 2P', cursive; overflow: hidden; }
+        body { margin: 0; background: #000510; color: #fff; font-family: 'Press Start 2P', cursive; overflow: hidden; }
         
-        /* 背景の波Canvas (一番奥) */
-        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; opacity: 0.6; }
+        /* ミステリアスな青いなみの背景 */
+        #bg-canvas { position: fixed; top: 0; left: 0; z-index: 1; }
+        #game-canvas { position: fixed; top: 0; left: 0; z-index: 5; pointer-events: none; }
 
-        /* MENU (波の上) */
-        #menu { position: relative; width: 100%; height: 100vh; background: rgba(0, 5, 15, 0.6); display: flex; flex-direction: column; align-items: center; z-index: 10; overflow-y: auto; padding-bottom: 50px; backdrop-filter: blur(8px); }
+        #menu { position: relative; width: 100%; height: 100vh; background: rgba(0, 8, 20, 0.6); display: flex; flex-direction: column; align-items: center; z-index: 10; overflow-y: auto; backdrop-filter: blur(10px); }
         
-        /* ゲームCanvas (最前面) */
-        #game-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 5; pointer-events: none; }
+        /* HP & スコア表示 (ご要望通りしっかり表示) */
+        #hud { position: fixed; top: 20px; left: 20px; z-index: 100; visibility: hidden; }
+        #score-display { font-size: 18px; margin-bottom: 5px; }
+        #hp-container { width: 200px; height: 10px; border: 1px solid #fff; }
+        #hp-bar { height: 100%; background: #fff; width: 100%; transition: 0.2s; }
 
-        /* HUD (最前面) */
-        #hud { position: fixed; top: 20px; left: 20px; z-index: 100; pointer-events: none; visibility: hidden; }
-        #score-val { font-size: 20px; color: #fff; margin-bottom: 5px; text-shadow: 0 0 10px rgba(0,255,255,0.8); }
-        #coin-display { font-size: 14px; color: #ffd700; margin-bottom: 10px; }
-        #hp-bar { width: 200px; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; }
-        #hp-fill { height: 100%; background: #fff; width: 100%; transition: width 0.3s ease; box-shadow: 0 0 10px #fff; }
-
-        h1 { font-size: 16px; margin: 30px 0; color: #fff; letter-spacing: 2px; text-shadow: 0 0 15px rgba(0,200,255,0.8); }
-        #menu-coin-status { font-size: 16px; color: #ffd700; margin-bottom: 10px; }
-        #shop-msg { font-size: 10px; color: #ff4444; height: 15px; margin-bottom: 10px; visibility: hidden; }
-
-        .section-title { font-size: 12px; color: #0088cc; margin: 20px 0 10px; border-bottom: 1px solid #002244; width: 80%; text-align: center; padding-bottom: 5px; }
+        h1 { font-size: 16px; margin: 40px 0; letter-spacing: 2px; color: #00d4ff; }
         
-        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 90%; max-width: 600px; }
-        .item-btn { 
-            background: rgba(0,20,40,0.4); border: 1px solid #003366; padding: 12px; cursor: pointer; text-align: center; 
-            transition: 0.3s; border-radius: 4px; display: flex; flex-direction: column; align-items: center; color: #fff;
-        }
-        .item-btn:hover { background: rgba(0,60,120,0.6); border-color: #00ccff; transform: translateY(-2px); }
-        .item-btn.owned { border-color: #00ffcc; color: #00ffcc; }
-        .item-btn.equipped { background: rgba(0,255,204,0.1); border-color: #00ffcc; box-shadow: 0 0 10px rgba(0,255,204,0.3); }
-        .item-name { font-size: 8px; margin-bottom: 5px; pointer-events: none; }
-        .item-price { font-size: 7px; color: #ffd700; pointer-events: none; }
+        /* プレイ方法（太字なし・英語） */
+        #how-to { max-width: 600px; font-family: 'Noto Sans JP'; font-size: 11px; color: #a0b0c0; margin-bottom: 30px; line-height: 1.8; text-align: left; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 5px; }
+        
+        .section-title { font-size: 12px; margin: 20px 0; color: #888; border-bottom: 1px solid #333; width: 80%; text-align: center; }
+        
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; width: 90%; max-width: 500px; }
+        .btn { background: rgba(255,255,255,0.05); border: 1px solid #444; padding: 15px; cursor: pointer; text-align: center; border-radius: 4px; transition: 0.3s; }
+        .btn:hover { background: rgba(255,255,255,0.15); transform: translateY(-2px); }
+        
+        /* コイン・ショップUI */
+        #coin-info { color: #ffd700; margin-bottom: 10px; font-size: 12px; }
+        #msg { color: #ff4444; font-size: 10px; height: 12px; margin-bottom: 10px; visibility: hidden; }
 
-        #how-to { max-width: 600px; font-family: 'Noto Sans JP'; font-size: 10px; color: #6688aa; margin: 20px; line-height: 1.8; text-align: left; background: rgba(0,10,20,0.5); padding: 20px; border: 1px solid #002244; }
-        #how-to b { font-weight: normal; color: #00ccff; font-family: 'Press Start 2P'; font-size: 8px; }
-
-        .copy-right { margin: 40px 0; font-size: 8px; color: #112233; }
+        .item-name { font-size: 8px; display: block; margin-bottom: 5px; }
+        .item-price { font-size: 7px; color: #ffd700; }
+        .equipped { border-color: #00ffcc !important; box-shadow: 0 0 10px rgba(0,255,204,0.3); }
     </style>
 </head>
 <body>
@@ -53,220 +45,205 @@
     <canvas id="game-canvas"></canvas>
 
     <div id="hud">
-        <div id="score-val">000000</div>
-        <div id="coin-display">COINS: 0</div>
-        <div id="hp-bar"><div id="hp-fill"></div></div>
+        <div id="score-display">SCORE: <span id="s-val">0</span></div>
+        <div id="hp-container"><div id="hp-bar"></div></div>
     </div>
 
     <div id="menu">
         <h1>MINAMI PROJECT 2026</h1>
-        <div id="menu-coin-status">COINS: <span id="m-coin-val">0</span></div>
-        <div id="shop-msg">NOT ENOUGH COINS!</div>
-
+        
         <div id="how-to">
             [CORE SYSTEM]<br>
-            - Move your Mouse to sync with the "SHIZUKU" unit.<br>
-            - Hold Left-Click to fire Resonance Shots.<br>
-            - Mental Integrity (HP) resets upon impact.<br><br>
+            - Synchronize with the unit using your Mouse movement.<br>
+            - Fire Resonance Shots by holding Left-Click.<br>
+            - Avoid collision with Noise to maintain Mental Integrity (HP).<br><br>
             [EXPANSION]<br>
-            - Collect Coins from neutralized enemies.<br>
-            - Auto-Repair: Restores HP over time.<br>
-            - Burst: Press Space to clear all Noise (Requires Gear).
+            - Collect Coins to unlock new manifest skins in the shop.<br>
+            - Auto-Repair: Gradually restores HP during battle.<br>
+            - Burst: Press Space to clear the field (Requires Gear).
         </div>
 
-        <div class="section-title">SELECT STAGE</div>
+        <div id="coin-info">COINS: <span id="c-val">0</span></div>
+        <div id="msg">NOT ENOUGH COINS!</div>
+
+        <div class="section-title">SELECT MODE</div>
         <div id="stage-grid" class="grid"></div>
 
-        <div class="section-title">SHOP & SKINS</div>
-        <div class="grid">
-            <div id="shop-Default" class="item-btn" onclick="buy('skin','Default',0)"><span class="item-name">Droplet</span><span class="item-price">FREE</span></div>
-            <div id="shop-Star" class="item-btn" onclick="buy('skin','Star',500)"><span class="item-name">Star</span><span class="item-price">500 C</span></div>
-            <div id="shop-Circle" class="item-btn" onclick="buy('skin','Circle',800)"><span class="item-name">Circle</span><span class="item-price">800 C</span></div>
-            <div id="shop-Sword" class="item-btn" onclick="buy('skin','Sword',1500)"><span class="item-name">Sword</span><span class="item-price">1500 C</span></div>
-            <div id="shop-Bear" class="item-btn" onclick="buy('skin','Bear',2000)"><span class="item-name">Bear</span><span class="item-price">2000 C</span></div>
-            <div id="shop-Train" class="item-btn" onclick="buy('skin','Train',3000)"><span class="item-name">Train</span><span class="item-price">3000 C</span></div>
+        <div class="section-title">SKINS & SHOP</div>
+        <div id="shop-grid" class="grid">
+            <div id="shop-Default" class="btn" onclick="buy('skin','Default',0)"><span class="item-name">Droplet</span><span class="item-price">FREE</span></div>
+            <div id="shop-Star" class="btn" onclick="buy('skin','Star',500)"><span class="item-name">Star</span><span class="item-price">500</span></div>
+            <div id="shop-Circle" class="btn" onclick="buy('skin','Circle',800)"><span class="item-name">Circle</span><span class="item-price">800</span></div>
+            <div id="shop-Sword" class="btn" onclick="buy('skin','Sword',1500)"><span class="item-name">Sword</span><span class="item-price">1500</span></div>
+            <div id="shop-Bear" class="btn" onclick="buy('skin','Bear',2000)"><span class="item-name">Bear</span><span class="item-price">2000</span></div>
+            <div id="shop-Train" class="btn" onclick="buy('skin','Train',3000)"><span class="item-name">Train</span><span class="item-price">3000</span></div>
         </div>
 
-        <div class="section-title">EQUIPMENT</div>
+        <div class="section-title">GEAR</div>
         <div class="grid">
-            <div id="shop-AutoHeal" class="item-btn" onclick="buy('item','AutoHeal',2500)"><span class="item-name">Auto-Repair</span><span class="item-price">2500 C</span></div>
-            <div id="shop-Burst" class="item-btn" onclick="buy('item','Burst',5000)"><span class="item-name">Burst Mode</span><span class="item-price">5000 C</span></div>
+            <div id="shop-Heal" class="btn" onclick="buy('item','Heal',2500)"><span class="item-name">Auto-Repair</span><span class="item-price">2500</span></div>
+            <div id="shop-Burst" class="btn" onclick="buy('item','Burst',5000)"><span class="item-name">Burst Mode</span><span class="item-price">5000</span></div>
         </div>
-        <div class="copy-right">©︎ Minami All Right Received 2026</div>
+        <div style="margin: 40px; font-size: 8px; color: #333;">CHROMATIC RESONANCE 2026</div>
     </div>
 
     <script>
-        // --- 背景の波 (より深く、ミステリアスな青) ---
-        const bgCanvas = document.getElementById('bg-canvas');
-        const bgCtx = bgCanvas.getContext('2d');
+        // --- なみの背景 (青ベース・ミステリアス) ---
+        const bg = document.getElementById('bg-canvas');
+        const bctx = bg.getContext('2d');
         let w, h;
-        function res() { w = bgCanvas.width = window.innerWidth; h = bgCanvas.height = window.innerHeight; }
+        function res() { w = bg.width = window.innerWidth; h = bg.height = window.innerHeight; }
         window.addEventListener('resize', res); res();
 
-        let time = 0;
+        let t = 0;
         function drawBg() {
-            bgCtx.fillStyle = '#00040a';
-            bgCtx.fillRect(0, 0, w, h);
-            time += 0.005;
+            bctx.fillStyle = '#000815';
+            bctx.fillRect(0, 0, w, h);
+            t += 0.01;
             for(let i=0; i<3; i++) {
-                bgCtx.beginPath();
-                bgCtx.strokeStyle = `rgba(0, 100, 200, ${0.1 - i*0.02})`;
-                bgCtx.lineWidth = 2;
-                for(let x=0; x<w; x+=2) {
-                    let y = h * (0.4 + i*0.1) + Math.sin(x*0.005 + time + i) * 60 * Math.cos(time*0.5);
-                    bgCtx.lineTo(x, y);
+                bctx.beginPath();
+                bctx.strokeStyle = `rgba(0, 150, 255, ${0.15 - i*0.03})`;
+                for(let x=0; x<w; x+=5) {
+                    let y = h*0.5 + Math.sin(x*0.005 + t + i) * 50 * Math.cos(t*0.3);
+                    bctx.lineTo(x, y);
                 }
-                bgCtx.stroke();
+                bctx.stroke();
             }
             requestAnimationFrame(drawBg);
         }
         drawBg();
 
-        // --- ゲームエンジン ---
-        const gameCanvas = document.getElementById('game-canvas');
-        const ctx = gameCanvas.getContext('2d');
-        gameCanvas.width = window.innerWidth; gameCanvas.height = window.innerHeight;
-
-        let saveData = JSON.parse(localStorage.getItem('minami_v2_save') || '{"coins":0, "owned":["Default"], "equippedSkin":"Default", "items":[], "cleared":{}}');
-        let gameActive = false, score = 0, hp = 100, frame = 0, enemies = [], bullets = [], ripples = [], particles = [], player = {x:0, y:0}, currentMode = null;
-
-        const config = {
-            SB: { color: '#ccaa00', spawn: 0.05, hp: 2, target: 3000, g: 'warp', power: 1, bSize: 4 },
-            KT: { color: '#0088cc', spawn: 0.1, hp: 2, target: 5000, g: 'dash', power: 1, bSize: 4 },
-            SK: { color: '#008844', spawn: 0.08, hp: 5, target: 7000, g: 'shield', power: 2, bSize: 5 },
-            KY: { color: '#aa0022', spawn: 0.12, hp: 3, target: 8000, g: 'wind', power: 1, bSize: 4 },
-            PK: { color: '#cc5588', spawn: 0.12, hp: 3, target: 8000, g: 'none', power: 1, bSize: 4 },
-            JB: { color: '#006666', spawn: 0.15, hp: 5, target: 10000, g: 'none', power: 2, bSize: 5 },
-            HM: { color: '#9932cc', spawn: 0.16, hp: 6, target: 12000, g: 'warp', power: 2, bSize: 5 },
-            KS: { color: '#808080', spawn: 0.18, hp: 7, target: 15000, g: 'dash', power: 2, bSize: 5 },
-            TY: { color: '#00bfff', spawn: 0.20, hp: 8, target: 18000, g: 'shield', power: 3, bSize: 6 },
-            HA: { color: '#CD7F32', spawn: 0.22, hp: 12, target: 20000, g: 'mix', power: 4, bSize: 7 },
-            HB: { color: '#C0C0C0', spawn: 0.25, hp: 15, target: 25000, g: 'mix', power: 5, bSize: 8 },
-            HC: { color: '#FFD700', spawn: 0.3, hp: 20, target: 30000, g: 'mix', power: 6, bSize: 9 },
-            CO: { color: '#cc6600', spawn: 1.0, hp: 80, target: 373000, g: 'rush', power: 15, bSize: 12 }
+        // --- ゲームロジック (路線色を厳守) ---
+        const save = JSON.parse(localStorage.getItem('minami_save_v3') || '{"coins":0, "owned":["Default"], "skin":"Default", "items":[], "cleared":[]}');
+        
+        // 路線色の定義：総武(黄)、京浜東北(青)、埼京(緑)、京葉(赤)
+        const modes = {
+            'ST=SB': { color: '#ffff00', name: 'SOBU (YELLOW)' },
+            'ST=KT': { color: '#0088ff', name: 'KEIHIN (BLUE)' },
+            'ST=SK': { color: '#00ff44', name: 'SAIKYO (GREEN)' },
+            'ST=KY': { color: '#ff0044', name: 'KEIYO (RED)' },
+            'ST=CO': { color: '#ff6600', name: 'CHUO (ORANGE) - UNKNOWN' } // 隠し
         };
 
-        function initUI() {
+        function updateUI() {
             const grid = document.getElementById('stage-grid');
             grid.innerHTML = '';
-            Object.keys(config).forEach(id => {
-                const isHidden = (id === 'HA' || id === 'HB' || id === 'HC') && !['SB','KT','SK','KY','PK','JB','HM','KS','TY'].every(s => saveData.cleared[s]);
-                const isUltimate = (id === 'CO') && !['SB','KT','SK','KY','PK','JB','HM','KS','TY','HA','HB','HC'].every(s => saveData.cleared[s]);
-                if(!isHidden && !isUltimate) {
-                    const btn = document.createElement('div');
-                    btn.className = `item-btn`;
-                    btn.style.borderColor = config[id].color;
-                    btn.style.color = config[id].color;
-                    btn.innerHTML = `<span class="item-name">ST=${id}</span><span class="item-price">${saveData.cleared[id] || 'NEW'}</span>`;
-                    btn.onclick = () => start(id);
-                    grid.appendChild(btn);
-                }
+            const allNormalCleared = ['ST=SB', 'ST=KT', 'ST=SK', 'ST=KY'].every(m => save.cleared.includes(m));
+
+            Object.keys(modes).forEach(id => {
+                if(id === 'ST=CO' && !allNormalCleared) return; // 全クリアまで隠す
+                const b = document.createElement('div');
+                b.className = 'btn';
+                b.style.color = modes[id].color;
+                b.style.borderColor = modes[id].color;
+                b.innerHTML = id + (save.cleared.includes(id) ? '<br><span style="font-size:7px">CLEARED</span>' : '');
+                b.onclick = () => startGame(id);
+                grid.appendChild(b);
             });
-            document.getElementById('m-coin-val').innerText = saveData.coins;
-            document.querySelectorAll('.item-btn').forEach(el => el.classList.remove('equipped', 'owned'));
-            saveData.owned.forEach(name => {
-                const el = document.getElementById(`shop-${name}`);
+
+            document.getElementById('c-val').innerText = save.coins;
+            document.querySelectorAll('.btn').forEach(el => el.classList.remove('equipped'));
+            save.owned.forEach(id => {
+                const el = document.getElementById('shop-'+id);
                 if(el) {
-                    el.classList.add('owned');
-                    const isEquipped = (saveData.equippedSkin === name || saveData.items.includes(name));
-                    el.querySelector('.item-price').innerText = isEquipped ? 'EQUIPPED' : 'OWNED';
-                    if(isEquipped) el.classList.add('equipped');
+                    if(save.skin === id || save.items.includes(id)) el.classList.add('equipped');
                 }
             });
         }
 
         function buy(type, name, price) {
-            if(!saveData.owned.includes(name)) {
-                if(saveData.coins >= price) { saveData.coins -= price; saveData.owned.push(name); }
-                else { const m=document.getElementById('shop-msg'); m.style.visibility='visible'; setTimeout(()=>m.style.visibility='hidden',1500); return; }
+            if(!save.owned.includes(name)) {
+                if(save.coins >= price) { save.coins -= price; save.owned.push(name); }
+                else { const m=document.getElementById('msg'); m.style.visibility='visible'; setTimeout(()=>m.style.visibility='hidden',1500); return; }
             }
-            if(type === 'skin') saveData.equippedSkin = name;
-            if(type === 'item' && !saveData.items.includes(name)) saveData.items.push(name);
-            localStorage.setItem('minami_v2_save', JSON.stringify(saveData));
-            initUI();
+            if(type === 'skin') save.skin = name;
+            if(type === 'item' && !save.items.includes(name)) save.items.push(name);
+            localStorage.setItem('minami_save_v3', JSON.stringify(save));
+            updateUI();
         }
 
-        function start(id) {
-            currentMode = { ...config[id], id: id };
-            score = 0; hp = 100; frame = 0; enemies = []; bullets = []; ripples = []; particles = [];
+        // ゲーム実行部分
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        let active = false, hp = 100, score = 0, player = {x:0, y:0}, enemies = [], bullets = [], current = null;
+
+        function startGame(id) {
+            current = id; hp = 100; score = 0; enemies = []; bullets = [];
             document.getElementById('menu').style.display = 'none';
             document.getElementById('hud').style.visibility = 'visible';
-            gameActive = true; loop();
+            active = true;
+            loop();
         }
 
-        window.addEventListener('mousemove', e => { player.x = e.clientX; player.y = e.clientY; });
-        let isDown = false; window.addEventListener('mousedown', () => isDown = true); window.addEventListener('mouseup', () => isDown = false);
-        window.addEventListener('keydown', e => { if(e.code === 'Space' && gameActive && saveData.items.includes('Burst')) useBurst(); });
+        window.onmousemove = e => { player.x = e.clientX; player.y = e.clientY; };
+        let shooting = false;
+        window.onmousedown = () => shooting = true;
+        window.onmouseup = () => shooting = false;
+        window.onkeydown = e => { if(e.code === 'Space' && active && save.items.includes('Burst')) burst(); };
 
-        function useBurst() {
-            ripples.push({x: player.x, y: player.y, r: 10, a: 1, burst: true});
-            enemies.forEach(e => { e.hp -= 50; if(e.hp <=0) { score += 100; dropCoin(e.x, e.y); } });
-            enemies = enemies.filter(e => e.hp > 0);
+        function burst() {
+            enemies.forEach(e => { score += 50; if(Math.random()<0.2) save.coins += 10; });
+            enemies = [];
         }
-
-        function dropCoin(x, y) { if(Math.random() < 0.3) particles.push({x, y, vx: (Math.random()-0.5)*5, vy: (Math.random()-0.5)*5, type:'coin'}); }
 
         function loop() {
-            if(!gameActive) return;
-            frame++;
-            if(saveData.items.includes('AutoHeal') && frame % 120 === 0 && hp < 100) hp = Math.min(100, hp + 1);
-            if(isDown && frame % 4 === 0) bullets.push({x: player.x, y: player.y-10, vy: -18});
+            if(!active) return;
+            ctx.clearRect(0, 0, w, h);
+            
+            // HP回復
+            if(save.items.includes('Heal') && Math.random() < 0.01) hp = Math.min(100, hp + 1);
 
-            ctx.fillStyle = "rgba(0, 5, 15, 0.5)"; ctx.fillRect(0,0,w,h);
-            
-            bullets.forEach((b, i) => { b.y += b.vy; ctx.fillStyle="#fff"; ctx.fillRect(b.x-2, b.y, 4, 10); if(b.y < -30) bullets.splice(i, 1); });
-            if(Math.random() < currentMode.spawn) enemies.push({ x: Math.random()*w, y: -50, hp: currentMode.hp, vx: (Math.random()-0.5)*4, vy: 3 });
-            
-            enemies.forEach((e, i) => {
-                e.y += e.vy; e.x += e.vx;
-                ctx.strokeStyle = currentMode.color; ctx.strokeRect(e.x-15, e.y-15, 30, 30);
+            // 自機描画 (スキン反映)
+            ctx.fillStyle = "#fff";
+            ctx.save(); ctx.translate(player.x, player.y);
+            const sk = save.skin;
+            if(sk === 'Star') { for(let i=0; i<5; i++){ ctx.rotate(Math.PI*2/5); ctx.lineTo(0,-15); ctx.rotate(Math.PI*2/10); ctx.lineTo(0,-7); } ctx.fill(); }
+            else if(sk === 'Sword') { ctx.fillRect(-2,-20,4,30); ctx.fillRect(-10,-5,20,3); }
+            else if(sk === 'Train') { ctx.fillRect(-10,-15,20,30); ctx.fillStyle="#000"; ctx.fillRect(-10,-2,20,2); }
+            else { ctx.beginPath(); ctx.arc(0,0,10,0,7); ctx.fill(); }
+            ctx.restore();
+
+            // 弾
+            if(shooting && Math.random() < 0.3) bullets.push({x:player.x, y:player.y-20});
+            bullets.forEach((b,i) => {
+                b.y -= 10; ctx.fillStyle="#fff"; ctx.fillRect(b.x-2, b.y, 4, 10);
+                if(b.y < 0) bullets.splice(i,1);
+            });
+
+            // 敵 (路線色を適用)
+            if(Math.random() < (current === 'ST=CO' ? 0.2 : 0.05)) enemies.push({x:Math.random()*w, y:-20});
+            enemies.forEach((e,i) => {
+                e.y += (current === 'ST=CO' ? 6 : 3);
+                ctx.strokeStyle = modes[current].color;
+                ctx.lineWidth = 2;
+                ctx.strokeRect(e.x-15, e.y-15, 30, 30);
+                
+                if(Math.hypot(e.x-player.x, e.y-player.y) < 25) { hp -= 10; enemies.splice(i,1); }
                 bullets.forEach((b, bi) => {
-                    if(Math.hypot(e.x-b.x, e.y-b.y) < 25) { e.hp -= currentMode.power; bullets.splice(bi, 1); if(e.hp <= 0) { score += 100; dropCoin(e.x, e.y); enemies.splice(i, 1); if(score >= currentMode.target) finish(true); }}
+                    if(Math.hypot(e.x-b.x, e.y-b.y) < 20) {
+                        enemies.splice(i,1); bullets.splice(bi,1);
+                        score += 100; if(Math.random()<0.1) save.coins += 10;
+                        if(score > (current==='ST=CO'?50000:3000)) end(true);
+                    }
                 });
-                if(Math.hypot(e.x-player.x, e.y-player.y) < 25) hp -= 0.5;
+                if(e.y > h) enemies.splice(i,1);
             });
 
-            particles.forEach((p, i) => {
-                let dx = player.x - p.x, dy = player.y - p.y, dist = Math.hypot(dx, dy);
-                if(dist < 150) { p.vx += dx/dist*0.5; p.vy += dy/dist*0.5; }
-                p.x += p.vx; p.y += p.vy; 
-                ctx.fillStyle="#ffd700"; ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI*2); ctx.fill();
-                if(dist < 20) { saveData.coins += 10; particles.splice(i, 1); }
-            });
-
-            ripples.forEach((r, i) => {
-                ctx.strokeStyle = `rgba(255,255,255,${r.a})`; ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, Math.PI*2); ctx.stroke();
-                r.r += 15; r.a -= 0.02; if(r.a <= 0) ripples.splice(i, 1);
-            });
-
-            drawPlayer();
-            if(hp <= 0) finish(false);
-            document.getElementById('hp-fill').style.width = hp + "%";
-            document.getElementById('score-val').innerText = score.toString().padStart(6, '0');
+            document.getElementById('hp-bar').style.width = hp + "%";
+            document.getElementById('s-val').innerText = score;
+            if(hp <= 0) end(false);
             requestAnimationFrame(loop);
         }
 
-        function drawPlayer() {
-            ctx.save(); ctx.translate(player.x, player.y); ctx.fillStyle = "#fff";
-            const s = saveData.equippedSkin;
-            if(s === 'Default') { ctx.beginPath(); ctx.moveTo(0, -15); ctx.bezierCurveTo(10,5,10,15,0,15); ctx.bezierCurveTo(-10,15,-10,5,0,-15); ctx.fill(); }
-            else if(s === 'Star') { ctx.beginPath(); for(let i=0; i<5; i++) { ctx.rotate(Math.PI*2/5); ctx.lineTo(0, -15); ctx.rotate(Math.PI*2/10); ctx.lineTo(0, -7); } ctx.fill(); }
-            else if(s === 'Circle') { ctx.beginPath(); ctx.arc(0, 0, 12, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = "#00ffff"; ctx.stroke(); }
-            else if(s === 'Sword') { ctx.fillRect(-2, -20, 4, 25); ctx.fillRect(-8, -5, 16, 3); }
-            else if(s === 'Bear') { ctx.beginPath(); ctx.arc(0,0,10,0,Math.PI*2); ctx.arc(-8,-8,5,0,Math.PI*2); ctx.arc(8,-8,5,0,Math.PI*2); ctx.fill(); }
-            else if(s === 'Train') { ctx.fillRect(-8, -12, 16, 24); ctx.fillStyle="#333"; ctx.fillRect(-8, -4, 16, 2); }
-            ctx.restore();
-        }
-
-        function finish(isClear) {
-            gameActive = false;
-            if(isClear) saveData.cleared[currentMode.id] = (hp >= 100) ? "COMPLETE" : "CLEAR";
-            localStorage.setItem('minami_v2_save', JSON.stringify(saveData));
+        function end(win) {
+            active = false;
+            if(win && !save.cleared.includes(current)) save.cleared.push(current);
+            localStorage.setItem('minami_save_v3', JSON.stringify(save));
             location.reload();
         }
 
-        // 最後にUIを初期化
-        initUI();
+        updateUI();
     </script>
 </body>
 </html>
