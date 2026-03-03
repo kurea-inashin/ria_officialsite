@@ -2,58 +2,72 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Minami Project 2026: Shop Edition</title>
+    <title>Minami Project 2026</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+JP:wght@300;700&display=swap');
         body { margin: 0; background: #000810; color: #e0e0e0; font-family: 'Press Start 2P', cursive; overflow: hidden; }
         canvas { display: block; }
-        #hud { position: absolute; top: 20px; left: 20px; z-index: 10; pointer-events: none; }
-        #score-val { font-size: 20px; color: #fff; margin-bottom: 5px; }
-        #coin-val { font-size: 14px; color: #ffd700; margin-bottom: 10px; }
-        #hp-bar { width: 200px; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; }
-        #hp-fill { height: 100%; background: #fff; width: 100%; transition: width 0.3s ease; }
-        #menu { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; align-items: center; z-index: 20; overflow-y: auto; padding-bottom: 50px; }
-        h1 { font-size: 16px; margin: 30px 0; color: #fff; letter-spacing: 2px; }
-        .section-title { font-size: 12px; color: #888; margin: 20px 0 10px; border-bottom: 1px solid #334; width: 80%; text-align: center; padding-bottom: 5px; }
+        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,10,0.95); display: flex; flex-direction: column; align-items: center; z-index: 20; overflow-y: auto; padding-bottom: 50px; }
+        h1 { font-size: 18px; margin: 30px 0; color: #fff; text-shadow: 0 0 10px #00ffff; }
+        .section-title { font-size: 12px; color: #888; margin: 20px 0 10px; border-bottom: 1px solid #334; width: 80%; text-align: center; }
         .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 90%; max-width: 600px; }
-        .item-btn { background: #112; border: 2px solid #334; padding: 10px; cursor: pointer; text-align: center; transition: 0.2s; border-radius: 4px; display: flex; flex-direction: column; align-items: center; }
-        .item-btn:hover { background: #223; border-color: #556; }
+        .item-btn, .action-btn { background: #050515; border: 2px solid #223; padding: 10px; cursor: pointer; text-align: center; border-radius: 4px; transition: 0.2s; }
+        .item-btn:hover, .action-btn:hover { background: #112; border-color: #0ff; }
         .item-btn.equipped { background: #004433; border-color: #00ffcc; }
-        .item-name { font-size: 8px; margin-bottom: 5px; color: #eee; }
+        .item-name { font-size: 8px; display: block; margin-bottom: 5px; }
         .item-price { font-size: 7px; color: #ffd700; }
-        .star-rating { font-size: 7px; color: #ffd700; margin-top: 4px; display: block; }
-        #how-to { font-family: 'Noto Sans JP'; font-size: 10px; color: #888; margin: 20px; line-height: 1.6; text-align: center; }
-        .copy-right { margin-top: 40px; font-size: 8px; color: #445; }
+        .star-rating { font-size: 7px; color: #ffd700; margin-top: 4px; }
+        .manual-text { font-family: 'Noto Sans JP'; font-size: 12px; line-height: 1.8; background: #000; padding: 20px; border: 1px solid #222; max-width: 500px; }
+        #hud { position: absolute; top: 20px; left: 20px; z-index: 10; pointer-events: none; }
+        #score-val { font-size: 20px; color: #fff; }
+        #hp-bar { width: 200px; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; margin-top: 10px; border: 1px solid #333; }
+        #hp-fill { height: 100%; background: linear-gradient(90deg, #ff0044, #fff); width: 100%; transition: width 0.2s; }
+        .copy-right { margin-top: 50px; font-size: 9px; color: #334; letter-spacing: 1px; }
     </style>
 </head>
 <body>
+
     <div id="hud">
         <div id="score-val">000000</div>
-        <div id="coin-val">COINS: 0</div>
+        <div id="coin-val" style="color:#ffd700; font-size:12px; margin-top:5px;">COINS: 0</div>
         <div id="hp-bar"><div id="hp-fill"></div></div>
     </div>
-    <div id="menu">
+
+    <div id="menu" class="overlay">
         <h1>MINAMI PROJECT 2026</h1>
-        <div id="how-to">
-            【SYSTEM】マウス移動：自機操作 / 左クリック：攻撃 / スペース：必殺技<br>
-            敵機も弾を撃ってきます。全通常ステージクリアで「ST=CO」解禁。
-        </div>
-        <div class="section-title">SELECT STAGE</div>
+        <div class="action-btn" style="width:220px; margin-bottom:20px;" onclick="showScreen('how-to-screen')">HOW TO PLAY</div>
+        <div class="section-title">SELECT SECTOR</div>
         <div class="grid" id="stage-grid"></div>
-        <div class="section-title">SHOP & SKINS</div>
-        <div id="shop-grid" class="grid">
-            <div id="shop-Default" class="item-btn" onclick="buy('skin','Default',0)"><span class="item-name">雫 (Default)</span><span class="item-price">0 C</span></div>
-            <div id="shop-Star" class="item-btn" onclick="buy('skin','Star',500)"><span class="item-name">星 (KiraKira)</span><span class="item-price">500 C</span></div>
-            <div id="shop-Circle" class="item-btn" onclick="buy('skin','Circle',800)"><span class="item-name">円 (Shield)</span><span class="item-price">800 C</span></div>
-            <div id="shop-Train" class="item-btn" onclick="buy('skin','Train',3000)"><span class="item-name">電車 (Express)</span><span class="item-price">3000 C</span></div>
-        </div>
-        <div class="section-title">EQUIPMENT</div>
-        <div class="grid">
-            <div id="shop-AutoHeal" class="item-btn" onclick="buy('item','AutoHeal',2500)"><span class="item-name">自動回復</span><span class="item-price">2500 C</span></div>
-            <div id="shop-Burst" class="item-btn" onclick="buy('item','Burst',5000)"><span class="item-name">バースト</span><span class="item-price">5000 C</span></div>
+        <div class="section-title">EQUIPMENT & SHOP</div>
+        <div class="grid" id="shop-grid">
+            <div id="shop-Default" class="item-btn" onclick="buy('skin','Default',0)"><span class="item-name">雫 (DF)</span><span class="item-price">OWNED</span></div>
+            <div id="shop-Train" class="item-btn" onclick="buy('skin','Train',3000)"><span class="item-name">電車 (EX)</span><span class="item-price">3000 C</span></div>
+            <div id="shop-AutoHeal" class="item-btn" onclick="buy('item','AutoHeal',5000)"><span class="item-name">自動回復</span><span class="item-price">5000 C</span></div>
         </div>
         <div class="copy-right">© 2026 MINAMI ALL RIGHTS RESERVED / Chromatic Resonance</div>
     </div>
+
+    <div id="how-to-screen" class="overlay" style="display:none;">
+        <h1>MANUAL</h1>
+        <div class="manual-text">
+            【操作】マウス移動 / 左クリック：射撃 / スペース：必殺技<br><br>
+            【ギミック】<br>
+            ST=SB: Warp(瞬間移動) / ST=KT: Dash(急加速)<br>
+            ST=SK: Shield(高耐久) / ST=KY: Wind(蛇行)<br><br>
+            全路線を制覇したとき、中央線(ST=CO)への道が開かれる。
+        </div>
+        <div class="action-btn" style="margin-top:30px; width:150px;" onclick="showScreen('menu')">RETURN</div>
+    </div>
+
+    <div id="result-screen" class="overlay" style="display:none;">
+        <h1 id="result-title">FAILED</h1>
+        <div id="result-stats" style="margin-bottom:30px; color:#ffd700;"></div>
+        <div class="grid" style="grid-template-columns: 1fr 1fr; width: 400px;">
+            <div class="action-btn" onclick="continueGame()">CONTINUE<br><span style="font-size:7px;">(500 Coins)</span></div>
+            <div class="action-btn" onclick="location.reload()">RESTART</div>
+        </div>
+    </div>
+
     <canvas id="game"></canvas>
 
     <script>
@@ -72,141 +86,149 @@
             KT: { color: '#0088cc', spawn: 0.07, hp: 2, target: 5000, g: 'dash', power: 1, bSize: 6, stars: 1 },
             SK: { color: '#00ff44', spawn: 0.08, hp: 8, target: 10000, g: 'shield', power: 2, bSize: 8, stars: 4 },
             KY: { color: '#ff0044', spawn: 0.15, hp: 3, target: 10000, g: 'wind', power: 1, bSize: 6, stars: 5 },
-            PK: { color: '#ff0044', spawn: 0.18, hp: 4, target: 12000, g: 'dash', power: 2, bSize: 7, stars: 6 },
-            JB: { color: '#00ff44', spawn: 0.20, hp: 10, target: 15000, g: 'shield', power: 3, bSize: 9, stars: 7 },
-            HM: { color: '#0088cc', spawn: 0.22, hp: 12, target: 18000, g: 'warp', power: 3, bSize: 9, stars: 8 },
-            KS: { color: '#ffff00', spawn: 0.25, hp: 15, target: 20000, g: 'wind', power: 4, bSize: 10, stars: 9 },
-            TY: { color: '#0088cc', spawn: 0.30, hp: 18, target: 25000, g: 'dash', power: 5, bSize: 11, stars: 12 },
-            HA: { color: '#ffff00', spawn: 0.35, hp: 25, target: 30000, g: 'mix', power: 6, bSize: 12, stars: 15 },
-            HB: { color: '#00ff44', spawn: 0.40, hp: 30, target: 40000, g: 'mix', power: 7, bSize: 13, stars: 18 },
-            HC: { color: '#ff0044', spawn: 0.50, hp: 40, target: 50000, g: 'mix', power: 8, bSize: 15, stars: 20 },
             CO: { color: '#ff6600', spawn: 1.50, hp: 100, target: 373000, g: 'rush', power: 20, bSize: 20, stars: 50 }
         };
 
+        function showScreen(id) {
+            document.querySelectorAll('.overlay').forEach(el => el.style.display = 'none');
+            document.getElementById(id).style.display = 'flex';
+        }
+
         function initUI() {
             const grid = document.getElementById('stage-grid'); grid.innerHTML = '';
-            const main = ['SB','KT','SK','KY','PK','JB','HM','KS','TY'], hide = ['HA','HB','HC'];
-            const allM = main.every(s => saveData.cleared[s]), allH = hide.every(s => saveData.cleared[s]);
             Object.keys(config).forEach(id => {
-                if(hide.includes(id) && !allM) return;
-                if(id === 'CO' && (!allM || !allH)) return;
                 const btn = document.createElement('div');
-                btn.className = `item-btn ${id}`; btn.style.borderColor = config[id].color; btn.style.color = config[id].color;
-                btn.innerHTML = `<span class="item-name">ST=${id}</span><span class="star-rating">${'★'.repeat(Math.ceil(config[id].stars/4)||1)}</span><span class="item-price">${saveData.cleared[id] || 'NEW'}</span>`;
+                btn.className = `item-btn ${id}`; btn.style.borderColor = config[id].color;
+                btn.innerHTML = `<span class="item-name">ST=${id}</span><span class="star-rating">${'★'.repeat(Math.ceil(config[id].stars/10)||1)}</span><span class="item-price">${saveData.cleared[id] || 'NEW'}</span>`;
                 btn.onclick = () => start(id); grid.appendChild(btn);
             });
-            document.querySelectorAll('.item-btn').forEach(el => el.classList.remove('equipped'));
-            const skinEl = document.getElementById('shop-' + saveData.equippedSkin); if(skinEl) skinEl.classList.add('equipped');
-            saveData.items.forEach(i => { const el = document.getElementById('shop-' + i); if(el) el.classList.add('equipped'); });
             document.getElementById('coin-val').innerText = `COINS: ${saveData.coins}`;
         }
 
         function buy(type, name, price) {
-            if(!saveData.owned.includes(name)) { if(saveData.coins >= price) { saveData.coins -= price; saveData.owned.push(name); } else return; }
+            if(!saveData.owned.includes(name) && !saveData.items.includes(name)) {
+                if(saveData.coins >= price) { 
+                    saveData.coins -= price; 
+                    if(type === 'skin') saveData.owned.push(name); else saveData.items.push(name);
+                } else { alert("Insufficient Coins"); return; }
+            }
             if(type === 'skin') saveData.equippedSkin = name;
-            if(type === 'item' && !saveData.items.includes(name)) saveData.items.push(name);
             localStorage.setItem('minami_v2_save', JSON.stringify(saveData)); initUI();
         }
 
         function start(id) {
-            currentMode = { ...config[id], id: id }; score = 0; hp = 100; frame = 0;
+            currentMode = { ...config[id], id: id };
+            score = 0; hp = 100; frame = 0;
             enemies = []; bullets = []; eBullets = []; ripples = []; particles = [];
-            document.getElementById('menu').style.display = 'none'; gameActive = true; loop();
+            document.querySelectorAll('.overlay').forEach(el => el.style.display = 'none');
+            gameActive = true; loop();
+        }
+
+        function continueGame() {
+            if(saveData.coins >= 500) {
+                saveData.coins -= 500; hp = 100; eBullets = [];
+                document.getElementById('result-screen').style.display = 'none';
+                gameActive = true; loop();
+            }
         }
 
         window.addEventListener('mousemove', e => { player.x = e.clientX; player.y = e.clientY; });
-        let isDown = false; window.addEventListener('mousedown', () => isDown = true); window.addEventListener('mouseup', () => isDown = false);
-        window.addEventListener('keydown', e => { if(e.code === 'Space' && saveData.items.includes('Burst')) {
-            ripples.push({x: player.x, y: player.y, r: 10, a: 1, burst: true});
-            enemies.forEach(e => { e.hp -= 50; if(e.hp <= 0) { score += 100; dropCoin(e.x, e.y); }});
-            enemies = enemies.filter(e => e.hp > 0);
-        }});
-
-        function dropCoin(x, y) { if(Math.random() < 0.4) particles.push({x, y, vx: (Math.random()-0.5)*10, vy: (Math.random()-0.5)*10, type:'coin'}); }
+        let isDown = false; 
+        window.addEventListener('mousedown', () => isDown = true); 
+        window.addEventListener('mouseup', () => isDown = false);
 
         function update() {
             frame++;
-            if(saveData.items.includes('AutoHeal') && frame % 120 === 0 && hp < 100) hp = Math.min(100, hp + 1);
-            if(isDown && frame % 4 === 0) bullets.push({x: player.x, y: player.y-10, vy: -18, size: currentMode.bSize, pwr: currentMode.power});
+            if(saveData.items.includes('AutoHeal') && frame % 120 === 0 && hp < 100) hp++;
+            if(isDown && frame % 5 === 0) bullets.push({x: player.x, y: player.y-10, vy: -15, size: currentMode.bSize, pwr: currentMode.power});
+            
             bullets.forEach((b, i) => { b.y += b.vy; if(b.y < -30) bullets.splice(i, 1); });
 
-            // 敵の生成
+            // 敵の生成とギミック
             if(Math.random() < currentMode.spawn) {
-                let type = currentMode.g;
-                if(type === 'mix') type = ['warp','dash','wind','shield'][Math.floor(Math.random()*4)];
-                enemies.push({ x: Math.random()*canvas.width, y: -50, hp: currentMode.hp, vx: (Math.random()-0.5)*4, vy: 3, type: type, t: 0 });
+                enemies.push({ x: Math.random()*canvas.width, y: -50, hp: currentMode.hp, vx: (Math.random()-0.5)*4, vy: 2, t: 0, g: currentMode.g });
             }
 
             enemies.forEach((e, i) => {
                 e.t++;
-                // ギミック動作
-                if(e.type === 'warp' && e.t % 60 === 0) { e.x = Math.random()*canvas.width; e.y += 30; ripples.push({x:e.x, y:e.y, r:15, a:0.5}); }
-                else if(e.type === 'wind') { e.x += Math.sin(frame*0.1)*8; e.y += 2; }
-                else if(e.type === 'dash') { e.y += 12; }
-                else if(e.type === 'shield') { e.y += 1.5; e.x += e.vx; }
-                else if(e.type === 'rush') { e.y += 15; e.x += (Math.random()-0.5)*20; }
-                else { e.y += e.vy; e.x += e.vx; }
+                // 【ギミックロジック復元】
+                if(e.g === 'warp' && e.t % 80 === 0) {
+                    ripples.push({x: e.x, y: e.y, r: 10, a: 1});
+                    e.x = Math.random()*canvas.width; e.y += 40;
+                } else if(e.g === 'wind') {
+                    e.x += Math.sin(e.t * 0.05) * 10; e.y += 1;
+                } else if(e.g === 'dash' && e.t > 40) {
+                    e.y += 10;
+                } else if(e.g === 'rush') {
+                    e.y += 12; e.x += Math.sin(e.t) * 20;
+                } else {
+                    e.y += e.vy; e.x += e.vx;
+                }
 
-                // 敵の攻撃（復活）
-                if(e.t % 80 === 0) { eBullets.push({x: e.x, y: e.y, vy: 5}); }
+                // 【敵の攻撃復元】
+                if(e.t % 90 === 0) eBullets.push({x: e.x, y: e.y, vy: 6});
 
                 bullets.forEach((b, bi) => {
                     if(Math.hypot(e.x-b.x, e.y-b.y) < 25) {
                         e.hp -= b.pwr; bullets.splice(bi, 1);
-                        if(e.hp <= 0) { score += 100; dropCoin(e.x, e.y); enemies.splice(i, 1); if(score >= currentMode.target) finish(true); }
+                        if(e.hp <= 0) { 
+                            score += 100; 
+                            if(Math.random()<0.4) particles.push({x: e.x, y: e.y, vx: (Math.random()-0.5)*5, vy: (Math.random()-0.5)*5});
+                            enemies.splice(i, 1); 
+                            if(score >= currentMode.target) finish(true);
+                        }
                     }
                 });
-                if(Math.hypot(e.x-player.x, e.y-player.y) < 25) { hp -= 0.8; }
+                if(Math.hypot(e.x-player.x, e.y-player.y) < 25) hp -= 1;
                 if(e.y > canvas.height + 50) enemies.splice(i,1);
             });
 
-            // 敵の弾の更新
             eBullets.forEach((eb, i) => {
                 eb.y += eb.vy;
-                if(Math.hypot(eb.x-player.x, eb.y-player.y) < 15) { hp -= 5; eBullets.splice(i,1); }
-                else if(eb.y > canvas.height) eBullets.splice(i,1);
+                if(Math.hypot(eb.x-player.x, eb.y-player.y) < 15) { hp -= 8; eBullets.splice(i,1); }
+                if(eb.y > canvas.height) eBullets.splice(i,1);
             });
 
             particles.forEach((p, i) => {
                 let dx = player.x - p.x, dy = player.y - p.y, dist = Math.hypot(dx, dy);
-                if(dist < 200) { p.vx += dx/dist*0.8; p.vy += dy/dist*0.8; }
-                p.x += p.vx; p.y += p.vy; p.vx *= 0.92; p.vy *= 0.92;
+                if(dist < 200) { p.x += dx/15; p.y += dy/15; }
                 if(dist < 20) { saveData.coins += 10; particles.splice(i, 1); }
             });
 
             if(hp <= 0) finish(false);
             document.getElementById('hp-fill').style.width = hp + "%";
             document.getElementById('score-val').innerText = score.toString().padStart(6, '0');
-            document.getElementById('coin-val').innerText = `COINS: ${saveData.coins}`;
         }
 
         function draw() {
-            ctx.fillStyle = "rgba(0, 8, 16, 0.4)"; ctx.fillRect(0,0,canvas.width, canvas.height);
-            // 自機描画
-            ctx.save(); ctx.translate(player.x, player.y); ctx.fillStyle = "#fff";
-            const s = saveData.equippedSkin;
-            if(s === 'Default') { ctx.beginPath(); ctx.moveTo(0,-15); ctx.bezierCurveTo(10,5,10,15,0,15); ctx.bezierCurveTo(-10,15,-10,5,0,-15); ctx.fill(); }
-            else if(s === 'Star') { for(let i=0;i<5;i++){ ctx.rotate(Math.PI*2/5); ctx.lineTo(0,-15); ctx.rotate(Math.PI*2/10); ctx.lineTo(0,-7); } ctx.fill(); }
-            else if(s === 'Circle') { ctx.beginPath(); ctx.arc(0,0,12,0,Math.PI*2); ctx.fill(); ctx.strokeStyle="#0ff"; ctx.stroke(); }
-            else if(s === 'Train') { ctx.fillRect(-8,-12,16,24); ctx.fillStyle="#333"; ctx.fillRect(-8,-4,16,2); }
+            ctx.fillStyle = "rgba(0, 5, 15, 0.5)"; ctx.fillRect(0,0,canvas.width, canvas.height);
+            // 自機
+            ctx.save(); ctx.translate(player.x, player.y);
+            if(saveData.equippedSkin === 'Train') {
+                ctx.fillStyle = "#fff"; ctx.fillRect(-10, -15, 20, 30);
+                ctx.fillStyle = "#333"; ctx.fillRect(-10, -5, 20, 3);
+            } else {
+                ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.moveTo(0,-15); ctx.lineTo(12,10); ctx.lineTo(-12,10); ctx.closePath(); ctx.fill();
+            }
             ctx.restore();
 
-            bullets.forEach(b => { ctx.fillStyle = "#fff"; ctx.fillRect(b.x-b.size/2, b.y, b.size, b.size*2.5); });
-            eBullets.forEach(eb => { ctx.fillStyle = "#ff4444"; ctx.beginPath(); ctx.arc(eb.x, eb.y, 4, 0, Math.PI*2); ctx.fill(); });
-            enemies.forEach(e => { ctx.strokeStyle = currentMode.color; ctx.lineWidth = 2; ctx.strokeRect(e.x-15, e.y-15, 30, 30); });
-            particles.forEach(p => { if(p.type==='coin'){ ctx.fillStyle="#ffd700"; ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI*2); ctx.fill(); }});
+            bullets.forEach(b => { ctx.fillStyle = "#0ff"; ctx.fillRect(b.x-b.size/2, b.y, b.size, b.size*2); });
+            eBullets.forEach(eb => { ctx.fillStyle = "#f04"; ctx.beginPath(); ctx.arc(eb.x, eb.y, 5, 0, Math.PI*2); ctx.fill(); });
+            enemies.forEach(e => { ctx.strokeStyle = currentMode.color; ctx.lineWidth=3; ctx.strokeRect(e.x-15, e.y-15, 30, 30); });
+            particles.forEach(p => { ctx.fillStyle="#ffd700"; ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI*2); ctx.fill(); });
             ripples.forEach((r, i) => {
-                ctx.strokeStyle = r.burst ? `rgba(255,255,255,${r.a})` : `rgba(0,255,255,${r.a})`;
-                ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, Math.PI*2); ctx.stroke();
-                r.r += r.burst ? 20 : 2; r.a -= 0.02; if(r.a <= 0) ripples.splice(i, 1);
+                ctx.strokeStyle = `rgba(0, 255, 255, ${r.a})`; ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, Math.PI*2); ctx.stroke();
+                r.r += 2; r.a -= 0.02; if(r.a <= 0) ripples.splice(i, 1);
             });
         }
 
         function finish(isClear) {
             gameActive = false;
-            if(isClear) saveData.cleared[currentMode.id] = (hp >= 100) ? "COMPLETE" : "CLEAR";
+            if(isClear) { 
+                saveData.cleared[currentMode.id] = "COMPLETE"; 
+                alert("SECTOR CLEARED"); location.reload(); 
+            } else { showScreen('result-screen'); }
             localStorage.setItem('minami_v2_save', JSON.stringify(saveData));
-            location.reload();
         }
 
         function loop() { if(!gameActive) return; update(); draw(); requestAnimationFrame(loop); }
