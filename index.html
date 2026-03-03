@@ -11,7 +11,7 @@
         /* HUD */
         #hud { position: absolute; top: 20px; left: 20px; z-index: 10; pointer-events: none; }
         #score-val { font-size: 20px; color: #fff; margin-bottom: 5px; }
-        #coin-val { font-size: 14px; color: #ffd700; margin-bottom: 10px; }
+        #coin-display { font-size: 14px; color: #ffd700; margin-bottom: 10px; text-shadow: 0 0 5px rgba(255,215,0,0.5); }
         #hp-bar { width: 200px; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; }
         #hp-fill { height: 100%; background: #fff; width: 100%; transition: width 0.3s ease; }
 
@@ -19,6 +19,10 @@
         #menu { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; align-items: center; z-index: 20; overflow-y: auto; padding-bottom: 50px; }
         h1 { font-size: 16px; margin: 30px 0; color: #fff; letter-spacing: 2px; }
         
+        /* Coin Status in Menu */
+        #menu-coin-status { font-size: 16px; color: #ffd700; margin-bottom: 20px; }
+        #shop-msg { font-size: 10px; color: #ff4444; height: 15px; margin-bottom: 10px; visibility: hidden; }
+
         .section-title { font-size: 12px; color: #888; margin: 20px 0 10px; border-bottom: 1px solid #334; width: 80%; text-align: center; padding-bottom: 5px; }
         
         .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 90%; max-width: 600px; }
@@ -28,11 +32,10 @@
         }
         .item-btn:hover { background: #223; border-color: #556; }
         .item-btn.owned { border-color: #00ffcc; }
-        .item-btn.equipped { background: #004433; border-color: #00ffcc; }
+        .item-btn.equipped { background: #004433; border-color: #00ffcc; box-shadow: 0 0 10px rgba(0,255,204,0.3); }
         .item-name { font-size: 8px; margin-bottom: 5px; color: #eee; }
         .item-price { font-size: 7px; color: #ffd700; }
 
-        /* PLAY MANUAL (ENGLISH) */
         #how-to { max-width: 600px; font-family: 'Noto Sans JP'; font-size: 10px; color: #aaa; margin: 20px; line-height: 1.6; text-align: left; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 8px; }
         #how-to b { color: #fff; font-family: 'Press Start 2P'; font-size: 8px; }
 
@@ -42,13 +45,16 @@
 <body>
     <div id="hud">
         <div id="score-val">000000</div>
-        <div id="coin-val">COINS: 0</div>
+        <div id="coin-display">COINS: 0</div>
         <div id="hp-bar"><div id="hp-fill"></div></div>
     </div>
 
     <div id="menu">
         <h1>MINAMI PROJECT 2026</h1>
         
+        <div id="menu-coin-status">YOUR COINS: <span id="m-coin-val">0</span></div>
+        <div id="shop-msg">NOT ENOUGH COINS!</div>
+
         <div id="how-to">
             <b>[CORE SYSTEM]</b><br>
             - Move your <b>Mouse</b> to sync with the "SHIZUKU" unit.<br>
@@ -58,11 +64,7 @@
             <b>[EXPANSION]</b><br>
             - Collect <b>Coins</b> from neutralized enemies to unlock new manifest skins and gear.<br>
             - <b>Auto-Repair</b>: Periodically restores small amounts of HP.<br>
-            - <b>Burst</b>: Press <b>Space</b> to vaporize all Noise on screen (Requires equipment).<br><br>
-            
-            <b>[RANKING]</b><br>
-            - <b>CLEAR</b>: Reach Target Score.<br>
-            - <b>COMPLETE</b>: Achieve Target Score with <b>100% HP</b>.
+            - <b>Burst</b>: Press <b>Space</b> to vaporize all Noise on screen (Requires equipment).
         </div>
 
         <div class="section-title">SELECT STAGE</div>
@@ -70,12 +72,12 @@
 
         <div class="section-title">SHOP & SKINS</div>
         <div class="grid" id="shop-grid">
-            <div id="shop-Default" class="item-btn" onclick="buy('skin','Default',0)"><span class="item-name">Droplet (Def)</span><span class="item-price">0 C</span></div>
-            <div id="shop-Star" class="item-btn" onclick="buy('skin','Star',500)"><span class="item-name">Star (Aura)</span><span class="item-price">500 C</span></div>
-            <div id="shop-Circle" class="item-btn" onclick="buy('skin','Circle',800)"><span class="item-name">Circle (Shield)</span><span class="item-price">800 C</span></div>
-            <div id="shop-Sword" class="item-btn" onclick="buy('skin','Sword',1500)"><span class="item-name">Sword (Brave)</span><span class="item-price">1500 C</span></div>
-            <div id="shop-Bear" class="item-btn" onclick="buy('skin','Bear',2000)"><span class="item-name">Bear (Cute)</span><span class="item-price">2000 C</span></div>
-            <div id="shop-Train" class="item-btn" onclick="buy('skin','Train',3000)"><span class="item-name">Train (Express)</span><span class="item-price">3000 C</span></div>
+            <div id="shop-Default" class="item-btn" onclick="buy('skin','Default',0)"><span class="item-name">Droplet</span><span class="item-price">FREE</span></div>
+            <div id="shop-Star" class="item-btn" onclick="buy('skin','Star',500)"><span class="item-name">Star</span><span class="item-price">500 C</span></div>
+            <div id="shop-Circle" class="item-btn" onclick="buy('skin','Circle',800)"><span class="item-name">Circle</span><span class="item-price">800 C</span></div>
+            <div id="shop-Sword" class="item-btn" onclick="buy('skin','Sword',1500)"><span class="item-name">Sword</span><span class="item-price">1500 C</span></div>
+            <div id="shop-Bear" class="item-btn" onclick="buy('skin','Bear',2000)"><span class="item-name">Bear</span><span class="item-price">2000 C</span></div>
+            <div id="shop-Train" class="item-btn" onclick="buy('skin','Train',3000)"><span class="item-name">Train</span><span class="item-price">3000 C</span></div>
         </div>
 
         <div class="section-title">EQUIPMENT</div>
@@ -133,7 +135,9 @@
                     grid.appendChild(btn);
                 }
             });
-            document.getElementById('coin-val').innerText = `COINS: ${saveData.coins}`;
+            document.getElementById('coin-display').innerText = `COINS: ${saveData.coins}`;
+            document.getElementById('m-coin-val').innerText = saveData.coins;
+            
             document.querySelectorAll('.item-btn').forEach(el => el.classList.remove('equipped', 'owned'));
             saveData.owned.forEach(name => {
                 const el = document.getElementById(`shop-${name}`);
@@ -146,9 +150,22 @@
             });
         }
 
+        function showShopMsg(msg) {
+            const el = document.getElementById('shop-msg');
+            el.innerText = msg;
+            el.style.visibility = 'visible';
+            setTimeout(() => { el.style.visibility = 'hidden'; }, 2000);
+        }
+
         function buy(type, name, price) {
             if(!saveData.owned.includes(name)) {
-                if(saveData.coins >= price) { saveData.coins -= price; saveData.owned.push(name); } else return;
+                if(saveData.coins >= price) { 
+                    saveData.coins -= price; 
+                    saveData.owned.push(name); 
+                } else { 
+                    showShopMsg("NOT ENOUGH COINS!"); 
+                    return; 
+                }
             }
             if(type === 'skin') saveData.equippedSkin = name;
             if(type === 'item' && !saveData.items.includes(name)) saveData.items.push(name);
