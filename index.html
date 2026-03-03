@@ -7,117 +7,32 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+JP:wght@300&display=swap');
 
-body{
-margin:0;
-background:#000510;
-color:#fff;
-font-family:'Press Start 2P',cursive;
-overflow:hidden;
-}
-
-#bg-canvas,#game-canvas{
-position:fixed;
-top:0;left:0;
-}
-
+body{ margin:0; background:#000510; color:#fff; font-family:'Press Start 2P',cursive; overflow:hidden; }
+#bg-canvas,#game-canvas{ position:fixed; top:0; left:0; }
 #bg-canvas{z-index:1;}
 #game-canvas{z-index:5;pointer-events:none;}
-
-#menu{
-position:relative;
-width:100%;
-height:100vh;
-background:rgba(0,10,30,0.8);
-display:flex;
-flex-direction:column;
-align-items:center;
-z-index:10;
-overflow-y:auto;
-backdrop-filter:blur(12px);
-}
-
-#hud{
-position:fixed;
-top:20px;
-left:20px;
-z-index:100;
-visibility:hidden;
-}
-
+#menu{ position:relative; width:100%; height:100vh; background:rgba(0,10,30,0.8); display:flex; flex-direction:column; align-items:center; z-index:10; overflow-y:auto; backdrop-filter:blur(12px); }
+#hud{ position:fixed; top:20px; left:20px; z-index:100; visibility:hidden; }
 #score-display{font-size:14px;margin-bottom:5px;}
 #combo-display{font-size:12px;margin-bottom:5px;color:#00ffff;}
 #hp-container{width:200px;height:10px;border:1px solid #fff;}
 #hp-bar{height:100%;background:#fff;width:100%;}
-
 h1{font-size:16px;margin:30px 0;color:#00d4ff;}
-
-.section-title{
-font-size:10px;
-margin:25px 0 15px;
-color:#446688;
-border-bottom:1px solid #1a334d;
-width:85%;
-text-align:center;
-}
-
-.grid{
-display:grid;
-grid-template-columns:repeat(3,1fr);
-gap:12px;
-width:95%;
-max-width:650px;
-margin-bottom:30px;
-}
-
-.btn{
-background:rgba(255,255,255,0.05);
-border:1px solid #2a4a6a;
-padding:12px 5px;
-cursor:pointer;
-text-align:center;
-border-radius:4px;
-font-size:8px;
-color:#fff;
-}
-
-.btn:hover{
-background:rgba(255,255,255,0.15);
-}
-
-.equipped{
-border-color:#00ffcc!important;
-box-shadow:0 0 10px rgba(0,255,204,0.6);
-}
-
-.status-text{
-display:block;
-font-size:6px;
-margin-top:6px;
-}
-
-.perfect-text{
-color:#00ffcc;
-}
-
-#how-to{
-max-width:600px;
-font-family:'Noto Sans JP';
-font-size:10px;
-color:#a0c0e0;
-margin-bottom:25px;
-line-height:1.7;
-background:rgba(255,255,255,0.05);
-padding:15px;
-border-radius:4px;
-}
-
+.section-title{ font-size:10px; margin:25px 0 15px; color:#446688; border-bottom:1px solid #1a334d; width:85%; text-align:center; }
+.grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; width:95%; max-width:650px; margin-bottom:30px; }
+.btn{ background:rgba(255,255,255,0.05); border:1px solid #2a4a6a; padding:12px 5px; cursor:pointer; text-align:center; border-radius:4px; font-size:8px; color:#fff; }
+.btn:hover{ background:rgba(255,255,255,0.15); }
+.equipped{ border-color:#00ffcc!important; box-shadow:0 0 10px rgba(0,255,204,0.6); }
+.status-text{ display:block; font-size:6px; margin-top:6px; }
+.perfect-text{ color:#00ffcc; }
+#how-to{ max-width:600px; font-family:'Noto Sans JP'; font-size:10px; color:#a0c0e0; margin-bottom:25px; line-height:1.7; background:rgba(255,255,255,0.05); padding:15px; border-radius:4px; }
 #coin-info{color:#ffd700;margin-bottom:10px;font-size:12px;}
 #msg{color:#ff4444;font-size:10px;height:12px;visibility:hidden;}
+.copy{ font-size:7px; color:rgba(255,255,255,0.3); margin-bottom:20px; }
 </style>
 </head>
 
 <body>
-
 <canvas id="bg-canvas"></canvas>
 <canvas id="game-canvas"></canvas>
 
@@ -129,482 +44,180 @@ border-radius:4px;
 
 <div id="menu">
 <h1>MINAMI PROJECT 2026</h1>
-
 <div id="how-to">
 [CORE SYSTEM]<br>
-- Move with Mouse.<br>
-- Hold Click to fire.<br>
-- Avoid enemy bullets & collision.<br><br>
-[EXPANSION]<br>
-- Collect Coins.<br>
-- Heal: auto HP regen.<br>
-- Burst: Press Space to clear bullets.
+- Destroy Enemy Units (Targets).<br>
+- Move with Mouse / Click to fire.<br>
+- Full clear main stages to unlock Extra.
 </div>
-
 <div id="coin-info">COINS: <span id="c-val">0</span></div>
 <div id="msg">NOT ENOUGH COINS!</div>
-
 <div class="section-title">SELECT STAGE</div>
 <div id="stage-grid" class="grid"></div>
-
 <div class="section-title">EQUIPMENT</div>
 <div id="shop-grid" class="grid">
-
-<div id="shop-Default" class="btn" onclick="buy('skin','Default',0)">Droplet<br><span style="color:#ffd700">FREE</span></div>
-<div id="shop-Star" class="btn" onclick="buy('skin','Star',500)">Star<br><span style="color:#ffd700">500</span></div>
-<div id="shop-Circle" class="btn" onclick="buy('skin','Circle',800)">Circle<br><span style="color:#ffd700">800</span></div>
-
-<div id="shop-Heal" class="btn" onclick="buy('item','Heal',2500)">Repair<br><span style="color:#ffd700">2500</span></div>
-<div id="shop-Burst" class="btn" onclick="buy('item','Burst',5000)">Burst<br><span style="color:#ffd700">5000</span></div>
-
+    <div id="shop-Default" class="btn" onclick="buy('skin','Default',0)">Droplet<br><span style="color:#ffd700">0</span></div>
+    <div id="shop-Star" class="btn" onclick="buy('skin','Star',500)">Star<br><span style="color:#ffd700">500</span></div>
+    <div id="shop-Circle" class="btn" onclick="buy('skin','Circle',800)">Circle<br><span style="color:#ffd700">800</span></div>
+    <div id="shop-Heal" class="btn" onclick="buy('item','Heal',2500)">Repair<br><span style="color:#ffd700">2500</span></div>
+    <div id="shop-Burst" class="btn" onclick="buy('item','Burst',5000)">Burst<br><span style="color:#ffd700">5000</span></div>
 </div>
+<div class="copy">© 2026 MINAMI ALL RIGHTS RESERVED.</div>
 </div>
 
 <script>
+// 背景・セーブデータ・ステージ定義（あなたのコードを継承）
+const bg=document.getElementById('bg-canvas'), bctx=bg.getContext('2d');
+let w,h; function resize(){ w=bg.width=window.innerWidth; h=bg.height=window.innerHeight; }
+window.onresize=resize; resize();
+let t=0; function drawBg(){ bctx.fillStyle='#000818'; bctx.fillRect(0,0,w,h); t+=0.01; for(let i=0;i<3;i++){ bctx.beginPath(); bctx.strokeStyle=`rgba(0,140,255,${0.15-i*0.04})`; for(let x=0;x<w;x+=10){ bctx.lineTo(x, h*0.55+Math.sin(x*0.006+t+i)*70*Math.cos(t*0.4)); } bctx.stroke(); } requestAnimationFrame(drawBg); } drawBg();
 
-// ===== 背景 =====
-const bg=document.getElementById('bg-canvas');
-const bctx=bg.getContext('2d');
-let w,h;
-function resize(){
-w=bg.width=window.innerWidth;
-h=bg.height=window.innerHeight;
-}
-window.onresize=resize;
-resize();
+let save=JSON.parse(localStorage.getItem('minami_project_overdrive_v2')||'{"coins":0,"owned":["Default"],"skin":"Default","items":[],"cleared":[],"perfect":[]}');
 
-let t=0;
-function drawBg(){
-bctx.fillStyle='#000818';
-bctx.fillRect(0,0,w,h);
-t+=0.01;
-for(let i=0;i<3;i++){
-bctx.beginPath();
-bctx.strokeStyle=`rgba(0,140,255,${0.15-i*0.04})`;
-for(let x=0;x<w;x+=10){
-let y=h*0.55+Math.sin(x*0.006+t+i)*70*Math.cos(t*0.4);
-bctx.lineTo(x,y);
-}
-bctx.stroke();
-}
-requestAnimationFrame(drawBg);
-}
-drawBg();
-
-// ===== セーブ =====
-let save=JSON.parse(localStorage.getItem('minami_project_overdrive')||
-'{"coins":0,"owned":["Default"],"skin":"Default","items":[],"cleared":[],"perfect":[]}');
-
-// 旧互換
-save.cleared=save.cleared.map(s=>s.replace("=","ー"));
-save.perfect=save.perfect.map(s=>s.replace("=","ー"));
-
-// ===== ステージ定義 =====
 const modes={
-'STーSB':{color:'#ffff00',diff:1},
-'STーKT':{color:'#0088ff',diff:1.2},
-'STーSK':{color:'#00ff44',diff:1.4},
-'STーKY':{color:'#ff0044',diff:1.6},
-'STーPK':{color:'#ff0044',diff:1.8},
-'STーJB':{color:'#00ff44',diff:2.1},
-'STーHM':{color:'#0088ff',diff:2.4},
-'STーKS':{color:'#ffff00',diff:2.7},
-'STーTY':{color:'#0088ff',diff:3},
-'STーHA':{color:'#ffff00',diff:4},
-'STーHB':{color:'#00ff44',diff:5.5},
-'STーHC':{color:'#ff0044',diff:7},
-'STーCO':{color:'#ff6600',diff:15}
+    'STーSB':{color:'#ffff00',diff:1,g:'warp'}, 'STーKT':{color:'#0088ff',diff:1.2,g:'dash'},
+    'STーSK':{color:'#00ff44',diff:1.4,g:'shield'}, 'STーKY':{color:'#ff0044',diff:1.6,g:'wind'},
+    'STーPK':{color:'#ff0044',diff:1.8,g:'dash'}, 'STーJB':{color:'#00ff44',diff:2.1,g:'shield'},
+    'STーHM':{color:'#0088ff',diff:2.4,g:'warp'}, 'STーKS':{color:'#ffff00',diff:2.7,g:'wind'},
+    'STーTY':{color:'#0088ff',diff:3,g:'dash'}, 'STーHA':{color:'#ffff00',diff:4,g:'mix'},
+    'STーHB':{color:'#00ff44',diff:5.5,g:'mix'}, 'STーHC':{color:'#ff0044',diff:7,g:'mix'},
+    'STーCO':{color:'#ff6600',diff:15,g:'rush'}
 };
 
 function updateUI(){
-const grid=document.getElementById('stage-grid');
-grid.innerHTML='';
-
-const main=[
-'STーSB','STーKT','STーSK','STーKY','STーPK',
-'STーJB','STーHM','STーKS','STーTY'
-];
-const next=['STーHA','STーHB','STーHC'];
-
-const allMain=main.every(s=>save.cleared.includes(s));
-const allPerfect=[...main,...next].every(s=>save.perfect.includes(s));
-
-Object.keys(modes).forEach(id=>{
-if(next.includes(id)&&!allMain)return;
-if(id==='STーCO'&&!allPerfect)return;
-
-const b=document.createElement('div');
-b.className='btn';
-b.style.color=b.style.borderColor=modes[id].color;
-
-let status='';
-if(save.perfect.includes(id))
-status='<span class="status-text perfect-text">PERFECT</span>';
-else if(save.cleared.includes(id))
-status='<span class="status-text">CLEARED</span>';
-
-b.innerHTML=id+status;
-b.onclick=()=>startGame(id);
-grid.appendChild(b);
-});
-
-document.getElementById('c-val').innerText=save.coins;
-
-document.querySelectorAll('.btn').forEach(el=>el.classList.remove('equipped'));
-save.owned.forEach(id=>{
-const el=document.getElementById('shop-'+id);
-if(el&&(save.skin===id||save.items.includes(id)))
-el.classList.add('equipped');
-});
+    const grid=document.getElementById('stage-grid'); grid.innerHTML='';
+    const main=['STーSB','STーKT','STーSK','STーKY','STーPK','STーJB','STーHM','STーKS','STーTY'], next=['STーHA','STーHB','STーHC'];
+    const allM=main.every(s=>save.cleared.includes(s)), allP=[...main,...next].every(s=>save.perfect.includes(s));
+    Object.keys(modes).forEach(id=>{
+        if(next.includes(id)&&!allM)return; if(id==='STーCO'&&!allP)return;
+        const b=document.createElement('div'); b.className='btn'; b.style.color=b.style.borderColor=modes[id].color;
+        let st=save.perfect.includes(id)?'<span class="status-text perfect-text">PERFECT</span>':save.cleared.includes(id)?'<span class="status-text">CLEARED</span>':'';
+        b.innerHTML=id+st; b.onclick=()=>startGame(id); grid.appendChild(b);
+    });
+    document.getElementById('c-val').innerText=save.coins;
+    document.querySelectorAll('.btn').forEach(el=>el.classList.remove('equipped'));
+    save.owned.forEach(id=>{ const el=document.getElementById('shop-'+id); if(el&&(save.skin===id||save.items.includes(id))) el.classList.add('equipped'); });
 }
 
 function buy(type,name,price){
-if(!save.owned.includes(name)){
-if(save.coins>=price){
-save.coins-=price;
-save.owned.push(name);
-}else{
-const m=document.getElementById('msg');
-m.style.visibility='visible';
-setTimeout(()=>m.style.visibility='hidden',1500);
-return;
-}
-}
-if(type==='skin')save.skin=name;
-if(type==='item'&&!save.items.includes(name))save.items.push(name);
-
-localStorage.setItem('minami_project_overdrive',JSON.stringify(save));
-updateUI();
+    if(!save.owned.includes(name)){
+        if(save.coins>=price){ save.coins-=price; save.owned.push(name); }
+        else { document.getElementById('msg').style.visibility='visible'; setTimeout(()=>document.getElementById('msg').style.visibility='hidden',1500); return; }
+    }
+    if(type==='skin')save.skin=name; if(type==='item')save.items.push(name);
+    localStorage.setItem('minami_project_overdrive_v2',JSON.stringify(save)); updateUI();
 }
 
-updateUI();
-// ===== ゲーム本体 =====
-const canvas=document.getElementById('game-canvas');
-const ctx=canvas.getContext('2d');
-canvas.width=window.innerWidth;
-canvas.height=window.innerHeight;
+// ゲーム本体ロジック（敵機の概念を追加しSTGとして成立させる）
+const canvas=document.getElementById('game-canvas'), ctx=canvas.getContext('2d');
+canvas.width=window.innerWidth; canvas.height=window.innerHeight;
 
-let player,bullets=[],enemyBullets=[],particles=[];
-let score=0,combo=0,comboTimer=0;
-let modeData,currentStage;
-let invincible=0;
-let firing=false;
-let burstCooldown=0;
-
-document.addEventListener('mousedown',()=>firing=true);
-document.addEventListener('mouseup',()=>firing=false);
+let player, bullets=[], enemies=[], enemyBullets=[], coins=[], score=0, combo=0, comboTimer=0, active=false, frame=0, burstCool=0, shake=0;
+let firing=false; document.addEventListener('mousedown',()=>firing=true); document.addEventListener('mouseup',()=>firing=false);
 
 function startGame(id){
-currentStage=id;
-modeData=modes[id];
-score=0;
-combo=0;
-comboTimer=0;
-enemyBullets=[];
-bullets=[];
-particles=[];
-invincible=0;
-burstCooldown=0;
-
-player={
-x:canvas.width/2,
-y:canvas.height-120,
-hp:100,
-maxHp:100
-};
-
-document.getElementById('menu').style.display='none';
-document.getElementById('hud').style.visibility='visible';
-
-canvas.style.pointerEvents='auto';
-canvas.addEventListener('mousemove',e=>{
-player.x=e.clientX;
-player.y=e.clientY;
-});
-
-gameLoop();
+    active=true; currentStage=id; modeData=modes[id]; score=0; combo=0; frame=0;
+    bullets=[]; enemies=[]; enemyBullets=[]; coins=[];
+    player={ x:w/2, y:h-120, hp:100 };
+    document.getElementById('menu').style.display='none'; document.getElementById('hud').style.visibility='visible';
+    canvas.style.pointerEvents='auto'; canvas.onmousemove=e=>{ player.x=e.clientX; player.y=e.clientY; };
+    gameLoop();
 }
 
-function shoot(){
-if(!firing)return;
-bullets.push({x:player.x,y:player.y-15,vy:-8});
+function spawnEnemy(){
+    if(!active) return;
+    let count = Math.ceil(modeData.diff);
+    if(frame % 60 === 0){
+        for(let i=0; i<count; i++) {
+            enemies.push({ x:Math.random()*w, y:-50, hp:modeData.diff*3, g:modeData.g, f:frame });
+        }
+    }
 }
-
-function spawnEnemyPattern(){
-
-let diff=modeData.diff;
-
-// 全ステージ常時攻撃
-for(let i=0;i<diff;i++){
-let angle=Math.random()*Math.PI*2;
-let speed=2+diff*0.5;
-enemyBullets.push({
-x:canvas.width/2,
-y:100,
-vx:Math.cos(angle)*speed,
-vy:Math.sin(angle)*speed
-});
-}
-
-// STーHC以降は追加リング弾
-if(currentStage==='STーHC'||currentStage==='STーCO'){
-for(let i=0;i<16;i++){
-let angle=i*(Math.PI*2/16);
-enemyBullets.push({
-x:canvas.width/2,
-y:120,
-vx:Math.cos(angle)*(2+diff*0.3),
-vy:Math.sin(angle)*(2+diff*0.3)
-});
-}
-}
-
-}
-
-setInterval(spawnEnemyPattern,1200);
 
 function update(){
+    if(!active) return; frame++;
+    if(firing && frame%6===0) bullets.push({x:player.x, y:player.y-20});
+    if(save.items.includes('Heal') && frame%60===0 && player.hp<100) player.hp++;
+    if(comboTimer>0) comboTimer--; else combo=0;
+    if(shake>0) shake--;
 
-shoot();
+    // 弾丸・敵機ロジック
+    bullets.forEach((b,bi)=>{
+        b.y-=12; if(b.y<0) bullets.splice(bi,1);
+        enemies.forEach((e,ei)=>{
+            if(Math.hypot(b.x-e.x, b.y-e.y)<25){
+                e.hp--; bullets.splice(bi,1);
+                if(e.hp<=0){
+                    enemies.splice(ei,1); combo++; comboTimer=120;
+                    score += 100 * (1 + combo*0.1);
+                    for(let j=0; j<2; j++) coins.push({x:e.x, y:e.y, vx:(Math.random()-0.5)*10, vy:(Math.random()-0.5)*10});
+                }
+            }
+        });
+    });
 
-if(comboTimer>0)comboTimer--;
-else combo=0;
+    enemies.forEach((e,ei)=>{
+        if(e.g==='warp' && frame%80===0) { e.x=Math.random()*w; e.y+=30; }
+        else if(e.g==='dash') e.y+=8;
+        else if(e.g==='wind') { e.x+=Math.sin(frame*0.1)*10; e.y+=3; }
+        else if(e.g==='rush') { e.y+=12; e.x+=(Math.random()-0.5)*20; }
+        else e.y+=3;
 
-if(invincible>0)invincible--;
+        if(frame % 100 === 0) enemyBullets.push({x:e.x, y:e.y, vx:0, vy:5});
+        if(Math.hypot(e.x-player.x, e.y-player.y)<30){ player.hp-=20; enemies.splice(ei,1); shake=10; }
+        if(e.y>h+50) enemies.splice(ei,1);
+    });
 
-if(burstCooldown>0)burstCooldown--;
+    enemyBullets.forEach((eb,ebi)=>{
+        eb.y+=eb.vy;
+        if(Math.hypot(eb.x-player.x, eb.y-player.y)<15){ player.hp-=10; enemyBullets.splice(ebi,1); shake=10; }
+        if(eb.y>h) enemyBullets.splice(ebi,1);
+    });
 
-bullets.forEach((b,i)=>{
-b.y+=b.vy;
-if(b.y<0)bullets.splice(i,1);
-});
+    coins.forEach((c,ci)=>{
+        let d=Math.hypot(player.x-c.x, player.y-c.y);
+        if(d<150){ c.vx+=(player.x-c.x)/d*0.8; c.vy+=(player.y-c.y)/d*0.8; }
+        c.x+=c.vx; c.y+=c.vy; c.vx*=0.95; c.vy*=0.95;
+        if(d<20){ save.coins+=10; coins.splice(ci,1); }
+    });
 
-enemyBullets.forEach((b,i)=>{
-b.x+=b.vx;
-b.y+=b.vy;
-
-if(b.x<0||b.x>canvas.width||b.y<0||b.y>canvas.height)
-enemyBullets.splice(i,1);
-
-let dx=b.x-player.x;
-let dy=b.y-player.y;
-if(Math.sqrt(dx*dx+dy*dy)<12 && invincible<=0){
-player.hp-=10;
-invincible=60;
-enemyBullets.splice(i,1);
-}
-});
-
-if(player.hp<=0){
-endGame(false);
-}
-
-if(score>=modeData.diff*1000){
-endGame(true);
-}
-
+    if(player.hp<=0) endGame(false);
+    if(score >= modeData.diff*3000) endGame(true);
 }
 
 function draw(){
-
-ctx.clearRect(0,0,canvas.width,canvas.height);
-
-// player
-ctx.beginPath();
-ctx.fillStyle=invincible>0?'#ff4444':'#ffffff';
-ctx.arc(player.x,player.y,10,0,Math.PI*2);
-ctx.fill();
-
-// bullets
-ctx.fillStyle='#00ffff';
-bullets.forEach(b=>{
-ctx.beginPath();
-ctx.arc(b.x,b.y,4,0,Math.PI*2);
-ctx.fill();
-});
-
-// enemy bullets
-ctx.fillStyle='#ff2222';
-enemyBullets.forEach(b=>{
-ctx.beginPath();
-ctx.arc(b.x,b.y,6,0,Math.PI*2);
-ctx.fill();
-});
-
-document.getElementById('s-val').innerText=score;
-document.getElementById('combo-val').innerText=combo;
-document.getElementById('hp-bar').style.width=
-(player.hp/player.maxHp*100)+'%';
+    ctx.clearRect(0,0,w,h);
+    if(shake>0) ctx.translate((Math.random()-0.5)*shake, (Math.random()-0.5)*shake);
+    
+    // 描画：自機、敵機、弾、コイン
+    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(player.x, player.y, 12, 0, 7); ctx.fill();
+    enemies.forEach(e=>{ ctx.strokeStyle=modeData.color; ctx.lineWidth=3; ctx.strokeRect(e.x-15, e.y-15, 30, 30); });
+    ctx.fillStyle='#00ffff'; bullets.forEach(b=>ctx.fillRect(b.x-2, b.y, 4, 10));
+    ctx.fillStyle='#ff2222'; enemyBullets.forEach(eb=>ctx.beginPath(); ctx.arc(eb.x, eb.y, 5, 0, 7); ctx.fill());
+    ctx.fillStyle='#ffd700'; coins.forEach(c=>ctx.beginPath(); ctx.arc(c.x, c.y, 4, 0, 7); ctx.fill());
+    
+    document.getElementById('s-val').innerText=Math.floor(score);
+    document.getElementById('combo-val').innerText=combo;
+    document.getElementById('hp-bar').style.width=player.hp+'%';
+    ctx.setTransform(1,0,0,1,0,0);
 }
 
-function gameLoop(){
-update();
-draw();
-requestAnimationFrame(gameLoop);
-}
+function gameLoop(){ if(active){ spawnEnemy(); update(); draw(); requestAnimationFrame(gameLoop); } }
 
-// ===== Burst =====
-document.addEventListener('keydown',e=>{
-if(e.code==='Space' && save.items.includes('Burst') && burstCooldown<=0){
-enemyBullets=[];
-burstCooldown=300;
-}
-});
-
-// ===== Heal =====
-setInterval(()=>{
-if(save.items.includes('Heal') && player && player.hp<player.maxHp){
-player.hp+=1;
-}
-},1000);
-
-// ===== 終了処理 =====
 function endGame(win){
-
-canvas.style.pointerEvents='none';
-document.getElementById('menu').style.display='flex';
-document.getElementById('hud').style.visibility='hidden';
-
-if(win){
-save.coins+=100*modeData.diff;
-
-if(!save.cleared.includes(currentStage))
-save.cleared.push(currentStage);
-
-if(player.hp===player.maxHp &&
-!save.perfect.includes(currentStage))
-save.perfect.push(currentStage);
+    active=false; canvas.style.pointerEvents='none';
+    if(win){
+        save.coins += 500;
+        if(!save.cleared.includes(currentStage)) save.cleared.push(currentStage);
+        if(player.hp>=100) save.perfect.push(currentStage);
+    }
+    localStorage.setItem('minami_project_overdrive_v2',JSON.stringify(save));
+    updateUI(); document.getElementById('menu').style.display='flex'; document.getElementById('hud').style.visibility='hidden';
 }
 
-localStorage.setItem('minami_project_overdrive',JSON.stringify(save));
+document.addEventListener('keydown',e=>{ if(e.code==='Space' && save.items.includes('Burst')) { enemyBullets=[]; shake=20; } });
+
 updateUI();
-}
-
-// ====== 追加強化ロジック ======
-
-let coPhase = 1;
-let shakeTime = 0;
-
-// 画面揺れ
-function screenShake(power){
-shakeTime = power;
-}
-
-function applyShake(){
-if(shakeTime > 0){
-let dx = (Math.random()-0.5)*10;
-let dy = (Math.random()-0.5)*10;
-canvas.style.transform = `translate(${dx}px,${dy}px)`;
-shakeTime--;
-}else{
-canvas.style.transform = "translate(0,0)";
-}
-}
-
-// CO専用 超弾幕
-function spawnCOChaos(){
-
-if(currentStage !== "STーCO") return;
-
-let diff = modeData.diff;
-
-// フェーズ2突入
-if(score > diff*600 && coPhase === 1){
-coPhase = 2;
-screenShake(60);
-}
-
-// フェーズ3突入（地獄）
-if(score > diff*1200 && coPhase === 2){
-coPhase = 3;
-screenShake(120);
-}
-
-// フェーズ別弾幕
-if(coPhase === 2){
-for(let i=0;i<24;i++){
-let angle = i*(Math.PI*2/24);
-enemyBullets.push({
-x:canvas.width/2,
-y:120,
-vx:Math.cos(angle)*(3+diff*0.4),
-vy:Math.sin(angle)*(3+diff*0.4)
-});
-}
-}
-
-if(coPhase === 3){
-for(let i=0;i<40;i++){
-let angle = i*(Math.PI*2/40);
-enemyBullets.push({
-x:canvas.width/2,
-y:120,
-vx:Math.cos(angle)*(4+diff*0.6),
-vy:Math.sin(angle)*(4+diff*0.6)
-});
-}
-
-// ランダム爆撃
-for(let i=0;i<8;i++){
-enemyBullets.push({
-x:Math.random()*canvas.width,
-y:-20,
-vx:0,
-vy:5+Math.random()*3
-});
-}
-}
-}
-
-setInterval(spawnCOChaos,1500);
-
-// コンボシステム強化
-function addScore(base){
-combo++;
-comboTimer = 120;
-let multiplier = 1 + combo*0.1;
-score += Math.floor(base * multiplier);
-}
-
-// 弾ヒット時スコア加算
-setInterval(()=>{
-if(bullets.length > 0){
-addScore(10);
-}
-},200);
-
-// PERFECT演出
-function drawPerfectEffect(){
-if(save.perfect.includes(currentStage)){
-ctx.font = "30px 'Press Start 2P'";
-ctx.fillStyle = "#00ffcc";
-ctx.fillText("PERFECT MODE", 50, 80);
-}
-}
-
-// draw拡張
-const originalDraw = draw;
-draw = function(){
-originalDraw();
-applyShake();
-drawPerfectEffect();
-};
-
-// update拡張
-const originalUpdate = update;
-update = function(){
-originalUpdate();
-spawnCOChaos();
-};
-
-// ===== ゲーム終了時COフェーズリセット =====
-const originalEndGame = endGame;
-endGame = function(win){
-coPhase = 1;
-originalEndGame(win);
-};
-
-// ===== スクリプト終了 =====
 </script>
 </body>
 </html>
