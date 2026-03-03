@@ -1,264 +1,207 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<title>MINAMI PROJECT 2026</title>
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-
-<style>
-body{
-    margin:0;
-    background:#000;
-    color:white;
-    font-family:'Press Start 2P', monospace;
-    overflow:hidden;
-}
-
-.hidden{ display:none; }
-
-.center{
-    text-align:center;
-}
-
-/* タイトル */
-h1{
-    margin-top:40px;
-    letter-spacing:6px;
-    font-size:28px;
-}
-
-/* 説明パネル */
-.info-box{
-    width:600px;
-    margin:30px auto;
-    padding:20px;
-    background:rgba(255,255,255,0.05);
-    border-radius:15px;
-    text-align:left;
-    line-height:1.8em;
-}
-
-/* グリッド */
-.grid{
-    display:grid;
-    grid-template-columns:repeat(3, 260px);
-    gap:25px;
-    justify-content:center;
-    margin-top:40px;
-}
-
-.stage{
-    padding:25px;
-    border-radius:15px;
-    border:3px solid;
-    background:#000;
-    cursor:pointer;
-    transition:0.3s;
-    text-align:center;
-}
-
-.stage:hover{
-    transform:scale(1.05);
-    box-shadow:0 0 20px currentColor;
-}
-
-.stage span{
-    display:block;
-    margin-top:15px;
-    font-size:12px;
-}
-
-.yellow{ color:#ffd400; border-color:#ffd400; }
-.blue{ color:#00c8ff; border-color:#00c8ff; }
-.green{ color:#00ff8c; border-color:#00ff8c; }
-.red{ color:#ff0044; border-color:#ff0044; }
-.pink{ color:#ff66aa; border-color:#ff66aa; }
-.cyan{ color:#00ffff; border-color:#00ffff; }
-.purple{ color:#c000ff; border-color:#c000ff; }
-.gray{ color:#888; border-color:#888; }
-
-hr{
-    margin:60px auto;
-    width:70%;
-    border:1px solid #222;
-}
-
-.footer{
-    margin:40px 0;
-    font-size:12px;
-    color:#444;
-    text-align:center;
-}
-
-/* ゲーム画面 */
-#gameCanvas{
-    background:#000;
-    display:block;
-    margin:0 auto;
-}
-
-.backBtn{
-    position:absolute;
-    top:20px;
-    left:20px;
-    padding:10px 20px;
-    border:2px solid white;
-    background:none;
-    color:white;
-    cursor:pointer;
-    font-family:'Press Start 2P';
-}
-.backBtn:hover{
-    box-shadow:0 0 10px white;
-}
-</style>
+    <meta charset="UTF-8">
+    <title>GIMMICK SHOOTER 2026</title>
+    <style>
+        body { background: #000; color: #fff; font-family: 'Courier New', Courier, monospace; margin: 0; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        #game-container { position: relative; width: 800px; height: 600px; border: 2px solid #555; background: radial-gradient(circle, #111 0%, #000 100%); cursor: crosshair; }
+        canvas { display: block; }
+        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.9); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
+        .active { display: flex; }
+        .btn { padding: 15px 30px; margin: 10px; border: 1px solid #fff; background: transparent; color: #fff; cursor: pointer; font-size: 18px; width: 300px; transition: 0.3s; position: relative; }
+        .btn:hover { background: #fff; color: #000; }
+        .cleared::after { content: " [CLEARED]"; color: #0f0; font-size: 12px; position: absolute; right: 10px; }
+        #hud { position: absolute; top: 15px; left: 15px; pointer-events: none; }
+        #hp-bar { width: 200px; height: 8px; border: 1px solid #fff; margin-top: 5px; }
+        #hp-fill { width: 100%; height: 100%; background: #f00; transition: 0.3s; }
+        #combo { position: absolute; top: 15px; right: 15px; font-size: 24px; color: #ff0; }
+    </style>
 </head>
-
 <body>
 
-<!-- ===== メニュー ===== -->
-<div id="menu">
+<div id="game-container">
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <div id="hud">
+        SCORE: <span id="s-val">0</span><br>
+        COIN: <span id="c-val">0</span>
+        <div id="hp-bar"><div id="hp-fill"></div></div>
+    </div>
+    <div id="combo"></div>
 
-<h1 class="center">MINAMI PROJECT 2026</h1>
+    <div id="m-screen" class="overlay active">
+        <h1>GIMMICK SHOOTER 2026</h1>
+        <button class="btn" onclick="openStages()">MISSION SELECT</button>
+        <button class="btn" onclick="openShop()">SHOP & UPGRADE</button>
+        <button class="btn" onclick="resetData()" style="border:none; color:#555; font-size:10px;">RESET DATA</button>
+    </div>
 
-<div class="info-box">
-【操作方法】<br>
-・マウス移動：霊（白機）を操る<br>
-・左クリック：想い（弾）を放つ<br>
-・敵に当たると終了
+    <div id="st-screen" class="overlay">
+        <h2>SELECT LEVEL</h2>
+        <div id="st-list"></div>
+        <div id="extra-stage"></div>
+        <button class="btn" onclick="back()">BACK</button>
+    </div>
+
+    <div id="sh-screen" class="overlay">
+        <h2>SHOP</h2>
+        <p>COIN: <span id="sh-c">0</span></p>
+        <button class="btn" onclick="buy('wide')">WIDE SHOT (500🪙)</button>
+        <button class="btn" onclick="buy('heal')">FULL REPAIR (200🪙)</button>
+        <button class="btn" onclick="back()">BACK</button>
+    </div>
 </div>
-
-<div class="grid">
-<div class="stage yellow" onclick="startGame(1)">ST-SB<span>★★★★★</span></div>
-<div class="stage blue" onclick="startGame(2)">ST-KT<span>★★★★★</span></div>
-<div class="stage green" onclick="startGame(3)">ST-SK<span>★★★★★</span></div>
-
-<div class="stage red" onclick="startGame(4)">ST-KY<span>★★★★★</span></div>
-<div class="stage pink" onclick="startGame(5)">ST-PK<span>★★★★★</span></div>
-<div class="stage cyan" onclick="startGame(6)">ST-JB<span>★★★★★</span></div>
-
-<div class="stage purple" onclick="startGame(7)">ST-HM<span>★★★★★</span></div>
-<div class="stage gray" onclick="startGame(8)">ST-KS<span>★★★★★</span></div>
-<div class="stage blue" onclick="startGame(9)">ST-TY<span>★★★★★</span></div>
-</div>
-
-<hr>
-<div class="footer">
-©MINAMI PROJECT 2026 / Chromatic Resonance
-</div>
-
-</div>
-
-
-<!-- ===== ゲーム画面 ===== -->
-<div id="game" class="hidden">
-<button class="backBtn" onclick="backToMenu()">BACK</button>
-<canvas id="gameCanvas" width="800" height="600"></canvas>
-</div>
-
 
 <script>
-let canvas = document.getElementById("gameCanvas");
-let ctx = canvas.getContext("2d");
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
 
-let player = { x:400, y:500, size:8 };
-let bullets = [];
-let enemies = [];
-let gameOver = false;
-let stageLevel = 1;
+// --- セーブ機能 ---
+const load = () => JSON.parse(localStorage.getItem('gs2026_save')) || { coins: 0, cleared: [], weapon: 'normal' };
+let user = load();
+const save = () => localStorage.setItem('gs2026_save', JSON.stringify(user));
 
-function startGame(level){
-    stageLevel = level;
-    document.getElementById("menu").classList.add("hidden");
-    document.getElementById("game").classList.remove("hidden");
+let game = {
+    state: 'menu', score: 0, hp: 100, combo: 0, comboT: 0, frame: 0,
+    p: { x: 400, y: 550 }, bullets: [], enemies: [], eb: [], stage: null
+};
 
-    bullets = [];
-    enemies = [];
-    gameOver = false;
+const LEVELS = [
+    { id: 'L1', name: 'LEVEL 1: SPLIT', color: '#ff4444', diff: 1 },
+    { id: 'L2', name: 'LEVEL 2: WARP', color: '#4444ff', diff: 2 },
+    { id: 'L3', name: 'LEVEL 3: GRAVITY', color: '#ffff44', diff: 3 },
+    { id: 'L4', name: 'LEVEL 4: BURST', color: '#44ff44', diff: 4 }
+];
 
-    spawnEnemy();
-    requestAnimationFrame(gameLoop);
-}
-
-function backToMenu(){
-    document.getElementById("menu").classList.remove("hidden");
-    document.getElementById("game").classList.add("hidden");
-}
-
-canvas.addEventListener("mousemove", e=>{
-    let rect = canvas.getBoundingClientRect();
-    player.x = e.clientX - rect.left;
-    player.y = e.clientY - rect.top;
+// マウス操作
+window.addEventListener('mousemove', (e) => {
+    const r = canvas.getBoundingClientRect();
+    game.p.x = e.clientX - r.left; game.p.y = e.clientY - r.top;
+});
+window.addEventListener('mousedown', () => {
+    if(game.state !== 'play') return;
+    game.bullets.push({x: game.p.x, y: game.p.y, vx: 0, vy: -15});
+    if(user.weapon === 'wide') {
+        game.bullets.push({x: game.p.x, y: game.p.y, vx: -4, vy: -13}, {x: game.p.x, y: game.p.y, vx: 4, vy: -13});
+    }
 });
 
-canvas.addEventListener("click", ()=>{
-    bullets.push({x:player.x, y:player.y});
-});
-
-function spawnEnemy(){
-    enemies.push({
-        x:Math.random()*760+20,
-        y:-20,
-        speed:2 + stageLevel*0.5
+function openStages() {
+    toggle('st-screen');
+    const list = document.getElementById('st-list');
+    list.innerHTML = '';
+    LEVELS.forEach(l => {
+        const b = document.createElement('button');
+        b.className = 'btn' + (user.cleared.includes(l.id) ? ' cleared' : '');
+        b.style.borderColor = l.color;
+        b.innerText = l.name;
+        b.onclick = () => start(l);
+        list.appendChild(b);
     });
+    const extra = document.getElementById('extra-stage');
+    extra.innerHTML = '';
+    if(user.cleared.length >= 4) {
+        const b = document.createElement('button');
+        b.className = 'btn' + (user.cleared.includes('LX') ? ' cleared' : '');
+        b.style.borderColor = '#ff8800'; b.innerText = "ULTRA MODE (STRESS)";
+        b.onclick = () => start({id:'LX', color:'#ff8800', diff:8});
+        extra.appendChild(b);
+    }
 }
 
-function update(){
-    bullets.forEach(b=> b.y -= 6);
-    enemies.forEach(e=> e.y += e.speed);
+function start(l) {
+    game.stage = l; game.state = 'play'; game.hp = 100; game.score = 0;
+    game.bullets = []; game.enemies = []; game.eb = [];
+    toggle('');
+}
 
-    enemies.forEach(e=>{
-        if(Math.hypot(e.x-player.x, e.y-player.y) < 15){
-            gameOver = true;
+function update() {
+    if(game.state !== 'play') return;
+    game.frame++;
+    if(game.comboT > 0) game.comboT--; else game.combo = 0;
+
+    // 敵生成
+    if(game.frame % Math.max(10, 40 - game.stage.diff*4) === 0) {
+        game.enemies.push({ x: Math.random()*760+20, y: -30, hp: 3+game.stage.diff, type: game.stage.id });
+    }
+
+    game.bullets.forEach((b, i) => { b.y += b.vy; b.x += b.vx; if(b.y < -20) game.bullets.splice(i,1); });
+
+    game.enemies.forEach((e, i) => {
+        // --- エグいギミック ---
+        if(e.type === 'L1') e.y += 3; 
+        if(e.type === 'L2' && game.frame % 60 === 0) { e.x = Math.random()*760+20; } // ワープ
+        if(e.type === 'L3') { // 重力：弾を曲げる
+            game.bullets.forEach(b => { if(Math.hypot(e.x-b.x, e.y-b.y) < 100) b.x += (e.x-b.x)*0.05; });
+            e.y += 2;
         }
+        if(e.type === 'LX') { e.y += 5; if(game.frame % 30 === 0) game.eb.push({x:e.x, y:e.y}); }
+        else { e.y += 2; if(game.frame % 80 === 0) game.eb.push({x:e.x, y:e.y}); }
+
+        game.bullets.forEach((b, bi) => {
+            if(Math.hypot(e.x-b.x, e.y-b.y) < 25) {
+                e.hp--; game.bullets.splice(bi,1);
+                if(e.hp <= 0) {
+                    game.combo++; game.comboT = 60;
+                    game.score += 100 * game.combo;
+                    user.coins += game.combo;
+                    // L1ギミック: 分裂弾
+                    if(e.type === 'L1') { for(let j=0; j<3; j++) game.eb.push({x:e.x, y:e.y, vx:Math.random()*6-3, vy:Math.random()*6}); }
+                    game.enemies.splice(i,1);
+                    save();
+                }
+            }
+        });
+        if(e.y > 650) game.enemies.splice(i,1);
     });
 
-    enemies = enemies.filter(e=> e.y < 650);
+    game.eb.forEach((eb, i) => {
+        eb.x += eb.vx || 0; eb.y += eb.vy || 4;
+        if(Math.hypot(eb.x-game.p.x, eb.y-game.p.y) < 15) { game.hp -= 10; game.eb.splice(i,1); }
+        if(eb.y > 650) game.eb.splice(i,1);
+    });
 
-    if(Math.random() < 0.02*stageLevel){
-        spawnEnemy();
+    if(game.hp <= 0) { alert("GAME OVER"); game.state = 'menu'; toggle('m-screen'); }
+    if(game.score >= 5000) {
+        if(!user.cleared.includes(game.stage.id)) user.cleared.push(game.stage.id);
+        save(); alert("MISSION CLEAR!"); game.state = 'menu'; toggle('m-screen');
     }
+    updateUI();
 }
 
-function draw(){
+function draw() {
     ctx.clearRect(0,0,800,600);
-
-    // プレイヤー
-    ctx.fillStyle="white";
-    ctx.beginPath();
-    ctx.arc(player.x, player.y, player.size, 0, Math.PI*2);
-    ctx.fill();
-
+    if(game.state !== 'play') return;
+    // 自機
+    ctx.strokeStyle = '#fff'; ctx.strokeRect(game.p.x-10, game.p.y-10, 20, 20);
     // 弾
-    bullets.forEach(b=>{
-        ctx.fillRect(b.x-2,b.y-8,4,8);
-    });
-
+    ctx.fillStyle = '#fff'; game.bullets.forEach(b => ctx.fillRect(b.x-1, b.y-10, 2, 10));
     // 敵
-    ctx.fillStyle="red";
-    enemies.forEach(e=>{
-        ctx.beginPath();
-        ctx.arc(e.x,e.y,10,0,Math.PI*2);
-        ctx.fill();
+    game.enemies.forEach(e => {
+        ctx.strokeStyle = game.stage.color;
+        ctx.strokeRect(e.x-15, e.y-15, 30, 30);
+        if(e.type === 'L3') { ctx.beginPath(); ctx.arc(e.x, e.y, 40, 0, Math.PI*2); ctx.stroke(); }
     });
-
-    if(gameOver){
-        ctx.fillStyle="white";
-        ctx.font="20px 'Press Start 2P'";
-        ctx.fillText("GAME OVER",250,300);
-    }
+    // 敵弾
+    ctx.fillStyle = '#f00'; game.eb.forEach(eb => ctx.beginPath(); ctx.arc(eb.x, eb.y, 3, 0, Math.PI*2); ctx.fill(););
 }
 
-function gameLoop(){
-    if(!gameOver){
-        update();
-        draw();
-        requestAnimationFrame(gameLoop);
-    }else{
-        draw();
-    }
+function updateUI() {
+    document.getElementById('s-val').innerText = game.score;
+    document.getElementById('c-val').innerText = user.coins;
+    document.getElementById('hp-fill').style.width = game.hp + "%";
+    document.getElementById('combo').innerText = game.combo > 1 ? game.combo + " COMBO" : "";
 }
+function toggle(id) { document.querySelectorAll('.overlay').forEach(e => e.classList.remove('active')); if(id) document.getElementById(id).classList.add('active'); }
+function back() { toggle('m-screen'); }
+function openShop() { toggle('sh-screen'); document.getElementById('sh-c').innerText = user.coins; }
+function buy(t) {
+    if(t==='wide' && user.coins >= 500) { user.coins -= 500; user.weapon = 'wide'; save(); openShop(); }
+    if(t==='heal' && user.coins >= 200) { user.coins -= 200; game.hp = 100; save(); openShop(); }
+}
+function resetData() { localStorage.clear(); location.reload(); }
+function loop() { update(); draw(); requestAnimationFrame(loop); }
+loop();
 </script>
-
 </body>
 </html>
