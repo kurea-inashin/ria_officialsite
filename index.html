@@ -1,234 +1,210 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <title>Minami Project 2026: Resonance</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+JP:wght@300&display=swap');
-        
-        body { margin: 0; background: #000510; color: #fff; font-family: 'Press Start 2P', cursive; overflow: hidden; }
-        
-        /* 背景：ミステリアスな青いなみ */
-        #bg-canvas { position: fixed; top: 0; left: 0; z-index: 1; }
-        #game-canvas { position: fixed; top: 0; left: 0; z-index: 5; pointer-events: none; }
-
-        /* メニュー画面 */
-        #menu { position: relative; width: 100%; height: 100vh; background: rgba(0, 5, 15, 0.7); display: flex; flex-direction: column; align-items: center; z-index: 10; overflow-y: auto; backdrop-filter: blur(10px); }
-        
-        /* HUD (HP・スコア) */
-        #hud { position: fixed; top: 20px; left: 20px; z-index: 100; visibility: hidden; }
-        #score-display { font-size: 16px; margin-bottom: 5px; }
-        #hp-container { width: 200px; height: 10px; border: 1px solid #fff; }
-        #hp-bar { height: 100%; background: #fff; width: 100%; transition: 0.1s; }
-
-        h1 { font-size: 16px; margin: 30px 0; color: #00d4ff; }
-        
-        /* プレイ方法（太字なし） */
-        #how-to { max-width: 600px; font-family: 'Noto Sans JP'; font-size: 10px; color: #88aadd; margin-bottom: 20px; line-height: 1.6; text-align: left; }
-        
-        #coin-info { color: #ffd700; margin-bottom: 10px; font-size: 12px; }
-        #msg { color: #ff4444; font-size: 10px; height: 12px; margin-bottom: 10px; visibility: hidden; }
-
-        .section-title { font-size: 10px; margin: 20px 0 10px; color: #555; border-bottom: 1px solid #222; width: 80%; text-align: center; }
-        
-        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 95%; max-width: 600px; margin-bottom: 20px; }
-        .btn { background: rgba(255,255,255,0.03); border: 1px solid #333; padding: 10px; cursor: pointer; text-align: center; border-radius: 4px; font-size: 8px; transition: 0.2s; }
-        .btn:hover { background: rgba(255,255,255,0.1); }
-        
-        .equipped { border-color: #00ffcc !important; box-shadow: 0 0 8px rgba(0,255,204,0.3); }
-        .status-text { font-size: 6px; display: block; margin-top: 5px; }
-    </style>
+<meta charset="UTF-8">
+<title>Minami Project 2026: The Final Resonance</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+JP:wght@300&display=swap');
+body { margin: 0; background: #000510; color: #fff; font-family: 'Press Start 2P', cursive; overflow: hidden; }
+#bg-canvas { position: fixed; top: 0; left: 0; z-index: 1; }
+#game-canvas { position: fixed; top: 0; left: 0; z-index: 5; pointer-events: none; }
+#menu { position: relative; width: 100%; height: 100vh; background: rgba(0, 10, 30, 0.75); display: flex; flex-direction: column; align-items: center; z-index: 10; overflow-y: auto; backdrop-filter: blur(12px); }
+#hud { position: fixed; top: 20px; left: 20px; z-index: 100; visibility: hidden; }
+#score-display { font-size: 16px; margin-bottom: 5px; }
+#hp-container { width: 200px; height: 10px; border: 1px solid #fff; position: relative; }
+#hp-bar { height: 100%; background: #fff; width: 100%; transition: 0.1s; }
+h1 { font-size: 16px; margin: 30px 0; color: #00d4ff; }
+.section-title { font-size: 10px; margin: 25px 0 15px; color: #446688; border-bottom: 1px solid #1a334d; width: 85%; text-align: center; }
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 95%; max-width: 650px; margin-bottom: 30px; }
+.btn { background: rgba(255,255,255,0.03); border: 1px solid #2a4a6a; padding: 12px 5px; cursor: pointer; text-align: center; border-radius: 4px; font-size: 8px; transition: 0.2s; color: #fff; }
+.btn:hover { background: rgba(255,255,255,0.12); transform: translateY(-2px); }
+.equipped { border-color: #00ffcc !important; box-shadow: 0 0 12px rgba(0,255,204,0.4); }
+.status-text { font-size: 6px; display: block; margin-top: 6px; }
+.perfect-text { color: #00ffcc; }
+</style>
 </head>
 <body>
-    <canvas id="bg-canvas"></canvas>
-    <canvas id="game-canvas"></canvas>
 
-    <div id="hud">
-        <div id="score-display">SCORE: <span id="s-val">0</span></div>
-        <div id="hp-container"><div id="hp-bar"></div></div>
-    </div>
+<canvas id="bg-canvas"></canvas>
+<canvas id="game-canvas"></canvas>
 
-    <div id="menu">
-        <h1>MINAMI PROJECT 2026</h1>
-        <div id="how-to">
-            [CORE SYSTEM]<br>
-            - Synchronize with the unit using Mouse movement.<br>
-            - Fire Resonance Shots by holding Left-Click.<br>
-            - Avoid collision with Noise to maintain Mental Integrity (HP).<br><br>
-            [EXPANSION]<br>
-            - Collect Coins to unlock new skins and gear.<br>
-            - Auto-Repair: Gradually restores HP during battle.<br>
-            - Burst: Press Space to clear the field (Requires Gear).
-        </div>
+<div id="hud">
+<div id="score-display">SCORE: <span id="s-val">0</span></div>
+<div id="hp-container"><div id="hp-bar"></div></div>
+</div>
 
-        <div id="coin-info">COINS: <span id="c-val">0</span></div>
-        <div id="msg">NOT ENOUGH COINS!</div>
+<div id="menu">
+<h1>MINAMI PROJECT 2026</h1>
+<div class="section-title">SELECT STAGE</div>
+<div id="stage-grid" class="grid"></div>
+</div>
 
-        <div class="section-title">SELECT STAGE</div>
-        <div id="stage-grid" class="grid"></div>
+<script>
 
-        <div class="section-title">SHOP</div>
-        <div id="shop-grid" class="grid">
-            <div id="shop-Default" class="btn" onclick="buy('skin','Default',0)">Droplet<br><span style="color:#ffd700">FREE</span></div>
-            <div id="shop-Star" class="btn" onclick="buy('skin','Star',500)">Star<br><span style="color:#ffd700">500</span></div>
-            <div id="shop-Circle" class="btn" onclick="buy('skin','Circle',800)">Circle<br><span style="color:#ffd700">800</span></div>
-            <div id="shop-Sword" class="btn" onclick="buy('skin','Sword',1500)">Sword<br><span style="color:#ffd700">1500</span></div>
-            <div id="shop-Bear" class="btn" onclick="buy('skin','Bear',2000)">Bear<br><span style="color:#ffd700">2000</span></div>
-            <div id="shop-Train" class="btn" onclick="buy('skin','Train',3000)">Train<br><span style="color:#ffd700">3000</span></div>
-            <div id="shop-Heal" class="btn" onclick="buy('item','Heal',2500)">Repair<br><span style="color:#ffd700">2500</span></div>
-            <div id="shop-Burst" class="btn" onclick="buy('item','Burst',5000)">Burst<br><span style="color:#ffd700">5000</span></div>
-        </div>
-    </div>
+// 背景
+const bg = document.getElementById('bg-canvas');
+const bctx = bg.getContext('2d');
+let w,h;
+function res(){ w=bg.width=window.innerWidth; h=bg.height=window.innerHeight; }
+window.onresize=res; res();
+let t=0;
+function drawBg(){
+bctx.fillStyle='#000818'; bctx.fillRect(0,0,w,h);
+t+=0.012;
+for(let i=0;i<3;i++){
+bctx.beginPath();
+bctx.strokeStyle=`rgba(0,140,255,${0.15-i*0.04})`;
+for(let x=0;x<w;x+=10){
+let y=h*0.55+Math.sin(x*0.006+t+i)*70*Math.cos(t*0.4);
+bctx.lineTo(x,y);
+}
+bctx.stroke();
+}
+requestAnimationFrame(drawBg);
+}
+drawBg();
 
-    <script>
-        // 背景のなみ
-        const bg = document.getElementById('bg-canvas');
-        const bctx = bg.getContext('2d');
-        let w, h;
-        function res() { w = bg.width = window.innerWidth; h = bg.height = window.innerHeight; }
-        window.onresize = res; res();
-        let t = 0;
-        function drawBg() {
-            bctx.fillStyle = '#00050a'; bctx.fillRect(0,0,w,h);
-            t += 0.01;
-            for(let i=0; i<3; i++) {
-                bctx.beginPath(); bctx.strokeStyle = `rgba(0, 150, 255, ${0.12 - i*0.03})`;
-                for(let x=0; x<w; x+=10) {
-                    let y = h*0.5 + Math.sin(x*0.005 + t + i) * 60;
-                    bctx.lineTo(x, y);
-                }
-                bctx.stroke();
-            }
-            requestAnimationFrame(drawBg);
-        }
-        drawBg();
+// セーブ
+let save = JSON.parse(localStorage.getItem('minami_project_vFinal') || '{"coins":0,"owned":["Default"],"skin":"Default","items":[],"cleared":[],"perfect":[]}');
 
-        // プレイデータのロード
-        let save = JSON.parse(localStorage.getItem('minami_resonance_v4') || '{"coins":0, "owned":["Default"], "skin":"Default", "items":[], "cleared":[], "perfect":[]}');
-        
-        // ステージと色の定義
-        const modes = {
-            'ST=SB': { color: '#ffff00', diff: 1 }, 'ST=KT': { color: '#0088ff', diff: 1.2 }, 
-            'ST=SK': { color: '#00ff44', diff: 1.4 }, 'ST=KY': { color: '#ff0044', diff: 1.6 },
-            'ST=PK': { color: '#ff0044', diff: 1.8 }, 'ST=JB': { color: '#00ff44', diff: 2.0 },
-            'ST=HM': { color: '#0088ff', diff: 2.2 }, 'ST=KS': { color: '#ffff00', diff: 2.4 },
-            'ST=TY': { color: '#0088ff', diff: 2.6 },
-            // 表クリアで解禁される3ステージ
-            'ST=HA': { color: '#ffff00', diff: 3.5 }, 'ST=HB': { color: '#00ff44', diff: 4.5 }, 
-            'ST=HC': { color: '#ff0044', diff: 5.5 },
-            // 全ノーダメクリアで解禁される隠し
-            'ST=CO': { color: '#ff6600', diff: 12.0 }
-        };
+// 旧データ互換（= → ー）
+save.cleared = save.cleared.map(s=>s.replace("=","ー"));
+save.perfect = save.perfect.map(s=>s.replace("=","ー"));
 
-        function updateUI() {
-            const grid = document.getElementById('stage-grid');
-            grid.innerHTML = '';
-            
-            const mainStages = ['ST=SB','ST=KT','ST=SK','ST=KY','ST=PK','ST=JB','ST=HM','ST=KS','ST=TY'];
-            const nextStages = ['ST=HA','ST=HB','ST=HC'];
-            
-            const allMainCleared = mainStages.every(s => save.cleared.includes(s));
-            const allNoDamage = [...mainStages, ...nextStages].every(s => save.perfect.includes(s));
+// ★ STー表記に変更済み
+const modes = {
+'STーSB':{color:'#ffff00',diff:1.0},
+'STーKT':{color:'#0088ff',diff:1.2},
+'STーSK':{color:'#00ff44',diff:1.4},
+'STーKY':{color:'#ff0044',diff:1.6},
+'STーPK':{color:'#ff0044',diff:1.8},
+'STーJB':{color:'#00ff44',diff:2.1},
+'STーHM':{color:'#0088ff',diff:2.4},
+'STーKS':{color:'#ffff00',diff:2.7},
+'STーTY':{color:'#0088ff',diff:3.0},
+'STーHA':{color:'#ffff00',diff:4.0},
+'STーHB':{color:'#00ff44',diff:5.5},
+'STーHC':{color:'#ff0044',diff:7.0},
+'STーCO':{color:'#ff6600',diff:15.0}
+};
 
-            Object.keys(modes).forEach(id => {
-                if (nextStages.includes(id) && !allMainCleared) return;
-                if (id === 'ST=CO' && !allNoDamage) return;
+function updateUI(){
+const grid=document.getElementById('stage-grid');
+grid.innerHTML='';
 
-                const b = document.createElement('div');
-                b.className = 'btn';
-                b.style.color = b.style.borderColor = modes[id].color;
-                
-                let status = '';
-                if(save.perfect.includes(id)) status = '<span class="status-text" style="color:#00ffcc">PERFECT (100%)</span>';
-                else if(save.cleared.includes(id)) status = '<span class="status-text">CLEARED</span>';
-                
-                b.innerHTML = id + status;
-                b.onclick = () => startGame(id);
-                grid.appendChild(b);
-            });
+const mainStages=[
+'STーSB','STーKT','STーSK','STーKY','STーPK',
+'STーJB','STーHM','STーKS','STーTY'
+];
+const nextStages=['STーHA','STーHB','STーHC'];
 
-            document.getElementById('c-val').innerText = save.coins;
-            document.querySelectorAll('.btn').forEach(el => el.classList.remove('equipped'));
-            save.owned.forEach(id => {
-                const el = document.getElementById('shop-'+id);
-                if(el && (save.skin === id || save.items.includes(id))) el.classList.add('equipped');
-            });
-        }
+const allMainCleared=mainStages.every(s=>save.cleared.includes(s));
+const allNoDamage=[...mainStages,...nextStages].every(s=>save.perfect.includes(s));
 
-        function buy(type, name, price) {
-            if(!save.owned.includes(name)) {
-                if(save.coins >= price) { save.coins -= price; save.owned.push(name); }
-                else { const m=document.getElementById('msg'); m.style.visibility='visible'; setTimeout(()=>m.style.visibility='hidden',1500); return; }
-            }
-            if(type === 'skin') save.skin = name;
-            if(type === 'item' && !save.items.includes(name)) save.items.push(name);
-            localStorage.setItem('minami_resonance_v4', JSON.stringify(save));
-            updateUI();
-        }
+Object.keys(modes).forEach(id=>{
+if(nextStages.includes(id)&&!allMainCleared)return;
+if(id==='STーCO'&&!allNoDamage)return;
 
-        const canvas = document.getElementById('game-canvas');
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-        let active = false, hp = 100, score = 0, player = {x:0, y:0}, enemies = [], bullets = [], current = null;
+const b=document.createElement('div');
+b.className='btn';
+b.style.color=b.style.borderColor=modes[id].color;
 
-        function startGame(id) {
-            current = id; hp = 100; score = 0; enemies = []; bullets = [];
-            document.getElementById('menu').style.display = 'none';
-            document.getElementById('hud').style.visibility = 'visible';
-            active = true; loop();
-        }
+let status='';
+if(save.perfect.includes(id)) status='<span class="status-text perfect-text">PERFECT(100%)</span>';
+else if(save.cleared.includes(id)) status='<span class="status-text">CLEARED</span>';
 
-        window.onmousemove = e => { player.x = e.clientX; player.y = e.clientY; };
-        let shoot = false; window.onmousedown = () => shoot = true; window.onmouseup = () => shoot = false;
-        window.onkeydown = e => { if(e.code === 'Space' && active && save.items.includes('Burst')) burst(); };
+b.innerHTML=id+status;
+b.onclick=()=>startGame(id);
+grid.appendChild(b);
+});
+}
+updateUI();
 
-        function burst() { enemies.forEach(e => { score += 50; if(Math.random()<0.1) save.coins += 5; }); enemies = []; }
+// ゲーム
+const canvas=document.getElementById('game-canvas');
+const ctx=canvas.getContext('2d');
+canvas.width=window.innerWidth;
+canvas.height=window.innerHeight;
 
-        function loop() {
-            if(!active) return;
-            ctx.clearRect(0,0,w,h);
-            if(save.items.includes('Heal') && Math.random() < 0.005) hp = Math.min(100, hp + 1);
-            
-            // 自機
-            ctx.fillStyle = "#fff"; ctx.save(); ctx.translate(player.x, player.y);
-            const sk = save.skin;
-            if(sk==='Star'){ for(let i=0;i<5;i++){ ctx.rotate(Math.PI*2/5); ctx.lineTo(0,-15); ctx.rotate(Math.PI*2/10); ctx.lineTo(0,-7); } ctx.fill(); }
-            else if(sk==='Train'){ ctx.fillRect(-8,-12,16,24); ctx.fillStyle="#000"; ctx.fillRect(-8,-2,16,2); }
-            else if(sk==='Sword'){ ctx.fillRect(-2,-20,4,30); ctx.fillRect(-10,-5,20,3); }
-            else { ctx.beginPath(); ctx.moveTo(0,-15); ctx.lineTo(10,10); ctx.lineTo(-10,10); ctx.fill(); }
-            ctx.restore();
+let active=false,hp=100,score=0,player={x:0,y:0},enemies=[],bullets=[],current=null;
 
-            if(shoot && Math.random() < 0.4) bullets.push({x:player.x, y:player.y-15});
-            bullets.forEach((b,i) => { b.y -= 12; ctx.fillStyle="#fff"; ctx.fillRect(b.x-1, b.y, 2, 8); if(b.y<0) bullets.splice(i,1); });
+function startGame(id){
+current=id;hp=100;score=0;enemies=[];bullets=[];
+document.getElementById('menu').style.display='none';
+document.getElementById('hud').style.visibility='visible';
+active=true;loop();
+}
 
-            if(Math.random() < (0.04 * modes[current].diff)) enemies.push({x:Math.random()*w, y:-20, hp: Math.ceil(modes[current].diff)});
-            enemies.forEach((e,i) => {
-                e.y += (2 + modes[current].diff * 0.5); ctx.strokeStyle = modes[current].color; ctx.lineWidth = 2;
-                ctx.strokeRect(e.x-15, e.y-15, 30, 30);
-                if(Math.hypot(e.x-player.x, e.y-player.y) < 25) { hp -= 15; enemies.splice(i,1); }
-                bullets.forEach((b,bi) => {
-                    if(Math.hypot(e.x-b.x, e.y-b.y) < 20) { e.hp -= 1; bullets.splice(bi,1); if(e.hp<=0){ enemies.splice(i,1); score += 100; if(Math.random()<0.1) save.coins += 10; }}
-                });
-                if(score > (modes[current].diff * 2000)) end(true);
-                if(e.y > h) enemies.splice(i,1);
-            });
+window.onmousemove=e=>{player.x=e.clientX;player.y=e.clientY;}
+let shoot=false;
+window.onmousedown=()=>shoot=true;
+window.onmouseup=()=>shoot=false;
 
-            document.getElementById('hp-bar').style.width = hp + "%";
-            document.getElementById('s-val').innerText = score;
-            if(hp <= 0) end(false);
-            requestAnimationFrame(loop);
-        }
+function loop(){
+if(!active)return;
+ctx.clearRect(0,0,w,h);
 
-        function end(win) {
-            active = false;
-            if(win) {
-                if(!save.cleared.includes(current)) save.cleared.push(current);
-                if(hp >= 100 && !save.perfect.includes(current)) save.perfect.push(current);
-            }
-            localStorage.setItem('minami_resonance_v4', JSON.stringify(save));
-            location.reload();
-        }
-        updateUI();
-    </script>
+// 自機
+ctx.fillStyle="#fff";
+ctx.beginPath();
+ctx.moveTo(player.x,player.y-15);
+ctx.lineTo(player.x+10,player.y+10);
+ctx.lineTo(player.x-10,player.y+10);
+ctx.fill();
+
+// 弾
+if(shoot&&Math.random()<0.45) bullets.push({x:player.x,y:player.y-15});
+bullets.forEach((b,i)=>{
+b.y-=14;
+ctx.fillRect(b.x-1,b.y,2,9);
+if(b.y<0)bullets.splice(i,1);
+});
+
+// 敵
+if(Math.random()<(0.045*modes[current].diff))
+enemies.push({x:Math.random()*w,y:-30,hp:Math.ceil(modes[current].diff*0.8)});
+
+enemies.forEach((e,i)=>{
+e.y+=(2.5+modes[current].diff*0.4);
+ctx.strokeStyle=modes[current].color;
+ctx.strokeRect(e.x-15,e.y-15,30,30);
+
+if(Math.hypot(e.x-player.x,e.y-player.y)<25){hp-=15;enemies.splice(i,1);}
+
+bullets.forEach((b,bi)=>{
+if(Math.hypot(e.x-b.x,e.y-b.y)<22){
+e.hp-=1;bullets.splice(bi,1);
+if(e.hp<=0){enemies.splice(i,1);score+=100;}
+}
+});
+
+if(score>=(modes[current].diff*2500)) end(true);
+if(e.y>h+50) enemies.splice(i,1);
+});
+
+// CO暗転
+if(current==="STーCO"){
+ctx.fillStyle="rgba(0,0,0,0.03)";
+ctx.fillRect(0,0,w,h);
+}
+
+document.getElementById('hp-bar').style.width=hp+"%";
+document.getElementById('s-val').innerText=score.toLocaleString();
+
+if(hp<=0) end(false);
+requestAnimationFrame(loop);
+}
+
+function end(win){
+active=false;
+if(win){
+if(!save.cleared.includes(current)) save.cleared.push(current);
+if(hp>=100&&!save.perfect.includes(current)) save.perfect.push(current);
+}
+localStorage.setItem('minami_project_vFinal',JSON.stringify(save));
+location.reload();
+}
+
+</script>
 </body>
 </html>
