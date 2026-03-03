@@ -2,201 +2,293 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>MINAMI SHOOTING 2026 - 9 STAGES MISSION</title>
+    <title>MINAMI SHOOTING 2026 - THE ULTIMATE EDITION</title>
     <style>
         body { background: #000; color: #fff; font-family: 'Arial Black', sans-serif; margin: 0; overflow: hidden; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        #game-container { position: relative; width: 800px; height: 600px; border: 4px solid #333; background: #000; }
+        #game-container { position: relative; width: 900px; height: 700px; border: 5px solid #222; background: #000; box-shadow: 0 0 50px rgba(255,0,0,0.2); }
         canvas { display: block; }
-        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100; overflow-y: auto; }
+        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
         .active { display: flex; }
-        .btn { padding: 12px; margin: 5px; border: 2px solid #fff; background: transparent; color: #fff; cursor: pointer; width: 340px; transition: 0.2s; position: relative; font-size: 14px; text-align: left; padding-left: 20px; }
-        .btn:hover:not(:disabled) { background: #fff; color: #000; transform: scale(1.02); }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .cleared-mark { position: absolute; right: 15px; color: #ffd700; font-weight: bold; text-shadow: 0 0 5px #ffd700; }
-        .hud { position: absolute; top: 15px; left: 15px; pointer-events: none; z-index: 50; }
-        .hp-bar { width: 150px; height: 10px; background: #222; border: 1px solid #fff; margin-top: 5px; }
-        #hp-fill { width: 100%; height: 100%; background: #f00; transition: 0.1s; }
-        #combo-ui { position: absolute; top: 15px; right: 20px; font-size: 30px; color: #ff0; font-style: italic; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 20px; }
+        
+        /* UIパーツ */
+        h1 { font-size: 32px; color: #f00; text-shadow: 0 0 20px #f00; margin-bottom: 5px; }
+        .status-text { font-size: 12px; color: #666; margin-bottom: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 15px; }
+        
+        /* ボタンデザイン */
+        .btn { padding: 12px; background: rgba(255,255,255,0.05); border: 2px solid #444; color: #fff; cursor: pointer; width: 240px; transition: 0.3s; position: relative; font-size: 14px; text-align: left; }
+        .btn:hover:not(:disabled) { background: #fff; color: #000; box-shadow: 0 0 15px #fff; }
+        .btn:disabled { opacity: 0.2; cursor: not-allowed; border-color: #222; }
+        
+        /* バッジ表示 */
+        .badge-container { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); display: flex; gap: 5px; }
+        .badge-clear { color: #0f0; font-weight: bold; font-size: 10px; }
+        .badge-nomiss { color: #ffd700; font-weight: bold; font-size: 16px; text-shadow: 0 0 8px #ffd700; }
+
+        /* HUD */
+        #hud { position: absolute; top: 20px; left: 20px; font-family: monospace; line-height: 1.6; pointer-events: none; }
+        .hp-outer { width: 200px; height: 12px; background: #222; border: 1px solid #fff; border-radius: 6px; overflow: hidden; }
+        #hp-inner { width: 100%; height: 100%; background: linear-gradient(90deg, #f00, #ff4400); transition: 0.2s; }
+        #nm-status { color: #ffd700; font-weight: bold; display: none; }
     </style>
 </head>
 <body>
 
 <div id="game-container">
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
-    <div id="hud" class="hud">
-        SCORE: <span id="score-val">0</span> / CLEAR: <span id="target-val">0</span><br>
-        COIN: 🪙 <span id="coin-val">0</span><br>
-        HP: <div class="hp-bar"><div id="hp-fill"></div></div>
+    <canvas id="gameCanvas" width="900" height="700"></canvas>
+    
+    <div id="hud">
+        SCORE: <span id="ui-score">0</span> / <span id="ui-target">0</span><br>
+        COIN: <span id="ui-coin">0</span><br>
+        <div id="nm-status">★ NO MISS ACTIVE ★</div>
+        HP: <div class="hp-outer"><div id="hp-inner"></div></div>
     </div>
-    <div id="combo-ui"></div>
 
-    <div id="m-screen" class="overlay active">
-        <h1 style="color: #ff0000; letter-spacing: 5px;">ST=KY MISSION SELECT</h1>
-        <div id="stage-grid" class="grid"></div>
-        <div id="special-area"></div>
-        <div style="margin-top: 20px;">
-            <button class="btn" onclick="openShop()" style="text-align:center;">🛒 ITEM SHOP</button>
-            <button class="btn" onclick="resetData()" style="border:none; color:#444; font-size:10px; text-align:center;">RESET ALL DATA</button>
+    <div id="menu-screen" class="overlay active">
+        <h1>MINAMI SHOOTING 2026</h1>
+        <div class="status-text">MISSION SELECT: CLEAR 1-9 TO UNLOCK OTHER. NO MISS ALL TO UNLOCK SPECIAL.</div>
+        
+        <div style="color:#ff0000; font-size:14px; margin-bottom:5px;">■ ST=KY LINE (KEIYO)</div>
+        <div id="ky-grid" class="grid"></div>
+
+        <div style="color:#00aaff; font-size:14px; margin-bottom:5px; margin-top:10px;">■ OTHER LINES (HIDDEN)</div>
+        <div id="other-grid" class="grid"></div>
+
+        <div style="color:#ff8c00; font-size:14px; margin-bottom:5px; margin-top:10px;">■ SPECIAL (UNKNOWN)</div>
+        <div id="special-grid" class="grid"></div>
+
+        <div style="margin-top:20px; display:flex; gap:10px;">
+            <button class="btn" onclick="openShop()" style="text-align:center; width:120px;">SHOP</button>
+            <button class="btn" onclick="resetData()" style="text-align:center; width:120px; border-color:#222; color:#444;">RESET</button>
         </div>
-    </div>
-
-    <div id="sh-screen" class="overlay">
-        <h2>SHOP</h2>
-        <p>所持コイン: <span id="sh-c">0</span></p>
-        <button class="btn" onclick="buy('wide', 800)">WIDE SHOT (800🪙)</button>
-        <button class="btn" onclick="buy('heal', 300)">REPAIR KIT (300🪙)</button>
-        <button class="btn" onclick="back()">BACK</button>
     </div>
 </div>
 
 <script>
+/**
+ * 🛠️ CORE SYSTEM: NO REDUCTION, FULL LOGIC
+ */
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// --- セーブデータ管理 ---
-const loadData = () => JSON.parse(localStorage.getItem('minami_2026_9st')) || { coins: 0, cleared: [], weapon: 'normal' };
-let userData = loadData();
-const saveData = () => localStorage.setItem('minami_2026_9st', JSON.stringify(userData));
-
-// --- ステージ定義（京葉線 9ステージ） ---
-const KY_STAGES = [
-    { id: 'ST=KY-01', name: 'KY-01: 東京', diff: 1 },
-    { id: 'ST=KY-02', name: 'KY-02: 八丁堀', diff: 2 },
-    { id: 'ST=KY-03', name: 'KY-03: 越中島', diff: 3 },
-    { id: 'ST=KY-04', name: 'KY-04: 潮見', diff: 4 },
-    { id: 'ST=KY-05', name: 'KY-05: 新木場', diff: 5 },
-    { id: 'ST=KY-06', name: 'KY-06: 葛西臨海公園', diff: 6 },
-    { id: 'ST=KY-07', name: 'KY-07: 舞浜', diff: 7 },
-    { id: 'ST=KY-08', name: 'KY-08: 新浦安', diff: 8 },
-    { id: 'ST=KY-09', name: 'KY-09: 市川塩浜', diff: 9 }
-];
-
-let game = {
-    state: 'menu', score: 0, target: 0, hp: 100, frame: 0,
-    p: { x: 400, y: 550 }, bullets: [], enemies: [], eb: [], combo: 0, comboT: 0
+// セーブデータ構造
+const SAVE_KEY = "minami_ultra_2026_save";
+let userData = JSON.parse(localStorage.getItem(SAVE_KEY)) || {
+    coins: 0,
+    weapon: 'normal',
+    // 各ステージの記録: { id: string, cleared: bool, noMiss: bool }
+    records: []
 };
 
-// --- 操作 ---
-window.addEventListener('mousemove', (e) => {
+function save() { localStorage.setItem(SAVE_KEY, JSON.stringify(userData)); }
+
+// 全13ステージ定義
+const STAGES = {
+    ky: Array.from({length: 9}, (_, i) => ({ id: `ST=KY-0${i+1}`, color: '#ff0000', diff: i+1 })),
+    other: [
+        { id: 'ST=KT', name: 'ST=KT (京浜東北)', color: '#00aaff', diff: 11 },
+        { id: 'ST=SB', name: 'ST=SB (総武)', color: '#ffff00', diff: 12 },
+        { id: 'ST=SK', name: 'ST=SK (埼京)', color: '#00ff00', diff: 13 }
+    ],
+    special: { id: 'ST=CN', name: 'ST=CN (中央線)', color: '#ff8c00', diff: 20 }
+};
+
+let game = {
+    state: 'menu',
+    hp: 100, score: 0, target: 0, coins: 0,
+    p: { x: 450, y: 620 },
+    bullets: [], enemies: [], eb: [],
+    frame: 0,
+    noMissFlag: true, // この周回で被弾したか
+    currentStage: null
+};
+
+// 入力系
+window.addEventListener('mousemove', e => {
     const r = canvas.getBoundingClientRect();
-    game.p.x = e.clientX - r.left; game.p.y = e.clientY - r.top;
+    game.p.x = e.clientX - r.left;
+    game.p.y = e.clientY - r.top;
 });
-window.addEventListener('mousedown', shoot);
-window.addEventListener('keydown', (e) => { if(e.code === 'Space') shoot(); });
-
-function shoot() {
+window.addEventListener('mousedown', () => {
     if(game.state !== 'play') return;
-    game.bullets.push({x: game.p.x, y: game.p.y-10, vx: 0, vy: -15});
+    const bSpeed = -18;
+    game.bullets.push({x: game.p.x, y: game.p.y-15, vx: 0, vy: bSpeed});
     if(userData.weapon === 'wide') {
-        game.bullets.push({x: game.p.x, y: game.p.y, vx: -4, vy: -13}, {x: game.p.x, y: game.p.y, vx: 4, vy: -13});
+        game.bullets.push({x: game.p.x, y: game.p.y-10, vx: -5, vy: bSpeed+2});
+        game.bullets.push({x: game.p.x, y: game.p.y-10, vx: 5, vy: bSpeed+2});
     }
+});
+
+function initMenu() {
+    const kyClearedCount = STAGES.ky.filter(s => isCleared(s.id)).length;
+    const allOtherClearedAndNoMiss = [...STAGES.ky, ...STAGES.other].every(s => isNoMiss(s.id));
+
+    renderGrid('ky-grid', STAGES.ky, true);
+    renderGrid('other-grid', STAGES.other, kyClearedCount >= 9);
+    renderGrid('special-grid', [STAGES.special], allOtherClearedAndNoMiss);
 }
 
-// --- メニュー構築 ---
-function updateMenu() {
-    const grid = document.getElementById('stage-grid');
-    grid.innerHTML = '';
-    KY_STAGES.forEach(s => {
+function renderGrid(elementId, stageList, unlocked) {
+    const el = document.getElementById(elementId);
+    el.innerHTML = '';
+    stageList.forEach(s => {
         const b = document.createElement('button');
         b.className = 'btn';
-        const isCleared = userData.cleared.includes(s.id);
-        b.innerHTML = `${s.name} ${isCleared ? '<span class="cleared-mark">済</span>' : ''}`;
-        b.style.borderColor = '#ff0000';
+        if(!unlocked) b.disabled = true;
+        
+        const rec = userData.records.find(r => r.id === s.id);
+        b.innerHTML = `
+            ${s.name || s.id}
+            <div class="badge-container">
+                ${rec?.cleared ? '<span class="badge-clear">済</span>' : ''}
+                ${rec?.noMiss ? '<span class="badge-nomiss">★</span>' : ''}
+            </div>
+        `;
+        b.style.borderColor = unlocked ? s.color : '#222';
         b.onclick = () => startStage(s);
-        grid.appendChild(b);
+        el.appendChild(b);
     });
-
-    const special = document.getElementById('special-area');
-    special.innerHTML = '';
-    if (userData.cleared.length >= 9) {
-        const b = document.createElement('button');
-        b.className = 'btn';
-        b.style.borderColor = '#ff8c00'; b.style.color = '#ff8c00';
-        const isCleared = userData.cleared.includes('ST=CN');
-        b.innerHTML = `ST=CN: 中央線 (超鬼むず) ${isCleared ? '<span class="cleared-mark">済</span>' : ''}`;
-        b.onclick = () => startStage({id:'ST=CN', name:'中央線', diff:15});
-        special.appendChild(b);
-    }
 }
+
+function isCleared(id) { return userData.records.some(r => r.id === id && r.cleared); }
+function isNoMiss(id) { return userData.records.some(r => r.id === id && r.noMiss); }
 
 function startStage(s) {
-    game.stage = s; game.state = 'play'; game.hp = 100; game.score = 0;
-    game.target = 1000 + (s.diff * 500); // 難易度に応じてノルマアップ
+    game.currentStage = s;
+    game.state = 'play';
+    game.hp = 100; game.score = 0; game.frame = 0;
+    game.target = 2000 + (s.diff * 1000);
+    game.noMissFlag = true;
     game.bullets = []; game.enemies = []; game.eb = [];
-    document.getElementById('m-screen').classList.remove('active');
-    updateUI();
+    document.getElementById('menu-screen').classList.remove('active');
+    document.getElementById('nm-status').style.display = 'block';
 }
 
 function update() {
     if(game.state !== 'play') return;
     game.frame++;
-    if(game.comboT > 0) game.comboT--; else game.combo = 0;
 
-    // 敵生成
-    if(game.frame % Math.max(10, 40 - game.stage.diff*2) === 0) {
-        game.enemies.push({ x: Math.random()*760+20, y: -30, hp: 2+Math.floor(game.stage.diff/2), vy: 2+Math.random()*game.stage.diff*0.5 });
+    // 敵スポーン
+    if(game.frame % Math.max(5, 35 - game.currentStage.diff) === 0) {
+        game.enemies.push({
+            x: Math.random() * 860 + 20,
+            y: -40,
+            hp: 3 + Math.floor(game.currentStage.diff / 2),
+            vy: 2 + (game.currentStage.diff * 0.2),
+            type: game.currentStage.id
+        });
     }
 
-    game.bullets.forEach((b, i) => { b.y += b.vy; b.x += b.vx || 0; if(b.y < -20) game.bullets.splice(i,1); });
+    // 自機弾
+    game.bullets.forEach((b, i) => {
+        b.x += b.vx; b.y += b.vy;
+        if(b.y < -50) game.bullets.splice(i, 1);
+    });
 
+    // 敵
     game.enemies.forEach((e, i) => {
         e.y += e.vy;
-        if(game.frame % 80 === 0) game.eb.push({x: e.x, y: e.y, vy: 4 + game.stage.diff*0.2});
+        // 路線別特殊移動
+        if(e.type === 'ST=KT') e.x += Math.sin(game.frame * 0.05) * 3;
+        if(e.type === 'ST=SK') { if(game.frame % 100 < 5) e.vy = 10; else e.vy = 2; }
+        if(e.type === 'ST=CN' && game.frame % 20 === 0) {
+            game.eb.push({x: e.x, y: e.y, vx: (game.p.x - e.x) * 0.02, vy: 7});
+        }
 
+        // 射撃
+        if(game.frame % 70 === 0) game.eb.push({x: e.x, y: e.y, vx: 0, vy: 5 + game.currentStage.diff * 0.1});
+
+        // 衝突
         game.bullets.forEach((b, bi) => {
             if(Math.hypot(e.x-b.x, e.y-b.y) < 25) {
-                e.hp--; game.bullets.splice(bi,1);
+                e.hp--; game.bullets.splice(bi, 1);
                 if(e.hp <= 0) {
-                    game.combo++; game.comboT = 60;
-                    game.score += 100 * game.combo;
-                    userData.coins += game.combo;
-                    game.enemies.splice(i,1);
+                    game.score += 150; userData.coins += 5;
+                    game.enemies.splice(i, 1);
                 }
             }
         });
-        if(e.y > 650) game.enemies.splice(i,1);
+        if(e.y > 750) game.enemies.splice(i, 1);
     });
 
+    // 敵弾
     game.eb.forEach((eb, i) => {
-        eb.y += eb.vy;
-        if(Math.hypot(eb.x-game.p.x, eb.y-game.p.y) < 18) { game.hp -= 15; game.eb.splice(i,1); }
-        if(eb.y > 650) game.eb.splice(i,1);
+        eb.x += eb.vx; eb.y += eb.vy;
+        if(Math.hypot(eb.x - game.p.x, eb.y - game.p.y) < 15) {
+            game.hp -= 20; game.noMissFlag = false;
+            game.eb.splice(i, 1);
+            document.getElementById('nm-status').style.display = 'none';
+        }
+        if(eb.y > 750) game.eb.splice(i, 1);
     });
 
-    if(game.hp <= 0) { alert("MISSION FAILED..."); back(); }
-    if(game.score >= game.target) {
-        if(!userData.cleared.includes(game.stage.id)) userData.cleared.push(game.stage.id);
-        saveData();
-        alert("STAGE CLEAR! 済マークを獲得したのら！");
-        back();
-    }
+    // クリア・失敗
+    if(game.hp <= 0) { alert("MISSION FAILED"); endSession(false); }
+    if(game.score >= game.target) { alert(game.noMissFlag ? "PERFECT NO MISS!" : "STAGE CLEARED"); endSession(true); }
+
     updateUI();
 }
 
-function draw() {
-    ctx.fillStyle = '#000'; ctx.fillRect(0,0,800,600);
-    if(game.state !== 'play') return;
-    // 自機
-    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(game.p.x, game.p.y-15); ctx.lineTo(game.p.x-15, game.p.y+15); ctx.lineTo(game.p.x+15, game.p.y+15); ctx.fill();
-    // 弾
-    ctx.fillStyle = '#0ff'; game.bullets.forEach(b => ctx.fillRect(b.x-2, b.y-10, 4, 20));
-    // 敵
-    ctx.fillStyle = game.stage.id === 'ST=CN' ? '#ff8c00' : '#f00';
-    game.enemies.forEach(e => ctx.fillRect(e.x-15, e.y-15, 30, 30));
-    // 敵弾
-    ctx.fillStyle = '#ff4400'; game.eb.forEach(eb => { ctx.beginPath(); ctx.arc(eb.x, eb.y, 6, 0, Math.PI*2); ctx.fill(); });
+function endSession(cleared) {
+    if(cleared) {
+        let rec = userData.records.find(r => r.id === game.currentStage.id);
+        if(!rec) {
+            rec = { id: game.currentStage.id, cleared: true, noMiss: game.noMissFlag };
+            userData.records.push(rec);
+        } else {
+            rec.cleared = true;
+            if(game.noMissFlag) rec.noMiss = true;
+        }
+    }
+    save();
+    game.state = 'menu';
+    initMenu();
+    document.getElementById('menu-screen').classList.add('active');
 }
 
-function back() { game.state = 'menu'; updateMenu(); document.getElementById('m-screen').classList.add('active'); document.getElementById('sh-screen').classList.remove('active'); }
-function openShop() { document.getElementById('sh-screen').classList.add('active'); document.getElementById('sh-c').innerText = userData.coins; }
-function buy(t, p) { if(userData.coins >= p) { userData.coins -= p; if(t==='wide') userData.weapon='wide'; if(t==='heal') game.hp=100; saveData(); openShop(); alert("購入成功のら！"); } else { alert("コイン不足のら！"); } }
-function updateUI() { document.getElementById('score-val').innerText = game.score; document.getElementById('target-val').innerText = game.target; document.getElementById('coin-val').innerText = userData.coins; document.getElementById('hp-fill').style.width = game.hp + "%"; document.getElementById('combo-ui').innerText = game.combo > 1 ? game.combo + " COMBO" : ""; }
-function resetData() { if(confirm("全データを消去しますか？")) { localStorage.clear(); location.reload(); } }
-function loop() { update(); draw(); requestAnimationFrame(loop); }
+function draw() {
+    ctx.clearRect(0,0,900,700);
+    if(game.state !== 'play') return;
+    // 自機
+    ctx.fillStyle = '#fff'; ctx.beginPath();
+    ctx.moveTo(game.p.x, game.p.y-18); ctx.lineTo(game.p.x-15, game.p.y+15); ctx.lineTo(game.p.x+15, game.p.y+15); ctx.fill();
+    // 弾
+    ctx.fillStyle = '#0ff'; game.bullets.forEach(b => ctx.fillRect(b.x-2, b.y-15, 4, 20));
+    // 敵
+    game.enemies.forEach(e => {
+        ctx.fillStyle = game.currentStage.color;
+        ctx.fillRect(e.x-18, e.y-18, 36, 36);
+        ctx.strokeStyle = '#fff'; ctx.strokeRect(e.x-18, e.y-18, 36, 36);
+    });
+    // 敵弾
+    ctx.fillStyle = '#f44'; game.eb.forEach(eb => {
+        ctx.beginPath(); ctx.arc(eb.x, eb.y, 6, 0, Math.PI*2); ctx.fill();
+    });
+}
 
-updateMenu();
-loop();
+function updateUI() {
+    document.getElementById('ui-score').innerText = game.score;
+    document.getElementById('ui-target').innerText = game.target;
+    document.getElementById('ui-coin').innerText = userData.coins;
+    document.getElementById('hp-inner').style.width = game.hp + "%";
+}
+
+function openShop() {
+    const cost = 2000;
+    if(userData.coins >= cost && userData.weapon !== 'wide') {
+        userData.coins -= cost; userData.weapon = 'wide'; save(); alert("WIDE SHOT PURCHASED"); initMenu();
+    } else if(userData.weapon === 'wide') {
+        alert("ALREADY PURCHASED");
+    } else {
+        alert(`NEED ${cost} COINS`);
+    }
+}
+
+function resetData() { if(confirm("DELETE ALL DATA?")) { localStorage.clear(); location.reload(); } }
+
+initMenu();
+(function loop(){ update(); draw(); requestAnimationFrame(loop); })();
+
 </script>
 </body>
 </html>
