@@ -2,247 +2,379 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Minami Project 2026</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MINAMI SHOOTING PROJECT 2026</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+JP:wght@700&display=swap');
-        body { margin: 0; background: #000; color: #fff; font-family: 'Press Start 2P', cursive; overflow: hidden; }
+        /* --- 全体デザイン (ダークブルー基調) --- */
+        body { 
+            background: #000814; 
+            color: #fff; 
+            font-family: 'Segoe UI', sans-serif; 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #game-container {
+            position: relative;
+            width: 800px;
+            height: 600px;
+            border: 4px solid #003366;
+            box-shadow: 0 0 30px #00d4ff;
+            background: #000;
+        }
+
         canvas { display: block; }
 
-        /* UI Screens */
-        .overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,10,0.95); display: flex; flex-direction: column; align-items: center; z-index: 20; padding-top: 40px; }
-        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 90%; max-width: 600px; }
+        /* --- 左上：カウンターHUD --- */
+        #hud-left {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(0, 20, 40, 0.8);
+            padding: 12px;
+            border-radius: 8px;
+            border-left: 5px solid #00d4ff;
+            font-family: 'Courier New', monospace;
+            z-index: 10;
+        }
+        .hp-bar-bg { width: 120px; height: 12px; background: #333; border-radius: 6px; margin-top: 5px; overflow: hidden; }
+        #hp-bar-fill { width: 100%; height: 100%; background: linear-gradient(90deg, #ff416c, #ff4b2b); transition: 0.3s; }
+
+        /* --- 右下：アイテムスロット --- */
+        #hud-right {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            display: flex;
+            gap: 12px;
+            z-index: 10;
+        }
+        .slot {
+            width: 60px;
+            height: 60px;
+            background: rgba(0, 51, 102, 0.9);
+            border: 2px solid #00d4ff;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .slot:hover { transform: scale(1.1); background: #00d4ff; color: #000; }
+
+        /* --- メニュー・オーバーレイ --- */
+        .overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 8, 20, 0.95);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+        .active { display: flex; }
         
-        /* Buttons */
-        .btn { background: #000810; border: 2px solid #333; padding: 12px; cursor: pointer; text-align: center; border-radius: 4px; transition: 0.2s; }
-        .btn:hover { border-color: #0ff; }
+        h1 { color: #00d4ff; text-shadow: 0 0 15px #00d4ff; margin-bottom: 30px; }
+        .btn {
+            padding: 12px 35px;
+            margin: 8px;
+            background: #001f3f;
+            border: 2px solid #00d4ff;
+            color: #fff;
+            font-size: 18px;
+            cursor: pointer;
+            border-radius: 25px;
+            transition: 0.3s;
+        }
+        .btn:hover { background: #00d4ff; color: #000; box-shadow: 0 0 20px #00d4ff; }
         
-        .item-name { font-size: 8px; display: block; margin-bottom: 5px; }
-        .item-status { font-size: 7px; color: #888; }
+        /* ステージ選択時の強調 */
+        .stage-btn.selected { border-color: #fff; box-shadow: 0 0 15px #fff; }
 
-        /* Manual Text */
-        .manual-box { font-family: 'Noto Sans JP'; font-size: 13px; line-height: 1.8; background: #111; padding: 25px; border: 1px solid #333; max-width: 500px; margin: 20px; text-align: left; }
-
-        /* HUD */
-        #hud { position: absolute; top: 20px; left: 20px; z-index: 10; pointer-events: none; }
-        #score-val { font-size: 20px; color: #fff; }
-        #hp-bar { width: 200px; height: 8px; background: #222; border: 1px solid #fff; margin-top: 10px; }
-        #hp-fill { height: 100%; background: #fff; width: 100%; }
-
-        .copy-right { position: absolute; bottom: 20px; font-size: 8px; color: #444; }
+        footer { margin-top: 15px; font-size: 10px; color: #444; text-transform: uppercase; }
     </style>
 </head>
 <body>
 
-    <div id="hud">
-        <div id="score-val">000000</div>
-        <div id="coin-info" style="color:#ffd700; font-size:12px; margin-top:5px;">COINS: 0</div>
-        <div id="hp-bar"><div id="hp-fill"></div></div>
+<div id="game-container">
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+    <div id="hud-left">
+        SCORE: <span id="score-val">000000</span><br>
+        HP: <div class="hp-bar-bg"><div id="hp-bar-fill"></div></div>
+        COIN: 🪙 <span id="coin-val">0</span>
     </div>
 
-    <div id="menu" class="overlay">
-        <h1>MINAMI PROJECT 2026</h1>
-        <div class="btn" style="width:200px; margin-bottom:30px;" onclick="showUI('how-to')">HOW TO PLAY</div>
-        
-        <div style="font-size:10px; color:#666; margin-bottom:10px;">- SELECT STAGE -</div>
-        <div class="grid" id="stage-grid"></div>
-
-        <div style="font-size:10px; color:#666; margin-top:30px; margin-bottom:10px;">- SHOP -</div>
-        <div class="grid">
-            <div class="btn" onclick="buyItem('AutoHeal', 5000)"><span class="item-name">AUTO HEAL</span><span class="item-status" id="status-AutoHeal">5000 C</span></div>
-            <div class="btn" onclick="buyItem('Burst', 8000)"><span class="item-name">BURST CORE</span><span class="item-status" id="status-Burst">8000 C</span></div>
-        </div>
-
-        <div class="copy-right">© 2026 MINAMI ALL RIGHTS RESERVED / Chromatic Resonance</div>
+    <div id="hud-right">
+        <div class="slot" onclick="toggleScreen('shop-screen')"><span>🛒</span>SHOP</div>
+        <div class="slot" id="weapon-slot"><span>🔫</span>NORMAL</div>
+        <div class="slot" onclick="useHeal()"><span>🧪</span>HEAL<br><span id="heal-count">0</span></div>
     </div>
 
-    <div id="how-to" class="overlay" style="display:none">
-        <h1>HOW TO PLAY</h1>
-        <div class="manual-box">
-            【操作】<br>
-            ・マウス移動：自機操作<br>
-            ・左クリック：攻撃<br>
-            ・スペース：必殺バースト（購入時）<br><br>
-            【ギミック】<br>
-            各路線ごとに特殊な挙動（瞬間移動、蛇行、急加速、盾）が発生します。<br>
-            全ステージクリアで「ST=CO」が解放されます。
-        </div>
-        <div class="btn" style="width:120px" onclick="showUI('menu')">BACK</div>
+    <div id="menu-screen" class="overlay active">
+        <h1>MINAMI SHOOTING 2026</h1>
+        <div id="stage-select-area">
+            </div>
+        <button class="btn" onclick="startGame()" style="margin-top: 20px;">MISSION START</button>
+        <button class="btn" onclick="toggleScreen('help-screen')">HOW TO PLAY</button>
     </div>
 
-    <div id="result" class="overlay" style="display:none">
-        <h1 id="res-title">FAILED</h1>
-        <div class="btn" style="width:240px; margin-bottom:15px;" onclick="doContinue()">CONTINUE (500 COINS)</div>
-        <div class="btn" style="width:240px;" onclick="location.reload()">RESTART</div>
+    <div id="help-screen" class="overlay">
+        <h2>PLAY GUIDE</h2>
+        <p>移動: WASD / 矢印キー</p>
+        <p>射撃: SPACE / 左クリック</p>
+        <p>セーブ: ステージクリア時に自動保存</p>
+        <button class="btn" onclick="toggleScreen('menu-screen')">BACK</button>
     </div>
 
-    <canvas id="game"></canvas>
+    <div id="shop-screen" class="overlay">
+        <h2>ITEM SHOP</h2>
+        <p>所持コイン: <span id="shop-coin">0</span>🪙</p>
+        <button class="btn" onclick="buyItem('wide', 500)">WIDE SHOT (500🪙)</button>
+        <button class="btn" onclick="buyItem('heal', 200)">HEAL POTION (200🪙)</button>
+        <button class="btn" onclick="buyItem('skin', 1000)">ORANGE SKIN (1000🪙)</button>
+        <button class="btn" onclick="toggleScreen('menu-screen')">BACK</button>
+    </div>
+</div>
 
-    <script>
-        const canvas = document.getElementById('game');
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+<footer>© 2026 MINAMI SHOOTING GAME PROJECT. All Rights Reserved.</footer>
 
-        let saveData = JSON.parse(localStorage.getItem('minami_2026_vFinal') || '{"coins":0, "items":[], "cleared":[]}');
-        let gameActive = false, score = 0, hp = 100, frame = 0;
-        let player = { x: 0, y: 0 }, bullets = [], eBullets = [], enemies = [], particles = [], ripples = [];
-        let currentMode = null;
+<script>
+/**
+ * --- GAME LOGIC ---
+ */
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
 
-        // 提示されたコードのパラメータとギミック
-        const config = {
-            SB: { color: '#ffff00', spawn: 0.05, hp: 2, target: 3000, g: 'warp' },
-            KT: { color: '#0088cc', spawn: 0.07, hp: 3, target: 5000, g: 'dash' },
-            SK: { color: '#00ff44', spawn: 0.08, hp: 10, target: 8000, g: 'shield' },
-            KY: { color: '#ff0044', spawn: 0.15, hp: 4, target: 10000, g: 'wind' },
-            CO: { color: '#ff6600', spawn: 1.5, hp: 150, target: 373000, g: 'rush' }
-        };
+// ステージデータ
+const STAGE_CONFIG = {
+    "ST=KY 01": { color: "#ff0000", line: "京葉線", bg: "#100", speed: 2 },
+    "ST=KY 04": { color: "#00ff00", line: "埼京線", bg: "#010", speed: 4 },
+    "ST=KY 07": { color: "#00aaff", line: "京浜東北線", bg: "#001", speed: 5 },
+    "ST=KY EX-01": { color: "#cd7f32", line: "銅", bg: "#110", speed: 7 },
+    "ST=KY UNKNOWN": { color: "rainbow", line: "中央線/超鬼むず", bg: "#000", speed: 10 }
+};
 
-        function showUI(id) {
-            document.querySelectorAll('.overlay').forEach(el => el.style.display = 'none');
-            if(id !== 'none') document.getElementById(id).style.display = 'flex';
+let game = {
+    state: 'menu',
+    score: 0,
+    hp: 100,
+    coins: 0,
+    currentStage: "ST=KY 01",
+    unlockedCount: 9, 
+    noMissClearedCount: 0,
+    inventory: { weapon: 'NORMAL', heals: 1 },
+    player: { x: 400, y: 550, size: 20, color: "#fff", speed: 6 },
+    bullets: [],
+    enemies: [],
+    enemyBullets: [],
+    keys: {},
+    frame: 0
+};
+
+// セーブ・ロード
+function save() {
+    localStorage.setItem('minami_game_2026', JSON.stringify({
+        coins: game.coins,
+        unlockedCount: game.unlockedCount,
+        noMiss: game.noMissClearedCount
+    }));
+}
+function load() {
+    const data = JSON.parse(localStorage.getItem('minami_game_2026'));
+    if (data) {
+        game.coins = data.coins || 0;
+        game.unlockedCount = data.unlockedCount || 9;
+        game.noMissClearedCount = data.noMiss || 0;
+    }
+}
+
+// 画面切り替え
+function toggleScreen(id) {
+    document.querySelectorAll('.overlay').forEach(el => el.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    if (id === 'shop-screen') document.getElementById('shop-coin').innerText = game.coins;
+}
+
+// ショップ機能
+function buyItem(type, price) {
+    if (game.coins >= price) {
+        game.coins -= price;
+        if (type === 'wide') game.inventory.weapon = 'WIDE';
+        if (type === 'heal') game.inventory.heals++;
+        if (type === 'skin') game.player.color = "#ff8c00"; // 中央線オレンジ
+        updateUI();
+        save();
+        alert("購入完了！");
+    } else {
+        alert("コインが足りません！");
+    }
+}
+
+function useHeal() {
+    if (game.inventory.heals > 0 && game.hp < 100) {
+        game.inventory.heals--;
+        game.hp = Math.min(100, game.hp + 40);
+        updateUI();
+    }
+}
+
+function updateUI() {
+    document.getElementById('score-val').innerText = game.score.toString().padStart(6, '0');
+    document.getElementById('coin-val').innerText = game.coins;
+    document.getElementById('hp-bar-fill').style.width = game.hp + "%";
+    document.getElementById('heal-count').innerText = game.inventory.heals;
+    document.getElementById('weapon-slot').innerText = game.inventory.weapon;
+}
+
+// ゲーム開始
+function startGame() {
+    game.state = 'playing';
+    game.hp = 100;
+    game.score = 0;
+    game.bullets = [];
+    game.enemies = [];
+    game.enemyBullets = [];
+    document.getElementById('menu-screen').classList.remove('active');
+}
+
+// メインループ
+function mainLoop() {
+    if (game.state === 'playing') {
+        update();
+        draw();
+    }
+    game.frame++;
+    requestAnimationFrame(mainLoop);
+}
+
+function update() {
+    // プレイヤー移動
+    if (game.keys['ArrowLeft'] || game.keys['a']) game.player.x -= game.player.speed;
+    if (game.keys['ArrowRight'] || game.keys['d']) game.player.x += game.player.speed;
+    if (game.keys['ArrowUp'] || game.keys['w']) game.player.y -= game.player.speed;
+    if (game.keys['ArrowDown'] || game.keys['s']) game.player.y += game.player.speed;
+
+    // 画面外防止
+    game.player.x = Math.max(20, Math.min(780, game.player.x));
+    game.player.y = Math.max(20, Math.min(580, game.player.y));
+
+    // 射撃 (30フレームごと)
+    if (game.frame % 10 === 0) {
+        game.bullets.push({ x: game.player.x, y: game.player.y, vy: -10 });
+        if (game.inventory.weapon === 'WIDE') {
+            game.bullets.push({ x: game.player.x, y: game.player.y, vy: -10, vx: -2 });
+            game.bullets.push({ x: game.player.x, y: game.player.y, vy: -10, vx: 2 });
         }
+    }
 
-        function initUI() {
-            const grid = document.getElementById('stage-grid'); grid.innerHTML = '';
-            const allCleared = Object.keys(config).filter(k=>k!=='CO').every(k=>saveData.cleared.includes(k));
-            
-            Object.keys(config).forEach(id => {
-                if(id === 'CO' && !allCleared) return;
-                const btn = document.createElement('div');
-                btn.className = 'btn';
-                btn.style.color = config[id].color;
-                btn.innerHTML = `<span class="item-name">ST=${id}</span><span class="item-status">${saveData.cleared.includes(id)?'CLEARED':'NEW'}</span>`;
-                btn.onclick = () => startGame(id);
-                grid.appendChild(btn);
-            });
-            document.getElementById('coin-info').innerText = `COINS: ${saveData.coins}`;
-            saveData.items.forEach(i => { document.getElementById('status-'+i).innerText = 'EQUIPPED'; });
+    // 敵生成
+    if (game.frame % 40 === 0) {
+        game.enemies.push({ x: Math.random() * 760 + 20, y: -20, hp: 3 });
+    }
+
+    // 更新処理
+    game.bullets.forEach((b, i) => {
+        b.y += b.vy; b.x += (b.vx || 0);
+        if (b.y < 0) game.bullets.splice(i, 1);
+    });
+
+    game.enemies.forEach((e, i) => {
+        e.y += 2;
+        // 敵の弾
+        if (game.frame % 60 === 0) {
+            game.enemyBullets.push({ x: e.x, y: e.y, vy: 4 });
         }
-
-        function buyItem(id, price) {
-            if(!saveData.items.includes(id) && saveData.coins >= price) {
-                saveData.coins -= price; saveData.items.push(id);
-                localStorage.setItem('minami_2026_vFinal', JSON.stringify(saveData)); initUI();
-            }
-        }
-
-        function startGame(id) {
-            currentMode = { ...config[id], id };
-            score = 0; hp = 100; frame = 0;
-            bullets = []; eBullets = []; enemies = []; particles = []; ripples = [];
-            showUI('none'); gameActive = true; loop();
-        }
-
-        function doContinue() {
-            if(saveData.coins >= 500) {
-                saveData.coins -= 500; hp = 100; eBullets = [];
-                showUI('none'); gameActive = true; loop();
-            }
-        }
-
-        window.onmousemove = e => { player.x = e.clientX; player.y = e.clientY; };
-        let isShooting = false;
-        window.onmousedown = () => isShooting = true; window.onmouseup = () => isShooting = false;
-        window.onkeydown = e => {
-            if(e.code === 'Space' && saveData.items.includes('Burst')) {
-                ripples.push({x: player.x, y: player.y, r: 0, a: 1, burst: true});
-                enemies.forEach(en => { en.hp -= 30; if(en.hp<=0) score+=100; });
-                enemies = enemies.filter(en => en.hp > 0);
-            }
-        };
-
-        function loop() {
-            if(!gameActive) return;
-            frame++;
-            if(saveData.items.includes('AutoHeal') && frame % 120 === 0 && hp < 100) hp++;
-
-            if(isShooting && frame % 5 === 0) bullets.push({x: player.x, y: player.y-15, v: -18});
-            bullets.forEach((b, i) => { b.y += b.v; if(b.y < -30) bullets.splice(i, 1); });
-
-            if(Math.random() < currentMode.spawn) {
-                enemies.push({ x: Math.random()*canvas.width, y: -50, hp: currentMode.hp, t: 0, g: currentMode.g });
-            }
-
-            enemies.forEach((e, i) => {
-                e.t++;
-                // ギミック（提示されたロジックそのまま）
-                if(e.g === 'warp' && e.t % 80 === 0) {
-                    ripples.push({x: e.x, y: e.y, r: 10, a: 0.5, burst: false});
-                    e.x = Math.random()*canvas.width; e.y += 50;
-                } else if(e.g === 'wind') {
-                    e.x += Math.sin(e.t * 0.1) * 10; e.y += 2;
-                } else if(e.g === 'dash' && e.t > 40) {
-                    e.y += 12;
-                } else if(e.g === 'shield') {
-                    e.y += 1;
-                } else if(e.g === 'rush') {
-                    e.y += 15; e.x += Math.sin(e.t) * 15;
-                } else {
-                    e.y += 3;
+        // 当たり判定
+        game.bullets.forEach((b, bi) => {
+            if (Math.hypot(e.x - b.x, e.y - b.y) < 20) {
+                e.hp--;
+                game.bullets.splice(bi, 1);
+                if (e.hp <= 0) {
+                    game.enemies.splice(i, 1);
+                    game.score += 100;
+                    game.coins += 5;
+                    updateUI();
                 }
+            }
+        });
+        if (e.y > 600) game.enemies.splice(i, 1);
+    });
 
-                // 敵の弾（復活）
-                if(e.t % 90 === 0) eBullets.push({x: e.x, y: e.y, v: 6});
-
-                bullets.forEach((b, bi) => {
-                    if(Math.hypot(e.x-b.x, e.y-b.y) < 25) {
-                        e.hp -= 1; bullets.splice(bi, 1);
-                        if(e.hp <= 0) {
-                            score += 100;
-                            if(Math.random()<0.4) particles.push({x:e.x, y:e.y, vx:(Math.random()-0.5)*6, vy:(Math.random()-0.5)*6});
-                            enemies.splice(i, 1);
-                            if(score >= currentMode.target) finish(true);
-                        }
-                    }
-                });
-                if(Math.hypot(e.x-player.x, e.y-player.y) < 25) hp -= 0.5;
-            });
-
-            eBullets.forEach((eb, i) => {
-                eb.y += eb.v;
-                if(Math.hypot(eb.x-player.x, eb.y-player.y) < 15) { hp -= 10; eBullets.splice(i, 1); }
-                else if(eb.y > canvas.height) eBullets.splice(i, 1);
-            });
-
-            particles.forEach((part, i) => {
-                let dx = player.x - part.x, dy = player.y - part.y, d = Math.hypot(dx, dy);
-                if(d < 200) { part.x += dx/10; part.y += dy/10; }
-                if(d < 20) { saveData.coins += 10; particles.splice(i, 1); }
-            });
-
-            if(hp <= 0) finish(false);
-            document.getElementById('hp-fill').style.width = hp + "%";
-            document.getElementById('score-val').innerText = score.toString().padStart(6, '0');
-            document.getElementById('coin-info').innerText = `COINS: ${saveData.coins}`;
+    game.enemyBullets.forEach((eb, i) => {
+        eb.y += eb.vy;
+        if (Math.hypot(eb.x - game.player.x, eb.y - game.player.y) < 15) {
+            game.hp -= 10;
+            game.enemyBullets.splice(i, 1);
+            updateUI();
+            if (game.hp <= 0) gameOver();
         }
+        if (eb.y > 600) game.enemyBullets.splice(i, 1);
+    });
+}
 
-        function draw() {
-            ctx.fillStyle = "rgba(0, 0, 10, 0.4)"; ctx.fillRect(0,0,canvas.width, canvas.height);
-            // 自機
-            ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(player.x, player.y, 10, 0, Math.PI*2); ctx.fill();
-            // 弾
-            bullets.forEach(b => { ctx.fillStyle = "#fff"; ctx.fillRect(b.x-2, b.y, 4, 10); });
-            eBullets.forEach(eb => { ctx.fillStyle = "#f00"; ctx.beginPath(); ctx.arc(eb.x, eb.y, 5, 0, Math.PI*2); ctx.fill(); });
-            // 敵
-            enemies.forEach(e => { ctx.strokeStyle = currentMode.color; ctx.lineWidth = 2; ctx.strokeRect(e.x-15, e.y-15, 30, 30); });
-            // パーティクル・エフェクト
-            particles.forEach(part => { ctx.fillStyle = "#ffd700"; ctx.beginPath(); ctx.arc(part.x, part.y, 3, 0, Math.PI*2); ctx.fill(); });
-            ripples.forEach((r, i) => {
-                ctx.strokeStyle = `rgba(0, 255, 255, ${r.a})`; ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, Math.PI*2); ctx.stroke();
-                r.r += 2; r.a -= 0.02; if(r.a <= 0) ripples.splice(i, 1);
-            });
-        }
+function draw() {
+    const config = STAGE_CONFIG[game.currentStage] || {bg: "#000", color: "#fff"};
+    ctx.fillStyle = config.bg;
+    ctx.fillRect(0, 0, 800, 600);
 
-        function finish(isClear) {
-            gameActive = false;
-            if(isClear) {
-                if(!saveData.cleared.includes(currentMode.id)) saveData.cleared.push(currentMode.id);
-                alert("STAGE CLEAR!"); location.reload();
-            } else { showUI('result'); }
-            localStorage.setItem('minami_2026_vFinal', JSON.stringify(saveData));
-        }
+    // ギミック：UNKNOWNの虹色境界線
+    if (config.color === "rainbow") {
+        ctx.strokeStyle = `hsl(${game.frame % 360}, 100%, 50%)`;
+        ctx.lineWidth = 10;
+        ctx.strokeRect(0, 0, 800, 600);
+    }
 
-        function loop() { if(!gameActive) return; update(); draw(); requestAnimationFrame(loop); }
-        initUI();
-    </script>
+    // プレイヤー描画
+    ctx.fillStyle = game.player.color;
+    ctx.shadowBlur = 15; ctx.shadowColor = game.player.color;
+    ctx.fillRect(game.player.x - 15, game.player.y - 15, 30, 30);
+
+    // 弾
+    ctx.fillStyle = "#0ff";
+    game.bullets.forEach(b => ctx.fillRect(b.x - 2, b.y - 5, 4, 10));
+
+    // 敵
+    ctx.fillStyle = "#f0f";
+    game.enemies.forEach(e => ctx.fillRect(e.x - 15, e.y - 15, 30, 30));
+
+    // 敵弾
+    let eColor = config.color === "rainbow" ? `hsl(${(game.frame + 180) % 360}, 100%, 50%)` : config.color;
+    ctx.fillStyle = eColor;
+    game.enemyBullets.forEach(eb => {
+        ctx.beginPath(); ctx.arc(eb.x, eb.y, 6, 0, Math.PI*2); ctx.fill();
+    });
+    ctx.shadowBlur = 0;
+}
+
+function gameOver() {
+    game.state = 'menu';
+    alert("MISSION FAILED\nSCORE: " + game.score);
+    save();
+    location.reload();
+}
+
+// 入力イベント
+window.addEventListener('keydown', e => game.keys[e.key] = true);
+window.addEventListener('keyup', e => game.keys[e.key] = false);
+
+// 初期化実行
+load();
+updateUI();
+mainLoop();
+
+</script>
 </body>
 </html>
