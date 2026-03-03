@@ -2,47 +2,57 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Minami Project 2026: Shop Edition</title>
+    <title>Minami Project 2026: Mystic Wave</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+JP:wght@300;700&display=swap');
-        body { margin: 0; background: #000810; color: #e0e0e0; font-family: 'Press Start 2P', cursive; overflow: hidden; }
-        canvas { display: block; }
         
+        /* ベース：ミステリアスな青のグラデーション */
+        body { margin: 0; background: radial-gradient(circle at center, #001a33 0%, #000810 100%); color: #e0e0e0; font-family: 'Press Start 2P', cursive; overflow: hidden; }
+        
+        /* 背景の波用Canvas */
+        #bg-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1; }
+        /* ゲーム用Canvas */
+        #game-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
+
         /* HUD */
-        #hud { position: absolute; top: 20px; left: 20px; z-index: 10; pointer-events: none; }
-        #score-val { font-size: 20px; color: #fff; margin-bottom: 5px; }
+        #hud { position: absolute; top: 20px; left: 20px; z-index: 10; pointer-events: none; visibility: hidden; }
+        #score-val { font-size: 20px; color: #fff; margin-bottom: 5px; text-shadow: 0 0 10px rgba(0,255,255,0.5); }
         #coin-display { font-size: 14px; color: #ffd700; margin-bottom: 10px; text-shadow: 0 0 5px rgba(255,215,0,0.5); }
         #hp-bar { width: 200px; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; }
-        #hp-fill { height: 100%; background: #fff; width: 100%; transition: width 0.3s ease; }
+        #hp-fill { height: 100%; background: #fff; width: 100%; transition: width 0.3s ease; box-shadow: 0 0 10px #fff; }
 
-        /* MENU & SHOP */
-        #menu { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); display: flex; flex-direction: column; align-items: center; z-index: 20; overflow-y: auto; padding-bottom: 50px; }
-        h1 { font-size: 16px; margin: 30px 0; color: #fff; letter-spacing: 2px; }
+        /* MENU & SHOP (最前面) */
+        #menu { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,8,16,0.8); display: flex; flex-direction: column; align-items: center; z-index: 20; overflow-y: auto; padding-bottom: 50px; backdrop-filter: blur(5px); }
+        h1 { font-size: 16px; margin: 30px 0; color: #fff; letter-spacing: 2px; text-shadow: 0 0 10px rgba(0,255,255,0.8); }
         
-        /* Coin Status in Menu */
-        #menu-coin-status { font-size: 16px; color: #ffd700; margin-bottom: 20px; }
+        /* Coin Status */
+        #menu-coin-status { font-size: 16px; color: #ffd700; margin-bottom: 20px; text-shadow: 0 0 5px rgba(255,215,0,0.5); }
         #shop-msg { font-size: 10px; color: #ff4444; height: 15px; margin-bottom: 10px; visibility: hidden; }
 
-        .section-title { font-size: 12px; color: #888; margin: 20px 0 10px; border-bottom: 1px solid #334; width: 80%; text-align: center; padding-bottom: 5px; }
+        .section-title { font-size: 12px; color: #00ccff; margin: 20px 0 10px; border-bottom: 1px solid #004466; width: 80%; text-align: center; padding-bottom: 5px; text-shadow: 0 0 5px rgba(0,204,255,0.5); }
         
         .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; width: 90%; max-width: 600px; }
         .item-btn { 
-            background: #112; border: 2px solid #334; padding: 10px; cursor: pointer; text-align: center; 
+            background: rgba(0,20,40,0.5); border: 2px solid #003355; padding: 10px; cursor: pointer; text-align: center; 
             transition: 0.2s; border-radius: 4px; display: flex; flex-direction: column; align-items: center;
         }
-        .item-btn:hover { background: #223; border-color: #556; }
-        .item-btn.owned { border-color: #00ffcc; }
-        .item-btn.equipped { background: #004433; border-color: #00ffcc; box-shadow: 0 0 10px rgba(0,255,204,0.3); }
-        .item-name { font-size: 8px; margin-bottom: 5px; color: #eee; }
+        .item-btn:hover { background: rgba(0,40,80,0.8); border-color: #006699; transform: scale(1.05); }
+        .item-btn.owned { border-color: #00ffcc; color: #00ffcc; }
+        .item-btn.equipped { background: rgba(0,255,204,0.15); border-color: #00ffcc; box-shadow: 0 0 15px rgba(0,255,204,0.4); color: #fff; }
+        .item-name { font-size: 8px; margin-bottom: 5px; }
         .item-price { font-size: 7px; color: #ffd700; }
 
-        #how-to { max-width: 600px; font-family: 'Noto Sans JP'; font-size: 10px; color: #aaa; margin: 20px; line-height: 1.6; text-align: left; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 8px; }
-        #how-to b { color: #fff; font-family: 'Press Start 2P'; font-size: 8px; }
+        /* PLAY MANUAL (ENGLISH - NO BOLD) */
+        #how-to { max-width: 600px; font-family: 'Noto Sans JP'; font-size: 10px; color: #88a0b0; margin: 20px; line-height: 1.8; text-align: left; background: rgba(0,20,40,0.5); padding: 20px; border-radius: 8px; border: 1px solid #003355; }
+        #how-to b { font-weight: normal; color: #eee; font-family: 'Press Start 2P'; font-size: 8px; } /* 太字を解除 */
 
-        .copy-right { margin-top: 30px; font-size: 8px; color: #445; letter-spacing: 1px; }
+        .copy-right { margin-top: 30px; font-size: 8px; color: #223344; letter-spacing: 1px; }
     </style>
 </head>
 <body>
+    <canvas id="bg-canvas"></canvas>
+    <canvas id="game-canvas"></canvas>
+
     <div id="hud">
         <div id="score-val">000000</div>
         <div id="coin-display">COINS: 0</div>
@@ -56,15 +66,15 @@
         <div id="shop-msg">NOT ENOUGH COINS!</div>
 
         <div id="how-to">
-            <b>[CORE SYSTEM]</b><br>
-            - Move your <b>Mouse</b> to sync with the "SHIZUKU" unit.<br>
-            - Hold <b>Left-Click</b> to fire Resonance Shots. Power increases as difficulty rises.<br>
+            [CORE SYSTEM]<br>
+            - Move your Mouse to sync with the "SHIZUKU" unit.<br>
+            - Hold Left-Click to fire Resonance Shots. Power increases as difficulty rises.<br>
             - Mental Integrity (HP) resets upon impact. 0% leads to Desync (Game Over).<br><br>
             
-            <b>[EXPANSION]</b><br>
-            - Collect <b>Coins</b> from neutralized enemies to unlock new manifest skins and gear.<br>
-            - <b>Auto-Repair</b>: Periodically restores small amounts of HP.<br>
-            - <b>Burst</b>: Press <b>Space</b> to vaporize all Noise on screen (Requires equipment).
+            [EXPANSION]<br>
+            - Collect Coins from neutralized enemies to unlock new manifest skins and gear.<br>
+            - Auto-Repair: Periodically restores small amounts of HP.<br>
+            - Burst: Press Space to vaporize all Noise on screen (Requires equipment).
         </div>
 
         <div class="section-title">SELECT STAGE</div>
@@ -89,18 +99,58 @@
         <div class="copy-right">MINAMI PROJECT 2026 / Chromatic Resonance</div>
     </div>
 
-    <canvas id="game"></canvas>
-
     <script>
-        const canvas = document.getElementById('game');
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        // --- 背景の波エフェクト (Mystic Waves) ---
+        const bgCanvas = document.getElementById('bg-canvas');
+        const bgCtx = bgCanvas.getContext('2d');
+        let width, height;
+
+        function resize() {
+            width = bgCanvas.width = window.innerWidth;
+            height = bgCanvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        let waves = [
+            { y: height * 0.5, length: 0.01, amplitude: 30, speed: 0.02, color: 'rgba(0, 100, 255, 0.2)' },
+            { y: height * 0.55, length: 0.008, amplitude: 50, speed: 0.015, color: 'rgba(0, 150, 255, 0.15)' },
+            { y: height * 0.6, length: 0.005, amplitude: 70, speed: 0.01, color: 'rgba(0, 200, 255, 0.1)' }
+        ];
+
+        let time = 0;
+        function drawBg() {
+            if (gameActive) return; // ゲーム中は描画しない（重くなるため）
+            requestAnimationFrame(drawBg);
+            bgCtx.clearRect(0, 0, width, height);
+            time += 1;
+
+            waves.forEach(wave => {
+                bgCtx.beginPath();
+                bgCtx.moveTo(0, wave.y);
+                for (let x = 0; x < width; x++) {
+                    // サイン波を重ね合わせて複雑な波を作る
+                    let y = wave.y + Math.sin(x * wave.length + time * wave.speed) * wave.amplitude * Math.sin(time * 0.01);
+                    bgCtx.lineTo(x, y);
+                }
+                bgCtx.strokeStyle = wave.color;
+                bgCtx.lineWidth = 2;
+                bgCtx.stroke();
+            });
+        }
+        drawBg(); // メニュー画面で波を動かす
+
+
+        // --- ゲーム本体のロジック (以前のものを継続) ---
+        const gameCanvas = document.getElementById('game-canvas');
+        const ctx = gameCanvas.getContext('2d');
+        gameCanvas.width = window.innerWidth; gameCanvas.height = window.innerHeight;
 
         let saveData = JSON.parse(localStorage.getItem('minami_v2_save') || '{"coins":0, "owned":["Default"], "equippedSkin":"Default", "items":[], "cleared":{}}');
 
         let gameActive = false, score = 0, hp = 100, frame = 0;
         let bullets = [], eBullets = [], enemies = [], ripples = [], particles = [];
-        let player = { x: canvas.width/2, y: canvas.height/2 };
+        let player = { x: gameCanvas.width/2, y: gameCanvas.height/2 };
         let currentMode = null;
 
         const config = {
@@ -135,9 +185,7 @@
                     grid.appendChild(btn);
                 }
             });
-            document.getElementById('coin-display').innerText = `COINS: ${saveData.coins}`;
             document.getElementById('m-coin-val').innerText = saveData.coins;
-            
             document.querySelectorAll('.item-btn').forEach(el => el.classList.remove('equipped', 'owned'));
             saveData.owned.forEach(name => {
                 const el = document.getElementById(`shop-${name}`);
@@ -152,20 +200,13 @@
 
         function showShopMsg(msg) {
             const el = document.getElementById('shop-msg');
-            el.innerText = msg;
-            el.style.visibility = 'visible';
+            el.innerText = msg; el.style.visibility = 'visible';
             setTimeout(() => { el.style.visibility = 'hidden'; }, 2000);
         }
 
         function buy(type, name, price) {
             if(!saveData.owned.includes(name)) {
-                if(saveData.coins >= price) { 
-                    saveData.coins -= price; 
-                    saveData.owned.push(name); 
-                } else { 
-                    showShopMsg("NOT ENOUGH COINS!"); 
-                    return; 
-                }
+                if(saveData.coins >= price) { saveData.coins -= price; saveData.owned.push(name); } else { showShopMsg("NOT ENOUGH COINS!"); return; }
             }
             if(type === 'skin') saveData.equippedSkin = name;
             if(type === 'item' && !saveData.items.includes(name)) saveData.items.push(name);
@@ -177,14 +218,27 @@
             currentMode = { ...config[id], id: id };
             score = 0; hp = 100; frame = 0; enemies = []; bullets = []; eBullets = []; ripples = []; particles = [];
             document.getElementById('menu').style.display = 'none';
-            gameActive = true; loop();
+            document.getElementById('hud').style.visibility = 'visible';
+            gameActive = true; 
+            gameLoop(); // ゲーム用のループを開始
         }
 
-        window.addEventListener('mousemove', e => { player.x = e.clientX; player.y = e.clientY; });
-        let isDown = false; window.addEventListener('mousedown', () => isDown = true); window.addEventListener('mouseup', () => isDown = false);
-        window.addEventListener('keydown', e => { if(e.code === 'Space' && saveData.items.includes('Burst')) useBurst(); });
+        // 入力処理
+        window.addEventListener('mousemove', e => { 
+            const rect = gameCanvas.getBoundingClientRect();
+            player.x = e.clientX - rect.left; 
+            player.y = e.clientY - rect.top; 
+        });
+        let isDown = false; 
+        window.addEventListener('mousedown', (e) => { if(e.button === 0) isDown = true; }); 
+        window.addEventListener('mouseup', (e) => { if(e.button === 0) isDown = false; });
+        
+        // 右クリックまたはスペースで必殺技
+        window.addEventListener('contextmenu', e => { e.preventDefault(); if(gameActive) useBurst(); });
+        window.addEventListener('keydown', e => { if(e.code === 'Space' && gameActive) useBurst(); });
 
         function useBurst() {
+            if(!saveData.items.includes('Burst')) return;
             ripples.push({x: player.x, y: player.y, r: 10, a: 1, burst: true});
             enemies.forEach(e => { e.hp -= 50; if(e.hp <=0) { score += 100; dropCoin(e.x, e.y); } });
             enemies = enemies.filter(e => e.hp > 0);
@@ -192,12 +246,13 @@
 
         function dropCoin(x, y) { if(Math.random() < 0.3) particles.push({x, y, vx: (Math.random()-0.5)*5, vy: (Math.random()-0.5)*5, type:'coin'}); }
 
-        function update() {
+        // ゲームループ
+        function gameUpdate() {
             frame++;
             if(saveData.items.includes('AutoHeal') && frame % 120 === 0 && hp < 100) hp = Math.min(100, hp + 1);
             if(isDown && frame % 4 === 0) bullets.push({x: player.x, y: player.y-10, vy: -18, size: currentMode.bSize, pwr: currentMode.power});
             bullets.forEach((b, i) => { b.y += b.vy; if(b.y < -30) bullets.splice(i, 1); });
-            if(Math.random() < currentMode.spawn) enemies.push({ x: Math.random()*canvas.width, y: -50, hp: currentMode.hp, vx: (Math.random()-0.5)*4, vy: 3, type: currentMode.g === 'mix' ? ['warp','dash','shield'][Math.floor(Math.random()*3)] : currentMode.g });
+            if(Math.random() < currentMode.spawn) enemies.push({ x: Math.random()*gameCanvas.width, y: -50, hp: currentMode.hp, vx: (Math.random()-0.5)*4, vy: 3, type: currentMode.g === 'mix' ? ['warp','dash','shield'][Math.floor(Math.random()*3)] : currentMode.g });
             enemies.forEach((e, i) => {
                 e.y += e.vy; e.x += e.vx;
                 bullets.forEach((b, bi) => {
@@ -212,6 +267,7 @@
             });
             if(hp <= 0) finish(false);
             document.getElementById('hp-fill').style.width = hp + "%";
+            document.getElementById('coin-display').innerText = `COINS: ${saveData.coins}`;
             document.getElementById('score-val').innerText = score.toString().padStart(6, '0');
         }
 
@@ -219,7 +275,7 @@
             ctx.save(); ctx.translate(player.x, player.y); ctx.fillStyle = "#fff";
             const s = saveData.equippedSkin;
             if(s === 'Default') { ctx.beginPath(); ctx.moveTo(0, -15); ctx.bezierCurveTo(10,5,10,15,0,15); ctx.bezierCurveTo(-10,15,-10,5,0,-15); ctx.fill(); }
-            else if(s === 'Star') { for(let i=0; i<5; i++) { ctx.rotate(Math.PI*2/5); ctx.lineTo(0, -15); ctx.rotate(Math.PI*2/10); ctx.lineTo(0, -7); } ctx.fill(); }
+            else if(s === 'Star') { ctx.beginPath(); for(let i=0; i<5; i++) { ctx.rotate(Math.PI*2/5); ctx.lineTo(0, -15); ctx.rotate(Math.PI*2/10); ctx.lineTo(0, -7); } ctx.fill(); }
             else if(s === 'Circle') { ctx.beginPath(); ctx.arc(0, 0, 12, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = "#00ffff"; ctx.stroke(); }
             else if(s === 'Sword') { ctx.fillRect(-2, -20, 4, 25); ctx.fillRect(-8, -5, 16, 3); }
             else if(s === 'Bear') { ctx.beginPath(); ctx.arc(0,0,10,0,Math.PI*2); ctx.arc(-8,-8,5,0,Math.PI*2); ctx.arc(8,-8,5,0,Math.PI*2); ctx.fill(); }
@@ -227,15 +283,16 @@
             ctx.restore();
         }
 
-        function draw() {
-            ctx.fillStyle = "rgba(0, 8, 16, 0.4)"; ctx.fillRect(0,0,canvas.width, canvas.height);
+        function gameDraw() {
+            // ゲーム画面は透明な青でクリア（背景の波が見えるように）
+            ctx.fillStyle = "rgba(0, 8, 16, 0.7)"; ctx.fillRect(0,0,gameCanvas.width, gameCanvas.height);
             drawPlayer();
             bullets.forEach(b => { ctx.fillStyle = "#fff"; ctx.fillRect(b.x-b.size/2, b.y, b.size, b.size*2); });
-            enemies.forEach(e => { ctx.strokeStyle = currentMode.color; ctx.strokeRect(e.x-15, e.y-15, 30, 30); });
+            enemies.forEach(e => { ctx.strokeStyle = currentMode.color; ctx.lineWidth = 2; ctx.strokeRect(e.x-15, e.y-15, 30, 30); });
             particles.forEach(p => { ctx.fillStyle="#ffd700"; ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI*2); ctx.fill(); });
             ripples.forEach((r, i) => {
                 ctx.strokeStyle = r.burst ? `rgba(255,255,255,${r.a})` : `rgba(0,255,255,${r.a})`;
-                ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, Math.PI*2); ctx.stroke();
+                ctx.lineWidth = r.burst ? 4 : 2; ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, Math.PI*2); ctx.stroke();
                 r.r += r.burst ? 20 : 2; r.a -= 0.02; if(r.a <= 0) ripples.splice(i, 1);
             });
         }
@@ -246,7 +303,8 @@
             localStorage.setItem('minami_v2_save', JSON.stringify(saveData));
             location.reload();
         }
-        function loop() { if(!gameActive) return; update(); draw(); requestAnimationFrame(loop); }
+        function gameLoop() { if(!gameActive) return; gameUpdate(); gameDraw(); requestAnimationFrame(gameLoop); }
+        
         initUI();
     </script>
 </body>
