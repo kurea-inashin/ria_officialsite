@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>Minami Project 2026: Shop Edition</title>
@@ -8,7 +8,7 @@
         body { margin: 0; background: #000810; color: #e0e0e0; font-family: 'Press Start 2P', cursive; overflow: hidden; }
         canvas { display: block; }
         
-        /* HUD & UI */
+        /* HUD */
         #hud { position: absolute; top: 20px; left: 20px; z-index: 10; pointer-events: none; }
         #score-val { font-size: 20px; color: #fff; margin-bottom: 5px; }
         #coin-val { font-size: 14px; color: #ffd700; margin-bottom: 10px; }
@@ -32,13 +32,11 @@
         .item-name { font-size: 8px; margin-bottom: 5px; color: #eee; }
         .item-price { font-size: 7px; color: #ffd700; }
 
-        .mode-btn { width: 100%; height: 50px; font-size: 8px; }
-        
-        #how-to { font-family: 'Noto Sans JP'; font-size: 10px; color: #888; margin: 20px; line-height: 1.5; text-align: center; }
-        .copy-right { margin-top: 30px; font-size: 8px; color: #445; }
+        /* PLAY MANUAL (ENGLISH) */
+        #how-to { max-width: 600px; font-family: 'Noto Sans JP'; font-size: 10px; color: #aaa; margin: 20px; line-height: 1.6; text-align: left; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 8px; }
+        #how-to b { color: #fff; font-family: 'Press Start 2P'; font-size: 8px; }
 
-        /* Hidden States */
-        .hidden { display: none !important; }
+        .copy-right { margin-top: 30px; font-size: 8px; color: #445; letter-spacing: 1px; }
     </style>
 </head>
 <body>
@@ -52,47 +50,41 @@
         <h1>MINAMI PROJECT 2026</h1>
         
         <div id="how-to">
-            【操作】マウス移動 / 左クリック：攻撃 / スペース：必殺技(要装備)<br>
-            敵を倒してコインを集め、ショップで装備を整えましょう。
+            <b>[CORE SYSTEM]</b><br>
+            - Move your <b>Mouse</b> to sync with the "SHIZUKU" unit.<br>
+            - Hold <b>Left-Click</b> to fire Resonance Shots. Power increases as difficulty rises.<br>
+            - Mental Integrity (HP) resets upon impact. 0% leads to Desync (Game Over).<br><br>
+            
+            <b>[EXPANSION]</b><br>
+            - Collect <b>Coins</b> from neutralized enemies to unlock new manifest skins and gear.<br>
+            - <b>Auto-Repair</b>: Periodically restores small amounts of HP.<br>
+            - <b>Burst</b>: Press <b>Space</b> to vaporize all Noise on screen (Requires equipment).<br><br>
+            
+            <b>[RANKING]</b><br>
+            - <b>CLEAR</b>: Reach Target Score.<br>
+            - <b>COMPLETE</b>: Achieve Target Score with <b>100% HP</b>.
         </div>
 
         <div class="section-title">SELECT STAGE</div>
-        <div class="grid" id="stage-grid">
-            </div>
+        <div class="grid" id="stage-grid"></div>
 
         <div class="section-title">SHOP & SKINS</div>
         <div class="grid" id="shop-grid">
-            <div class="item-btn equipped" onclick="buy('skin','Default',0)">
-                <span class="item-name"> (Default)</span><span class="item-price">EQUIPPED</span>
-            </div>
-            <div id="shop-Star" class="item-btn" onclick="buy('skin','Star',500)">
-                <span class="item-name"> (KiraKira)</span><span class="item-price">500 C</span>
-            </div>
-            <div id="shop-Circle" class="item-btn" onclick="buy('skin','Circle',800)">
-                <span class="item-name">円(Shield)</span><span class="item-price">800 C</span>
-            </div>
-            <div id="shop-Sword" class="item-btn" onclick="buy('skin','Sword',1500)">
-                <span class="item-name"> (Brave)</span><span class="item-price">1500 C</span>
-            </div>
-            <div id="shop-Bear" class="item-btn" onclick="buy('skin','Bear',2000)">
-                <span class="item-name"> (Cute)</span><span class="item-price">2000 C</span>
-            </div>
-            <div id="shop-Train" class="item-btn" onclick="buy('skin','Train',3000)">
-                <span class="item-name"> (Express)</span><span class="item-price">3000 C</span>
-            </div>
+            <div id="shop-Default" class="item-btn" onclick="buy('skin','Default',0)"><span class="item-name">Droplet (Def)</span><span class="item-price">0 C</span></div>
+            <div id="shop-Star" class="item-btn" onclick="buy('skin','Star',500)"><span class="item-name">Star (Aura)</span><span class="item-price">500 C</span></div>
+            <div id="shop-Circle" class="item-btn" onclick="buy('skin','Circle',800)"><span class="item-name">Circle (Shield)</span><span class="item-price">800 C</span></div>
+            <div id="shop-Sword" class="item-btn" onclick="buy('skin','Sword',1500)"><span class="item-name">Sword (Brave)</span><span class="item-price">1500 C</span></div>
+            <div id="shop-Bear" class="item-btn" onclick="buy('skin','Bear',2000)"><span class="item-name">Bear (Cute)</span><span class="item-price">2000 C</span></div>
+            <div id="shop-Train" class="item-btn" onclick="buy('skin','Train',3000)"><span class="item-name">Train (Express)</span><span class="item-price">3000 C</span></div>
         </div>
 
         <div class="section-title">EQUIPMENT</div>
         <div class="grid">
-            <div id="shop-AutoHeal" class="item-btn" onclick="buy('item','AutoHeal',2500)">
-                <span class="item-name">Auto Recovery</span><span class="item-price">2500 C</span>
-            </div>
-            <div id="shop-Burst" class="item-btn" onclick="buy('item','Burst',5000)">
-                <span class="item-name">Burst</span><span class="item-price">5000 C</span>
-            </div>
+            <div id="shop-AutoHeal" class="item-btn" onclick="buy('item','AutoHeal',2500)"><span class="item-name">Auto-Repair</span><span class="item-price">2500 C</span></div>
+            <div id="shop-Burst" class="item-btn" onclick="buy('item','Burst',5000)"><span class="item-name">Burst Mode</span><span class="item-price">5000 C</span></div>
         </div>
 
-        <div class="copy-right">©︎MINAMI PROJECT 2026 / Chromatic Resonance</div>
+        <div class="copy-right">MINAMI PROJECT 2026 / Chromatic Resonance</div>
     </div>
 
     <canvas id="game"></canvas>
@@ -102,10 +94,9 @@
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth; canvas.height = window.innerHeight;
 
-        // セーブデータ
         let saveData = JSON.parse(localStorage.getItem('minami_v2_save') || '{"coins":0, "owned":["Default"], "equippedSkin":"Default", "items":[], "cleared":{}}');
 
-        let gameActive = false, score = 0, hp = 100, frame = 0, coinsInGame = 0;
+        let gameActive = false, score = 0, hp = 100, frame = 0;
         let bullets = [], eBullets = [], enemies = [], ripples = [], particles = [];
         let player = { x: canvas.width/2, y: canvas.height/2 };
         let currentMode = null;
@@ -132,10 +123,9 @@
             Object.keys(config).forEach(id => {
                 const isHidden = (id === 'HA' || id === 'HB' || id === 'HC') && !['SB','KT','SK','KY','PK','JB','HM','KS','TY'].every(s => saveData.cleared[s]);
                 const isUltimate = (id === 'CO') && !['SB','KT','SK','KY','PK','JB','HM','KS','TY','HA','HB','HC'].every(s => saveData.cleared[s]);
-                
                 if(!isHidden && !isUltimate) {
                     const btn = document.createElement('div');
-                    btn.className = `item-btn ${id}`;
+                    btn.className = `item-btn`;
                     btn.style.borderColor = config[id].color;
                     btn.style.color = config[id].color;
                     btn.innerHTML = `<span class="item-name">ST=${id}</span><span class="item-price">${saveData.cleared[id] || 'NEW'}</span>`;
@@ -144,36 +134,31 @@
                 }
             });
             document.getElementById('coin-val').innerText = `COINS: ${saveData.coins}`;
-            
-            // Shop UI Update
+            document.querySelectorAll('.item-btn').forEach(el => el.classList.remove('equipped', 'owned'));
             saveData.owned.forEach(name => {
                 const el = document.getElementById(`shop-${name}`);
                 if(el) {
                     el.classList.add('owned');
-                    el.querySelector('.item-price').innerText = (saveData.equippedSkin === name || saveData.items.includes(name)) ? 'EQUIPPED' : 'OWNED';
-                    if(saveData.equippedSkin === name || saveData.items.includes(name)) el.classList.add('equipped');
+                    const isEquipped = (saveData.equippedSkin === name || saveData.items.includes(name));
+                    el.querySelector('.item-price').innerText = isEquipped ? 'EQUIPPED' : 'OWNED';
+                    if(isEquipped) el.classList.add('equipped');
                 }
             });
         }
 
         function buy(type, name, price) {
             if(!saveData.owned.includes(name)) {
-                if(saveData.coins >= price) {
-                    saveData.coins -= price;
-                    saveData.owned.push(name);
-                } else { alert("Coins not enough!"); return; }
+                if(saveData.coins >= price) { saveData.coins -= price; saveData.owned.push(name); } else return;
             }
             if(type === 'skin') saveData.equippedSkin = name;
             if(type === 'item' && !saveData.items.includes(name)) saveData.items.push(name);
-            
             localStorage.setItem('minami_v2_save', JSON.stringify(saveData));
             initUI();
         }
 
         function start(id) {
             currentMode = { ...config[id], id: id };
-            score = 0; hp = 100; frame = 0; coinsInGame = 0;
-            enemies = []; bullets = []; eBullets = []; ripples = []; particles = [];
+            score = 0; hp = 100; frame = 0; enemies = []; bullets = []; eBullets = []; ripples = []; particles = [];
             document.getElementById('menu').style.display = 'none';
             gameActive = true; loop();
         }
@@ -188,69 +173,40 @@
             enemies = enemies.filter(e => e.hp > 0);
         }
 
-        function dropCoin(x, y) {
-            if(Math.random() < 0.3) particles.push({x, y, vx: (Math.random()-0.5)*5, vy: (Math.random()-0.5)*5, type:'coin'});
-        }
+        function dropCoin(x, y) { if(Math.random() < 0.3) particles.push({x, y, vx: (Math.random()-0.5)*5, vy: (Math.random()-0.5)*5, type:'coin'}); }
 
         function update() {
             frame++;
             if(saveData.items.includes('AutoHeal') && frame % 120 === 0 && hp < 100) hp = Math.min(100, hp + 1);
-            
             if(isDown && frame % 4 === 0) bullets.push({x: player.x, y: player.y-10, vy: -18, size: currentMode.bSize, pwr: currentMode.power});
-            
             bullets.forEach((b, i) => { b.y += b.vy; if(b.y < -30) bullets.splice(i, 1); });
-
-            if(Math.random() < currentMode.spawn) {
-                enemies.push({ x: Math.random()*canvas.width, y: -50, hp: currentMode.hp, vx: (Math.random()-0.5)*4, vy: 3, type: currentMode.g === 'mix' ? ['warp','dash','shield'][Math.floor(Math.random()*3)] : currentMode.g });
-            }
-
+            if(Math.random() < currentMode.spawn) enemies.push({ x: Math.random()*canvas.width, y: -50, hp: currentMode.hp, vx: (Math.random()-0.5)*4, vy: 3, type: currentMode.g === 'mix' ? ['warp','dash','shield'][Math.floor(Math.random()*3)] : currentMode.g });
             enemies.forEach((e, i) => {
                 e.y += e.vy; e.x += e.vx;
                 bullets.forEach((b, bi) => {
-                    if(Math.hypot(e.x-b.x, e.y-b.y) < 25) {
-                        e.hp -= b.pwr; bullets.splice(bi, 1);
-                        if(e.hp <= 0) { score += 100; dropCoin(e.x, e.y); enemies.splice(i, 1); if(score >= currentMode.target) finish(true); }
-                    }
+                    if(Math.hypot(e.x-b.x, e.y-b.y) < 25) { e.hp -= b.pwr; bullets.splice(bi, 1); if(e.hp <= 0) { score += 100; dropCoin(e.x, e.y); enemies.splice(i, 1); if(score >= currentMode.target) finish(true); }}
                 });
-                if(Math.hypot(e.x-player.x, e.y-player.y) < 25) { hp -= 0.5; }
+                if(Math.hypot(e.x-player.x, e.y-player.y) < 25) hp -= 0.5;
             });
-
             particles.forEach((p, i) => {
-                p.x += p.vx; p.y += p.vy;
-                if(p.type === 'coin') {
-                    let dx = player.x - p.x, dy = player.y - p.y;
-                    let dist = Math.hypot(dx, dy);
-                    if(dist < 150) { p.vx += dx/dist*0.5; p.vy += dy/dist*0.5; }
-                    if(dist < 20) { saveData.coins += 10; particles.splice(i, 1); }
-                }
+                let dx = player.x - p.x, dy = player.y - p.y, dist = Math.hypot(dx, dy);
+                if(dist < 150) { p.vx += dx/dist*0.5; p.vy += dy/dist*0.5; }
+                p.x += p.vx; p.y += p.vy; if(dist < 20) { saveData.coins += 10; particles.splice(i, 1); }
             });
-
             if(hp <= 0) finish(false);
             document.getElementById('hp-fill').style.width = hp + "%";
             document.getElementById('score-val').innerText = score.toString().padStart(6, '0');
-            document.getElementById('coin-val').innerText = `COINS: ${saveData.coins}`;
         }
 
         function drawPlayer() {
-            ctx.save();
-            ctx.translate(player.x, player.y);
-            ctx.fillStyle = "#fff";
+            ctx.save(); ctx.translate(player.x, player.y); ctx.fillStyle = "#fff";
             const s = saveData.equippedSkin;
-            if(s === 'Default') {
-                ctx.beginPath(); ctx.moveTo(0, -15); ctx.bezierCurveTo(10,5,10,15,0,15); ctx.bezierCurveTo(-10,15,-10,5,0,-15); ctx.fill();
-            } else if(s === 'Star') {
-                for(let i=0; i<5; i++) { ctx.rotate(Math.PI*2/5); ctx.lineTo(0, -15); ctx.rotate(Math.PI*2/10); ctx.lineTo(0, -7); } ctx.fill();
-                if(frame % 5 === 0) ripples.push({x: player.x, y: player.y, r: 2, a: 0.5});
-            } else if(s === 'Circle') {
-                ctx.beginPath(); ctx.arc(0, 0, 12, 0, Math.PI*2); ctx.fill();
-                ctx.strokeStyle = "#00ffff"; ctx.stroke();
-            } else if(s === 'Sword') {
-                ctx.fillRect(-2, -20, 4, 25); ctx.fillRect(-8, -5, 16, 3);
-            } else if(s === 'Bear') {
-                ctx.beginPath(); ctx.arc(0,0,10,0,Math.PI*2); ctx.arc(-8,-8,5,0,Math.PI*2); ctx.arc(8,-8,5,0,Math.PI*2); ctx.fill();
-            } else if(s === 'Train') {
-                ctx.fillRect(-8, -12, 16, 24); ctx.fillStyle="#333"; ctx.fillRect(-8, -4, 16, 2);
-            }
+            if(s === 'Default') { ctx.beginPath(); ctx.moveTo(0, -15); ctx.bezierCurveTo(10,5,10,15,0,15); ctx.bezierCurveTo(-10,15,-10,5,0,-15); ctx.fill(); }
+            else if(s === 'Star') { for(let i=0; i<5; i++) { ctx.rotate(Math.PI*2/5); ctx.lineTo(0, -15); ctx.rotate(Math.PI*2/10); ctx.lineTo(0, -7); } ctx.fill(); }
+            else if(s === 'Circle') { ctx.beginPath(); ctx.arc(0, 0, 12, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle = "#00ffff"; ctx.stroke(); }
+            else if(s === 'Sword') { ctx.fillRect(-2, -20, 4, 25); ctx.fillRect(-8, -5, 16, 3); }
+            else if(s === 'Bear') { ctx.beginPath(); ctx.arc(0,0,10,0,Math.PI*2); ctx.arc(-8,-8,5,0,Math.PI*2); ctx.arc(8,-8,5,0,Math.PI*2); ctx.fill(); }
+            else if(s === 'Train') { ctx.fillRect(-8, -12, 16, 24); ctx.fillStyle="#333"; ctx.fillRect(-8, -4, 16, 2); }
             ctx.restore();
         }
 
@@ -259,7 +215,7 @@
             drawPlayer();
             bullets.forEach(b => { ctx.fillStyle = "#fff"; ctx.fillRect(b.x-b.size/2, b.y, b.size, b.size*2); });
             enemies.forEach(e => { ctx.strokeStyle = currentMode.color; ctx.strokeRect(e.x-15, e.y-15, 30, 30); });
-            particles.forEach(p => { if(p.type==='coin'){ ctx.fillStyle="#ffd700"; ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI*2); ctx.fill(); }});
+            particles.forEach(p => { ctx.fillStyle="#ffd700"; ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI*2); ctx.fill(); });
             ripples.forEach((r, i) => {
                 ctx.strokeStyle = r.burst ? `rgba(255,255,255,${r.a})` : `rgba(0,255,255,${r.a})`;
                 ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, Math.PI*2); ctx.stroke();
@@ -269,14 +225,10 @@
 
         function finish(isClear) {
             gameActive = false;
-            if(isClear) {
-                const status = (hp >= 100) ? "COMPLETE" : "CLEAR";
-                saveData.cleared[currentMode.id] = status;
-            }
+            if(isClear) saveData.cleared[currentMode.id] = (hp >= 100) ? "COMPLETE" : "CLEAR";
             localStorage.setItem('minami_v2_save', JSON.stringify(saveData));
             location.reload();
         }
-
         function loop() { if(!gameActive) return; update(); draw(); requestAnimationFrame(loop); }
         initUI();
     </script>
