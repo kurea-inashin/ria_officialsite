@@ -2,374 +2,211 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>Minami Project 2026: Final Overdrive - Full Authority Edition</title>
-
+<title>Minami Project 2026: Overdrive Final</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+JP:wght@300&display=swap');
-
-/* デザインはあなたのFinal Overdriveを完全継承 */
-body { margin:0; background:#000510; color:#fff; font-family:'Press Start 2P',cursive; overflow:hidden; }
-#bg-canvas, #game-canvas { position:fixed; top:0; left:0; }
+body { margin:0; background:#000510; color:#fff; font-family:'Press Start 2P',cursive; overflow:hidden; user-select:none; }
+#bg-canvas, #game-canvas { position:fixed; top:0; left:0; width:100vw; height:100vh; }
 #bg-canvas { z-index:1; }
 #game-canvas { z-index:5; pointer-events:none; }
-
-#menu {
-    position:relative; width:100%; height:100vh; background:rgba(0,10,30,0.85);
-    display:flex; flex-direction:column; align-items:center; z-index:10;
-    overflow-y:auto; backdrop-filter:blur(12px);
-}
-
-#hud { position:fixed; top:20px; left:20px; z-index:100; visibility:hidden; }
-#score-display { font-size:14px; margin-bottom:5px; text-shadow: 0 0 10px #00d4ff; }
-#combo-display { font-size:12px; margin-bottom:5px; color:#00ffff; }
-#hp-container { width:220px; height:12px; border:2px solid #fff; border-radius:6px; background:rgba(0,0,0,0.5); }
-#hp-bar { height:100%; background:linear-gradient(90deg, #ff0044, #00ffcc); width:100%; transition:0.1s; }
-
+#menu { position:relative; width:100%; height:100vh; background:rgba(0,10,30,0.85); display:flex; flex-direction:column; align-items:center; z-index:10; overflow-y:auto; backdrop-filter:blur(12px); }
+#hud { position:fixed; top:20px; left:20px; z-index:100; visibility:hidden; pointer-events:none; }
+#score-display { font-size:14px; margin-bottom:5px; text-shadow:0 0 10px #00d4ff; }
+#hp-container { width:200px; height:12px; border:2px solid #fff; background:rgba(0,0,0,0.5); }
+#hp-bar { height:100%; background:#00ffcc; width:100%; transition:0.1s; }
 h1 { font-size:18px; margin:40px 0; color:#00d4ff; text-shadow:0 0 20px #00d4ff; }
-
-.section-title {
-    font-size:10px; margin:30px 0 15px; color:#446688;
-    border-bottom:1px solid #1a334d; width:85%; text-align:center; letter-spacing:2px;
-}
-
-.grid { display:grid; grid-template-columns:repeat(3,1fr); gap:15px; width:95%; max-width:700px; margin-bottom:30px; }
-
-.btn {
-    background:rgba(255,255,255,0.03); border:1px solid #2a4a6a; padding:15px 5px;
-    cursor:pointer; text-align:center; border-radius:4px; font-size:8px; transition:0.3s;
-}
-.btn:hover { background:rgba(255,255,255,0.12); transform:translateY(-3px); border-color:#fff; }
-.equipped { border-color:#00ffcc!important; box-shadow:0 0 15px rgba(0,255,204,0.5); }
-
-#how-to {
-    max-width:650px; font-family:'Noto Sans JP'; font-size:11px; color:#a0c0e0;
-    margin-bottom:30px; line-height:1.8; text-align:left; background:rgba(255,255,255,0.05);
-    padding:20px; border-radius:8px; border:1px solid rgba(255,255,255,0.1);
-}
-
-#coin-info { color:#ffd700; margin-bottom:10px; font-size:16px; text-shadow:0 0 10px #ffd700; }
-#msg { color:#ff4444; font-size:10px; height:12px; visibility:hidden; }
-
-/* コピーライト */
-.copyright-footer {
-    font-size:8px; color:rgba(255,255,255,0.4); margin:40px 0 20px 0;
-    letter-spacing: 1px;
-}
+.section-title { font-size:10px; margin:25px 0 10px; color:#446688; border-bottom:1px solid #1a334d; width:85%; text-align:center; }
+.grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; width:95%; max-width:650px; margin-bottom:30px; }
+.btn { background:rgba(255,255,255,0.05); border:1px solid #2a4a6a; padding:12px 5px; cursor:pointer; text-align:center; border-radius:4px; font-size:8px; color:#fff; }
+.btn:hover { background:rgba(255,255,255,0.15); border-color:#fff; }
+.equipped { border-color:#00ffcc!important; box-shadow:0 0 10px #00ffcc; }
+#coin-info { color:#ffd700; margin-bottom:10px; font-size:14px; }
+.copy { font-size:7px; color:rgba(255,255,255,0.3); margin:30px 0; }
 </style>
 </head>
-
 <body>
+
 <canvas id="bg-canvas"></canvas>
 <canvas id="game-canvas"></canvas>
 
 <div id="hud">
     <div id="score-display">SCORE: <span id="s-val">0</span></div>
-    <div id="combo-display">COMBO: <span id="combo-val">0</span></div>
     <div id="hp-container"><div id="hp-bar"></div></div>
 </div>
 
 <div id="menu">
     <h1>MINAMI PROJECT 2026</h1>
-
-    <div id="how-to">
-        [SYSTEM OPERATION]<br>
-        - MOVE: Mouse Cursor Synchronization.<br>
-        - ATTACK: Hold Left-Click to engage.<br>
-        - BURST: [SPACE] to clear enemy signals (Requires Module).<br>
-        - OBJECTIVE: Stabilize the sector by eliminating high-frequency noise.
-    </div>
-
     <div id="coin-info">COINS: <span id="c-val">0</span></div>
-    <div id="msg">NOT ENOUGH CREDITS!</div>
-
-    <div class="section-title">SECTOR SELECTION</div>
+    <div class="section-title">SELECT STAGE</div>
     <div id="stage-grid" class="grid"></div>
-
-    <div class="section-title">EXPANSION UNITS</div>
+    <div class="section-title">SHOP</div>
     <div id="shop-grid" class="grid">
-        <div id="shop-Default" class="btn" onclick="buy('skin','Default',0)">Standard<br><span style="color:#ffd700">0</span></div>
-        <div id="shop-Star" class="btn" onclick="buy('skin','Star',1500)">Nova Skin<br><span style="color:#ffd700">1500</span></div>
-        <div id="shop-Circle" class="btn" onclick="buy('skin','Circle',2000)">Zenith Skin<br><span style="color:#ffd700">2000</span></div>
-        <div id="shop-Heal" class="btn" onclick="buy('item','Heal',5000)">Auto-Repair<br><span style="color:#ffd700">5000</span></div>
-        <div id="shop-Burst" class="btn" onclick="buy('item','Burst',10000)">Burst Drive<br><span style="color:#ffd700">10000</span></div>
+        <div id="shop-Default" class="btn" onclick="buy('skin','Default',0)">Standard</div>
+        <div id="shop-Star" class="btn" onclick="buy('skin','Star',1000)">Star (1k)</div>
+        <div id="shop-Train" class="btn" onclick="buy('skin','Train',3000)">Train (3k)</div>
+        <div id="shop-Heal" class="btn" onclick="buy('item','Heal',5000)">Repair (5k)</div>
+        <div id="shop-Burst" class="btn" onclick="buy('item','Burst',10000)">Burst (10k)</div>
     </div>
-
-    <div class="copyright-footer">© 2026 MINAMI ALL RIGHTS RESERVED.</div>
+    <div class="copy">© 2026 MINAMI ALL RIGHTS RESERVED.</div>
 </div>
 
 <script>
-// --- CORE CONFIGURATION ---
-const bg = document.getElementById('bg-canvas'), bctx = bg.getContext('2d');
+const bg=document.getElementById('bg-canvas'), bctx=bg.getContext('2d');
+const cvs=document.getElementById('game-canvas'), ctx=cvs.getContext('2d');
 let w, h; 
-function resize() { w = bg.width = window.innerWidth; h = bg.height = window.innerHeight; }
-window.onresize = resize; resize();
+function resize() {
+    w=cvs.width=bg.width=window.innerWidth;
+    h=cvs.height=bg.height=window.innerHeight;
+}
+window.onresize=resize; resize();
 
-let time = 0;
-function drawBackground() {
-    bctx.fillStyle = '#000510';
-    bctx.fillRect(0, 0, w, h);
-    time += 0.015;
-    for (let i = 0; i < 4; i++) {
+// 背景描画（軽量版）
+let t=0;
+function drawBg(){
+    bctx.fillStyle='#000510'; bctx.fillRect(0,0,w,h); t+=0.01;
+    bctx.strokeStyle='rgba(0,100,255,0.1)';
+    for(let i=0;i<5;i++){
         bctx.beginPath();
-        bctx.strokeStyle = `rgba(0, 150, 255, ${0.18 - i * 0.04})`;
-        bctx.lineWidth = 2;
-        for (let x = 0; x < w; x += 15) {
-            let y = h * 0.5 + Math.sin(x * 0.005 + time + i) * 80 * Math.cos(time * 0.3 + i);
-            bctx.lineTo(x, y);
-        }
+        for(let x=0;x<w;x+=30){ bctx.lineTo(x, h*0.5+Math.sin(x*0.005+t+i)*50); }
         bctx.stroke();
     }
-    requestAnimationFrame(drawBackground);
+    requestAnimationFrame(drawBg);
 }
-drawBackground();
+drawBg();
 
-// --- DATA PERSISTENCE ---
-let save = JSON.parse(localStorage.getItem('minami_overdrive_full_v1') || '{"coins":0,"owned":["Default"],"skin":"Default","items":[],"cleared":[],"perfect":[]}');
+// セーブデータ（あなたの指定形式）
+let save=JSON.parse(localStorage.getItem('minami_final_stable')||'{"coins":0,"owned":["Default"],"skin":"Default","items":[],"cleared":[],"perfect":[]}');
 
-const modes = {
-    'STーSB': { color:'#ffff00', diff:1.0, g:'warp' },
-    'STーKT': { color:'#0088ff', diff:1.2, g:'dash' },
-    'STーSK': { color:'#00ff44', diff:1.5, g:'shield' },
-    'STーKY': { color:'#ff0044', diff:1.8, g:'wind' },
-    'STーPK': { color:'#ff0044', diff:2.1, g:'dash' },
-    'STーJB': { color:'#00ff44', diff:2.5, g:'shield' },
-    'STーHM': { color:'#0088ff', diff:3.0, g:'warp' },
-    'STーKS': { color:'#ffff00', diff:3.5, g:'wind' },
-    'STーTY': { color:'#0088ff', diff:4.0, g:'dash' },
-    'STーHA': { color:'#ffff00', diff:6.0, g:'mix' },
-    'STーHB': { color:'#00ff44', diff:8.0, g:'mix' },
-    'STーHC': { color:'#ff0044', diff:12.0, g:'mix' },
-    'STーCO': { color:'#ff6600', diff:25.0, g:'rush' }
+const modes={
+    'ST=SB':{c:'#ffff00',d:1,g:'warp'}, 'ST=KT':{c:'#0088ff',d:1.2,g:'dash'}, 'ST=SK':{c:'#00ff44',d:1.5,g:'shield'},
+    'ST=KY':{c:'#ff0044',d:1.8,g:'wind'}, 'ST=PK':{c:'#ff0044',d:2.2,g:'dash'}, 'ST=JB':{c:'#00ff44',d:2.6,g:'shield'},
+    'ST=HM':{c:'#0088ff',d:3,g:'warp'}, 'ST=KS':{c:'#ffff00',d:3.5,g:'wind'}, 'ST=TY':{c:'#0088ff',d:4,g:'dash'},
+    'ST=HA':{c:'#ffff00',d:6,g:'mix'}, 'ST=HB':{c:'#00ff44',d:8,g:'mix'}, 'ST=HC':{c:'#ff0044',d:12,g:'mix'},
+    'ST=CO':{c:'#ff6600',d:30,g:'rush'}
 };
 
-function updateUI() {
-    const grid = document.getElementById('stage-grid');
-    grid.innerHTML = '';
-    const mainS = ['STーSB','STーKT','STーSK','STーKY','STーPK','STーJB','STーHM','STーKS','STーTY'];
-    const hideS = ['STーHA','STーHB','STーHC'];
-    
-    const allMain = mainS.every(s => save.cleared.includes(s));
-    const allPerf = [...mainS, ...hideS].every(s => save.perfect.includes(s));
-
-    Object.keys(modes).forEach(id => {
-        if (hideS.includes(id) && !allMain) return;
-        if (id === 'STーCO' && !allPerf) return;
-
-        const b = document.createElement('div');
-        b.className = 'btn';
-        b.style.color = b.style.borderColor = modes[id].color;
-
-        let status = '';
-        if (save.perfect.includes(id)) status = '<span class="status-text" style="color:#00ffcc;margin-top:5px;display:block;">PERFECT</span>';
-        else if (save.cleared.includes(id)) status = '<span class="status-text" style="color:#888;margin-top:5px;display:block;">CLEARED</span>';
-
-        b.innerHTML = id + status;
-        b.onclick = () => startGame(id);
-        grid.appendChild(b);
+function updateUI(){
+    const grid=document.getElementById('stage-grid'), main=['ST=SB','ST=KT','ST=SK','ST=KY','ST=PK','ST=JB','ST=HM','ST=KS','ST=TY'], hide=['ST=HA','ST=HB','ST=HC'];
+    grid.innerHTML=''; const allM=main.every(s=>save.cleared.includes(s)), allP=[...main,...hide].every(s=>save.perfect.includes(s));
+    Object.keys(modes).forEach(id=>{
+        if(hide.includes(id)&&!allM) return; if(id==='ST=CO'&&!allP) return;
+        const b=document.createElement('div'); b.className='btn'; b.style.color=b.style.borderColor=modes[id].c;
+        b.innerHTML=id+(save.perfect.includes(id)?'<br>PERFECT':save.cleared.includes(id)?'<br>CLEARED':'');
+        b.onclick=()=>startGame(id); grid.appendChild(b);
     });
-
-    document.getElementById('c-val').innerText = save.coins;
-    document.querySelectorAll('.btn').forEach(el => el.classList.remove('equipped'));
-    const sEl = document.getElementById('shop-' + save.skin); if (sEl) sEl.classList.add('equipped');
-    save.items.forEach(i => { const iEl = document.getElementById('shop-' + i); if (iEl) iEl.classList.add('equipped'); });
+    document.getElementById('c-val').innerText=save.coins;
+    document.querySelectorAll('.btn').forEach(el=>el.classList.remove('equipped'));
+    const sEl=document.getElementById('shop-'+save.skin); if(sEl) sEl.classList.add('equipped');
+    save.items.forEach(i=>{ const iEl=document.getElementById('shop-'+i); if(iEl) iEl.classList.add('equipped'); });
 }
 
-// --- GAME CORE ENGINE ---
-const cvs = document.getElementById('game-canvas'), ctx = cvs.getContext('2d');
-cvs.width = window.innerWidth; cvs.height = window.innerHeight;
+let active=false, player, bullets=[], enemies=[], enemyBullets=[], coins=[], current, frame=0, score=0, firing=false;
 
-let active = false, player, score = 0, combo = 0, comboTimer = 0;
-let bullets = [], enemies = [], enemyBullets = [], particles = [], coins = [];
-let currentMode, frame = 0, shake = 0, firing = false, burstCooldown = 0;
-
-document.addEventListener('mousedown', () => firing = true);
-document.addEventListener('mouseup', () => firing = false);
-document.addEventListener('keydown', e => {
-    if (e.code === 'Space' && save.items.includes('Burst') && burstCooldown <= 0) {
-        enemyBullets = []; shake = 30; burstCooldown = 600;
-        spawnExplosion(player.x, player.y, '#00ffff', 40);
-    }
-});
-
-function startGame(id) {
-    currentMode = id; active = true; score = 0; combo = 0; frame = 0;
-    bullets = []; enemies = []; enemyBullets = []; particles = []; coins = [];
-    player = { x: w / 2, y: h - 150, hp: 100, maxHp: 100, invinc: 0 };
-    document.getElementById('menu').style.display = 'none';
-    document.getElementById('hud').style.visibility = 'visible';
-    cvs.style.pointerEvents = 'auto';
-    cvs.onmousemove = e => { player.x = e.clientX; player.y = e.clientY; };
-    loop();
+// ゲーム開始処理（ここでフラグをリセット）
+function startGame(id){
+    current=id; active=true; score=0; frame=0; bullets=[]; enemies=[]; enemyBullets=[]; coins=[]; firing=false;
+    player={ x:w/2, y:h-100, hp:100, inv:0 };
+    document.getElementById('menu').style.display='none';
+    document.getElementById('hud').style.visibility='visible';
+    requestAnimationFrame(loop);
 }
 
-function spawnExplosion(x, y, color, count) {
-    for (let i = 0; i < count; i++) {
-        particles.push({
-            x, y, color,
-            vx: (Math.random() - 0.5) * 15, vy: (Math.random() - 0.5) * 15,
-            life: 30 + Math.random() * 20
-        });
-    }
-}
+// 入力イベント（document全体で取得し、ゲーム中のみ有効化）
+window.addEventListener('mousedown', (e)=> { if(active) firing=true; });
+window.addEventListener('mouseup', ()=> { firing=false; });
+window.addEventListener('mousemove', (e)=> { if(active) { player.x=e.clientX; player.y=e.clientY; } });
+window.addEventListener('keydown', (e)=> { if(active && e.code==='Space' && save.items.includes('Burst')) { enemyBullets=[]; score+=500; } });
 
-function spawnCoin(x, y) {
-    for (let i = 0; i < 3; i++) {
-        coins.push({
-            x, y, vx: (Math.random() - 0.5) * 12, vy: (Math.random() - 0.5) * 12
-        });
-    }
-}
+function loop(){
+    if(!active) return;
+    frame++; ctx.clearRect(0,0,w,h);
 
-function loop() {
-    if (!active) return;
-    frame++; ctx.clearRect(0, 0, w, h);
-    
-    // Shake Effect
-    if (shake > 0) {
-        ctx.save();
-        ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
-        shake *= 0.9;
-    }
+    // 回復・無敵時間
+    if(save.items.includes('Heal') && frame%120===0) player.hp=Math.min(100, player.hp+1);
+    if(player.inv > 0) player.inv--;
 
-    // Player Heal Logic
-    if (save.items.includes('Heal') && frame % 120 === 0 && player.hp < 100) player.hp++;
-    if (player.invinc > 0) player.invinc--;
-    if (burstCooldown > 0) burstCooldown--;
-    if (comboTimer > 0) comboTimer--; else combo = 0;
-
-    // Shooting
-    if (firing && frame % 6 === 0) bullets.push({ x: player.x, y: player.y - 20 });
-
-    // Enemy Spawning & Logic
-    let diff = modes[currentMode].diff;
-    if (Math.random() < 0.03 * diff) {
-        enemies.push({
-            x: Math.random() * w, y: -50,
-            hp: 5 * diff, type: modes[currentMode].g,
-            f: frame, phase: Math.random() * Math.PI * 2
-        });
-    }
-
-    // Updates
-    bullets.forEach((b, bi) => {
-        b.y -= 15;
-        if (b.y < 0) bullets.splice(bi, 1);
-        enemies.forEach((e, ei) => {
-            if (Math.hypot(b.x - e.x, b.y - e.y) < 30) {
-                e.hp--; bullets.splice(bi, 1);
-                spawnExplosion(b.x, b.y, '#fff', 2);
-                if (e.hp <= 0) {
-                    enemies.splice(ei, 1); spawnExplosion(e.x, e.y, modes[currentMode].color, 15);
-                    spawnCoin(e.x, e.y);
-                    combo++; comboTimer = 120;
-                    score += Math.floor(100 * (1 + combo * 0.1) * diff);
+    // 自機弾の生成と移動
+    if(firing && frame%7===0) bullets.push({x:player.x, y:player.y-20});
+    bullets.forEach((b,bi)=>{
+        b.y-=15; ctx.fillStyle='#00ffff'; ctx.fillRect(b.x-2, b.y, 4, 12);
+        if(b.y < 0) bullets.splice(bi,1);
+        enemies.forEach((e,ei)=>{
+            if(Math.hypot(b.x-e.x, b.y-e.y)<30){
+                e.hp--; bullets.splice(bi,1);
+                if(e.hp<=0){
+                    enemies.splice(ei,1); score+=100;
+                    for(let i=0;i<2;i++) coins.push({x:e.x, y:e.y, vx:(Math.random()-0.5)*10, vy:(Math.random()-0.5)*10});
                 }
             }
         });
     });
 
-    enemies.forEach((e, ei) => {
-        // AI Patterns (あなたの構想通りの詳細挙動)
-        if (e.type === 'warp' && frame % 70 === 0) { e.x = Math.random() * w; e.y += 40; }
-        else if (e.type === 'dash') e.y += 10;
-        else if (e.type === 'wind') { e.x += Math.sin(frame * 0.08 + e.phase) * 12; e.y += 4; }
-        else if (e.type === 'shield') e.y += 2;
-        else if (e.type === 'rush') { e.y += 15; e.x += Math.sin(frame * 0.2) * 20; }
-        else if (e.type === 'mix') {
-            if (e.f % 100 < 50) e.y += 8; else e.x += Math.cos(frame * 0.1) * 15;
-            e.y += 2;
-        } else e.y += 3;
+    // 敵機生成（路線のギミックを注入）
+    if(Math.random() < 0.02 * modes[current].d) enemies.push({x:Math.random()*w, y:-50, hp:3*modes[current].d, g:modes[current].g});
+    enemies.forEach((e,ei)=>{
+        if(e.g==='warp'&&frame%80===0){ e.x=Math.random()*w; e.y+=40; }
+        else if(e.g==='dash') e.y+=8;
+        else if(e.g==='wind') { e.x+=Math.sin(frame*0.1)*8; e.y+=3; }
+        else if(e.g==='rush') { e.y+=12; e.x+=(Math.random()-0.5)*15; }
+        else e.y+=3;
 
-        // Draw Enemy
-        ctx.strokeStyle = modes[currentMode].color; ctx.lineWidth = 4;
-        ctx.strokeRect(e.x - 20, e.y - 20, 40, 40);
-        if (e.type === 'shield') { ctx.lineWidth = 1; ctx.strokeRect(e.x - 28, e.y - 28, 56, 56); }
-
-        // Enemy Attack
-        if (frame % Math.max(20, Math.floor(100 / diff)) === 0) {
-            enemyBullets.push({ x: e.x, y: e.y + 20, vx: 0, vy: 5 + diff });
-        }
-
-        if (Math.hypot(e.x - player.x, e.y - player.y) < 35 && player.invinc <= 0) {
-            player.hp -= 20; player.invinc = 60; shake = 20; enemies.splice(ei, 1);
-        }
-        if (e.y > h + 50) enemies.splice(ei, 1);
+        ctx.strokeStyle=modes[current].c; ctx.lineWidth=3; ctx.strokeRect(e.x-15, e.y-15, 30, 30);
+        if(frame%90===0) enemyBullets.push({x:e.x, y:e.y+20, vy:5 + modes[current].d});
+        if(Math.hypot(e.x-player.x, e.y-player.y)<30 && player.inv<=0){ player.hp-=20; player.inv=60; }
+        if(e.y>h+50) enemies.splice(ei,1);
     });
 
-    enemyBullets.forEach((eb, ebi) => {
-        eb.x += (eb.vx || 0); eb.y += eb.vy;
-        ctx.fillStyle = '#ff3333'; ctx.beginPath(); ctx.arc(eb.x, eb.y, 6, 0, 7); ctx.fill();
-        if (Math.hypot(eb.x - player.x, eb.y - player.y) < 18 && player.invinc <= 0) {
-            player.hp -= 10; player.invinc = 60; shake = 15; enemyBullets.splice(ebi, 1);
-        }
-        if (eb.y > h) enemyBullets.splice(ebi, 1);
+    // 敵弾
+    enemyBullets.forEach((eb,ebi)=>{
+        eb.y+=eb.vy; ctx.fillStyle='#ff3333'; ctx.beginPath(); ctx.arc(eb.x, eb.y, 6, 0, 7); ctx.fill();
+        if(Math.hypot(eb.x-player.x, eb.y-player.y)<15 && player.inv<=0){ player.hp-=10; player.inv=60; enemyBullets.splice(ebi,1); }
+        if(eb.y>h) enemyBullets.splice(ebi,1);
     });
 
-    coins.forEach((c, ci) => {
-        let dx = player.x - c.x, dy = player.y - c.y, dist = Math.hypot(dx, dy);
-        if (dist < 250) { c.vx += dx / dist * 1.2; c.vy += dy / dist * 1.2; }
-        c.x += c.vx; c.y += c.vy; c.vx *= 0.93; c.vy *= 0.93;
-        ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(c.x, c.y, 5, 0, 7); ctx.fill();
-        if (dist < 25) { save.coins += 25; coins.splice(ci, 1); }
+    // コイン（磁石ギミック）
+    coins.forEach((c,ci)=>{
+        let d=Math.hypot(player.x-c.x, player.y-c.y);
+        if(d<200){ c.vx+=(player.x-c.x)/d*0.8; c.vy+=(player.y-c.y)/d*0.8; }
+        c.x+=c.vx; c.y+=c.vy; c.vx*=0.95; c.vy*=0.95;
+        ctx.fillStyle='#ffd700'; ctx.beginPath(); ctx.arc(c.x, c.y, 4, 0, 7); ctx.fill();
+        if(d<25){ save.coins+=20; coins.splice(ci,1); }
     });
 
-    particles.forEach((p, pi) => {
-        p.x += p.vx; p.y += p.vy; p.life--;
-        ctx.fillStyle = p.color; ctx.globalAlpha = p.life / 50;
-        ctx.fillRect(p.x, p.y, 3, 3); ctx.globalAlpha = 1;
-        if (p.life <= 0) particles.splice(pi, 1);
-    });
-
-    // Player Skin Drawing
+    // 自機（スキン反映）
     ctx.save(); ctx.translate(player.x, player.y);
-    if (player.invinc % 4 < 2) {
-        ctx.fillStyle = '#fff';
-        if (save.skin === 'Star') {
-            for (let i = 0; i < 5; i++) { ctx.rotate(Math.PI * 2 / 5); ctx.lineTo(0, -20); ctx.rotate(Math.PI * 2 / 10); ctx.lineTo(0, -10); } ctx.fill();
-        } else if (save.skin === 'Circle') {
-            ctx.beginPath(); ctx.arc(0, 0, 15, 0, 7); ctx.lineWidth = 3; ctx.stroke(); ctx.fill();
-        } else {
-            ctx.beginPath(); ctx.moveTo(0, -20); ctx.lineTo(18, 15); ctx.lineTo(-18, 15); ctx.fill();
-        }
+    if(player.inv%4 < 2){
+        ctx.fillStyle='#fff';
+        if(save.skin==='Star'){ for(let i=0;i<5;i++){ctx.rotate(Math.PI*2/5);ctx.lineTo(0,-15);ctx.rotate(Math.PI*2/10);ctx.lineTo(0,-7);} ctx.fill(); }
+        else if(save.skin==='Train'){ ctx.fillRect(-12,-15,24,30); ctx.fillStyle='#000'; ctx.fillRect(-12,2,24,3); }
+        else { ctx.beginPath(); ctx.moveTo(0,-18); ctx.lineTo(15,12); ctx.lineTo(-15,12); ctx.fill(); }
     }
     ctx.restore();
 
-    if (shake > 0) ctx.restore();
-
-    // UI Stats
-    document.getElementById('s-val').innerText = score.toLocaleString();
-    document.getElementById('combo-val').innerText = combo;
-    document.getElementById('hp-bar').style.width = player.hp + '%';
-
-    if (score >= diff * 5000) endGame(true);
-    if (player.hp <= 0) endGame(false);
-    
-    if (active) requestAnimationFrame(loop);
+    document.getElementById('s-val').innerText=score;
+    document.getElementById('hp-bar').style.width=player.hp+'%';
+    if(score >= modes[current].d*3000) end(true);
+    if(player.hp <= 0) end(false);
+    if(active) requestAnimationFrame(loop);
 }
 
-function endGame(win) {
-    active = false; cvs.style.pointerEvents = 'none';
-    if (win) {
-        if (!save.cleared.includes(currentMode)) save.cleared.push(currentMode);
-        if (player.hp >= 100 && !save.perfect.includes(currentMode)) save.perfect.push(currentMode);
-        save.coins += Math.floor(score * 0.1);
+function end(win){
+    active=false;
+    if(win){
+        if(!save.cleared.includes(current)) save.cleared.push(current);
+        if(player.hp>=100) save.perfect.push(current);
     }
-    localStorage.setItem('minami_overdrive_full_v1', JSON.stringify(save));
-    updateUI();
-    document.getElementById('menu').style.display = 'flex';
-    document.getElementById('hud').style.visibility = 'hidden';
+    localStorage.setItem('minami_final_stable', JSON.stringify(save));
+    updateUI(); document.getElementById('menu').style.display='flex'; document.getElementById('hud').style.visibility='hidden';
 }
 
-function buy(type, name, price) {
-    if (!save.owned.includes(name)) {
-        if (save.coins >= price) { save.coins -= price; save.owned.push(name); }
-        else { document.getElementById('msg').style.visibility = 'visible'; setTimeout(() => document.getElementById('msg').style.visibility = 'hidden', 1500); return; }
+function buy(type,name,price){
+    if(!save.owned.includes(name)){
+        if(save.coins>=price){ save.coins-=price; save.owned.push(name); }
+        else return;
     }
-    if (type === 'skin') save.skin = name;
-    if (type === 'item' && !save.items.includes(name)) save.items.push(name);
-    localStorage.setItem('minami_overdrive_full_v1', JSON.stringify(save)); updateUI();
+    if(type==='skin') save.skin=name; if(type==='item') save.items.push(name);
+    localStorage.setItem('minami_final_stable', JSON.stringify(save)); updateUI();
 }
-
 updateUI();
 </script>
 </body>
