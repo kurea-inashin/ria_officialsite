@@ -9,7 +9,7 @@
         body { margin: 0; background: #000; color: #fff; font-family: 'Press Start 2P', cursive; overflow: hidden; user-select: none; }
         canvas { display: block; }
 
-        /* HUD: 必殺技ゲージとスコアを強調 */
+        /* HUD */
         #hud { position: absolute; top: 20px; left: 20px; z-index: 10; pointer-events: none; }
         #score-val { font-size: 24px; text-shadow: 0 0 10px #00ffff; margin-bottom: 10px; }
         .bar-label { font-size: 8px; margin-top: 10px; color: #aaa; }
@@ -27,15 +27,15 @@
 
         /* Stage Grid */
         .mode-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
-        .mode-btn { width: 140px; padding: 15px; border: 2px solid #333; background: #000; color: #444; cursor: pointer; text-align: center; font-size: 10px; transition: 0.3s; }
+        .mode-btn { width: 150px; padding: 15px; border: 2px solid #333; background: #000; color: #444; cursor: pointer; text-align: center; font-size: 10px; transition: 0.3s; position: relative; }
         .mode-btn.unlocked { border-color: var(--c); color: var(--c); }
         .mode-btn.unlocked:hover { background: var(--c); color: #000; box-shadow: 0 0 25px var(--c); transform: translateY(-5px); }
-        .mode-btn.cleared::after { content: ' CLEAR'; font-size: 8px; display: block; color: #0f0; }
+        .mode-btn.cleared::after { content: '✔ CLEAR'; font-size: 8px; display: block; color: #0f0; margin-top: 5px; }
+        .diff-stars { font-size: 8px; color: #ff0; margin-top: 5px; display: block; }
 
         .status-msg { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); font-size: 36px; opacity: 0; transition: 0.4s; pointer-events: none; z-index: 50; text-align: center; font-weight: 900; }
         #ending { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 100; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-family: 'Noto Sans JP'; padding: 40px; }
 
-        /* Additional Styles */
         #copyright { position: absolute; bottom: 15px; font-size: 10px; color: #666; font-family: 'Noto Sans JP'; }
         .info-text { font-family: 'Noto Sans JP'; font-size: 14px; line-height: 1.8; text-align: left; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px; margin-bottom: 20px; }
     </style>
@@ -56,7 +56,7 @@
         <h1 style="font-size:30px; margin-bottom:40px; text-shadow: 0 0 20px #0088ff;">MINAMI PROJECT 2026</h1>
         <div id="main-nav">
             <button class="nav-btn" onclick="openPanel('stage-select')">SELECT MISSION</button>
-            <button class="nav-btn" onclick="openPanel('garage')">GARAGE / SKINS</button>
+            <button class="nav-btn" onclick="openPanel('garage')">GARAGE</button>
             <button class="nav-btn" onclick="openPanel('shop')">TECH SHOP</button>
             <button class="nav-btn" onclick="openPanel('how-to')">HOW TO PLAY</button>
         </div>
@@ -71,9 +71,8 @@
             <div class="info-text">
                 ・<b>移動</b>: マウスカーソルに追従します。<br>
                 ・<b>攻撃</b>: 左クリック長押しで射撃を行います。<br>
-                ・<b>ボム</b>: 右クリック または スペースキーで発動。敵弾を消去し大ダメージを与えます。<br>
-                ・<b>バースト</b>: 敵を撃破してゲージを溜めるとボムが追加されます。<br>
-                ・<b>ギミック</b>: ステージ特有の妨害（揺れ、霧など）はショップの装備で対策可能です。
+                ・<b>ボム</b>: 右クリック または スペースキーで発動。敵弾消去＋大ダメージ。<br>
+                ・<b>ショップ強化</b>: 購入したアイテムはそのプレイ1回のみ有効です。
             </div>
             <button class="nav-btn" onclick="backToMain()">BACK</button>
         </div>
@@ -81,7 +80,7 @@
         <div id="garage" class="panel">
             <h2>GARAGE</h2>
             <div>
-                <p style="font-size:10px;">COLOR SKIN</p>
+                <p style="font-size:10px;">UNIT COLOR</p>
                 <button class="nav-btn" style="border-color:#fff" onclick="setSkin('#fff')">WHITE</button>
                 <button class="nav-btn" style="border-color:#0f0" onclick="setSkin('#0f0')">GREEN</button>
                 <button class="nav-btn" style="border-color:#0ff" onclick="setSkin('#0ff')">CYAN</button>
@@ -94,15 +93,15 @@
             <div id="shop-gold" style="color:#ffd700; font-size:20px; margin-bottom:20px;"></div>
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
                 <button class="nav-btn" onclick="buy('atk', 1000)">ATTACK UP (1000G)</button>
-                <button class="nav-btn" onclick="buy('heal', 500)">FULL REPAIR (500G)</button>
+                <button class="nav-btn" onclick="buy('heal', 500)">REPAIR (500G)</button>
                 <button class="nav-btn" onclick="buy('anti_vibrate', 2000)">STABILIZER (2000G)</button>
                 <button class="nav-btn" onclick="buy('anti_fog', 2000)">HEATER (2000G)</button>
-                <button class="nav-btn" onclick="buy('aura', 3000)">CYAN AURA (3000G)</button>
             </div>
-            <button class="nav-btn" style="margin-top:30px;" onclick="backToMain()">BACK</button>
+            <p style="font-size:8px; color:#aaa; margin-top:20px;">*アイテムはリロードすると消失します</p>
+            <button class="nav-btn" style="margin-top:10px;" onclick="backToMain()">BACK</button>
         </div>
 
-        <div id="copyright">© 2026 Minami Shooting Game Project. All Rights Reserved. <br>このサイトの一部コンテンツまたはその全てを作成者の許諾なく外部へ使用する行為を禁じます。</div>
+        <div id="copyright">© 2026 Minami Rail-Shooting Project. All Rights Reserved.</div>
     </div>
 
     <div id="ending">
@@ -124,50 +123,38 @@
         let player = { x: canvas.width/2, y: canvas.height/2 };
         let currentMode = null;
 
+        // セッション限りの強化データ（リロードで消える）
+        let sessionData = { atk: 2, items: [] };
+
+        // 永続保存データ
         const NORMAL_STAGES = ['SB', 'KT', 'SK', 'KY', 'PK', 'JB', 'S1', 'S2', 'S3'];
-        let userData = JSON.parse(localStorage.getItem('minami_2026_v6')) || {
-            gold: 0, atk: 2, bombs: 1, unlocked: [...NORMAL_STAGES], cleared: [], aura: 'none',
-            skin: '#fff', items: [] // 武器選択(weapon)を削除
+        let userData = JSON.parse(localStorage.getItem('minami_2026_v7')) || {
+            gold: 0, bombs: 1, unlocked: [...NORMAL_STAGES], cleared: [], skin: '#fff'
         };
 
         const STAGES = {
-            'SB': { name: 'STⅠ', color: '#ccaa00', diff: 1, bossHp: 500, score1: 5000, score2: 15000, gimmick: 'vibrate' },
-            'KT': { name: 'STⅡ', color: '#0088cc', diff: 1.2, bossHp: 700, score1: 7000, score2: 20000, gimmick: 'water' },
-            'SK': { name: 'STⅢ', color: '#008844', diff: 1.5, bossHp: 900, score1: 8000, score2: 25000, gimmick: 'fog' },
-            'KY': { name: 'STⅣ', color: '#aa0022', diff: 2.0, bossHp: 1200, score1: 10000, score2: 30000, gimmick: 'wind' },
-            'PK': { name: 'STⅤ', color: '#cc5588', diff: 2.2, bossHp: 1400, score1: 12000, score2: 35000, gimmick: 'reverse' },
-            'JB': { name: 'STⅥ', color: '#006666', diff: 2.5, bossHp: 1600, score1: 15000, score2: 40000, gimmick: 'jamming' },
-            'S1': { name: 'STⅦ', color: '#6600cc', diff: 3.0, bossHp: 2000, score1: 18000, score2: 50000, gimmick: 'warp' },
-            'S2': { name: 'STⅧ', color: '#cc00cc', diff: 3.5, bossHp: 2500, score1: 20000, score2: 60000, gimmick: 'poison' },
-            'S3': { name: 'STⅨ', color: '#00cccc', diff: 4.0, bossHp: 3000, score1: 25000, score2: 80000, gimmick: 'gravity' },
-            'HA': { name: 'α', color: '#CD7F32', diff: 6, bossHp: 6000, score1: 40000, score2: 100000, secret: true },
-            'HB': { name: 'β', color: '#C0C0C0', diff: 8, bossHp: 8000, score1: 50000, score2: 150000, secret: true },
-            'HC': { name: 'θ', color: '#FFD700', diff: 12, bossHp: 12000, score1: 70000, score2: 200000, secret: true },
-            'UA': { name: 'Ω', color: '#444', diff: 20, bossHp: 25000, score1: 100000, score2: 300000, secret: true },
-            'UB': { name: 'γ', color: '#fff', diff: 30, bossHp: 40000, score1: 150000, score2: 500000, secret: true },
-            'CO': { name: 'φ', color: '#ff6600', diff: 60, bossHp: 150000, score1: 300000, score2: 999999, secret: true, ultimate: true }
+            'SB': { name: 'ST=SB', color: '#ccaa00', stars: 1, diff: 1, bossHp: 500, score1: 5000, score2: 15000, gimmick: 'vibrate' },
+            'KT': { name: 'ST=KT', color: '#0088cc', stars: 1, diff: 1.2, bossHp: 700, score1: 7000, score2: 20000, gimmick: 'water' },
+            'SK': { name: 'ST=SK', color: '#008844', stars: 2, diff: 1.5, bossHp: 900, score1: 8000, score2: 25000, gimmick: 'fog' },
+            'KY': { name: 'ST=KY', color: '#aa0022', stars: 2, diff: 2.0, bossHp: 1200, score1: 10000, score2: 30000, gimmick: 'wind' },
+            'PK': { name: 'ST=PK', color: '#cc5588', stars: 3, diff: 2.2, bossHp: 1400, score1: 12000, score2: 35000, gimmick: 'reverse' },
+            'JB': { name: 'ST=JB', color: '#006666', stars: 3, diff: 2.5, bossHp: 1600, score1: 15000, score2: 40000, gimmick: 'jamming' },
+            'S1': { name: 'ST=S1', color: '#6600cc', stars: 4, diff: 3.0, bossHp: 2000, score1: 18000, score2: 50000, gimmick: 'warp' },
+            'S2': { name: 'ST=S2', color: '#cc00cc', stars: 4, diff: 3.5, bossHp: 2500, score1: 20000, score2: 60000, gimmick: 'poison' },
+            'S3': { name: 'ST=S3', color: '#00cccc', stars: 5, diff: 4.0, bossHp: 3000, score1: 25000, score2: 80000, gimmick: 'gravity' },
+            'HA': { name: 'ST=HA', color: '#CD7F32', stars: 6, diff: 6, bossHp: 6000, secret: true },
+            'HB': { name: 'ST=HB', color: '#C0C0C0', stars: 7, diff: 8, bossHp: 8000, secret: true },
+            'HC': { name: 'ST=HC', color: '#FFD700', stars: 8, diff: 12, bossHp: 12000, secret: true },
+            'UA': { name: 'ST=UA', color: '#444', stars: 10, diff: 20, bossHp: 25000, secret: true },
+            'UB': { name: 'ST=UB', color: '#fff', stars: 15, diff: 30, bossHp: 40000, secret: true },
+            'CO': { name: 'ST=CO', color: '#ff6600', stars: 30, diff: 60, bossHp: 150000, secret: true, ultimate: true }
         };
 
-        function save() { localStorage.setItem('minami_2026_v6', JSON.stringify(userData)); }
-
-        function openPanel(id) {
-            document.getElementById('main-nav').style.display = 'none';
-            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            if(id === 'stage-select') renderStages();
-            if(id === 'shop') document.getElementById('shop-gold').innerText = `TOTAL GOLD: ${userData.gold}`;
-        }
-
-        function backToMain() {
-            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-            document.getElementById('main-nav').style.display = 'block';
-        }
-
-        function setSkin(c) { userData.skin = c; save(); }
+        function save() { localStorage.setItem('minami_2026_v7', JSON.stringify(userData)); }
 
         function renderStages() {
             const grid = document.getElementById('grid'); grid.innerHTML = '';
-            // 解禁ロジック
+            // 解禁判定
             if(NORMAL_STAGES.every(id => userData.cleared.includes(id))) 
                 ['HA','HB','HC'].forEach(id => !userData.unlocked.includes(id) && userData.unlocked.push(id));
             if(['HA','HB','HC'].every(id => userData.cleared.includes(id)))
@@ -180,19 +167,36 @@
                 const btn = document.createElement('div');
                 btn.className = `mode-btn unlocked ${userData.cleared.includes(id) ? 'cleared' : ''}`;
                 btn.style.setProperty('--c', STAGES[id].color);
-                btn.innerHTML = STAGES[id].ultimate ? "<b>CENTRAL ORE</b>" : STAGES[id].name;
+                
+                // 星表記の生成
+                let stars = "★".repeat(STAGES[id].stars);
+                btn.innerHTML = `${STAGES[id].ultimate ? "CENTRAL ORE" : STAGES[id].name}<br><span class="diff-stars">${stars}</span>`;
                 btn.onclick = () => startGame(id);
                 grid.appendChild(btn);
             });
         }
 
+        function openPanel(id) {
+            document.getElementById('main-nav').style.display = 'none';
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            if(id === 'stage-select') renderStages();
+            if(id === 'shop') document.getElementById('shop-gold').innerText = `GOLD: ${userData.gold}`;
+        }
+
+        function backToMain() {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.getElementById('main-nav').style.display = 'block';
+        }
+
+        function setSkin(c) { userData.skin = c; save(); }
+
         function buy(type, cost) {
             if(userData.gold >= cost) {
                 userData.gold -= cost;
-                if(type === 'atk') userData.atk += 1;
+                if(type === 'atk') sessionData.atk += 1;
                 if(type === 'heal') hp = 100;
-                if(type === 'aura') userData.aura = 'cyan';
-                if(type.startsWith('anti_')) userData.items.push(type);
+                if(type.startsWith('anti_')) sessionData.items.push(type);
                 save(); openPanel('shop');
             }
         }
@@ -213,11 +217,9 @@
 
         function useBomb() {
             if(userData.bombs > 0 && bombActive <= 0) {
-                userData.bombs--;
-                bombActive = 60;
-                eBullets = [];
+                userData.bombs--; bombActive = 60; eBullets = [];
                 enemies.forEach(e => {
-                    e.hp -= 1000 * (userData.atk/2);
+                    e.hp -= 1000 * (sessionData.atk/2);
                     createExplosion(e.x, e.y, "#fff");
                 });
                 showMsg("MAXIMUM BURST!!", "#00ffff");
@@ -232,31 +234,28 @@
             frame++;
             if(bombActive > 0) bombActive--;
 
-            if(phase === 1 && score >= currentMode.score1) { phase = 2; showMsg("PHASE 2: INTENSIFY", "#ff0"); }
-            if(phase === 2 && score >= currentMode.score2) { phase = 3; showMsg("BOSS DETECTED", "#f00"); }
+            let s1 = currentMode.score1 || 5000;
+            let s2 = currentMode.score2 || 15000;
+            if(phase === 1 && score >= s1) { phase = 2; showMsg("PHASE 2", "#ff0"); }
+            if(phase === 2 && score >= s2) { phase = 3; showMsg("BOSS", "#f00"); }
 
-            // ギミック（対策アイテム対応）
-            if(currentMode.gimmick === 'wind' && userData.aura !== 'cyan') player.x += Math.sin(frame/20)*15;
-            if(currentMode.gimmick === 'gravity') player.y += 3;
-            if(currentMode.gimmick === 'vibrate' && !userData.items.includes('anti_vibrate')) { 
-                player.x += (Math.random()-0.5)*12; player.y += (Math.random()-0.5)*12; 
+            // ギミック（sessionDataを参照）
+            if(currentMode.gimmick === 'vibrate' && !sessionData.items.includes('anti_vibrate')) { 
+                player.x += (Math.random()-0.5)*10; player.y += (Math.random()-0.5)*10; 
             }
-            if(currentMode.gimmick === 'poison' && !userData.items.includes('anti_fog') && frame % 100 === 0) hp -= 1;
+            if(currentMode.gimmick === 'fog' && !sessionData.items.includes('anti_fog') && frame % 100 === 0) hp -= 1;
 
-            // 自機の射撃ロジックを元のコードと完全に同一（1-way）にする
-            if(isDown && frame % 5 === 0) {
-                bullets.push({ x: player.x, y: player.y - 20, p: userData.atk });
-            }
+            if(isDown && frame % 5 === 0) bullets.push({ x: player.x, y: player.y - 20, p: sessionData.atk });
 
             if(!enemies.some(e => e.isBoss) && frame % 35 === 0) {
-                enemies.push({ x: Math.random()*canvas.width, y: -50, hp: 15*currentMode.diff, size: 30, vy: 3 + currentMode.diff/4, type: Math.random() < 0.2 ? 'sin' : 'norm' });
+                enemies.push({ x: Math.random()*canvas.width, y: -50, hp: 15*currentMode.diff, size: 30, vy: 3 + currentMode.diff/4 });
             }
             if(phase === 3 && !enemies.some(e => e.isBoss)) {
                 enemies.push({ x: canvas.width/2, y: -100, hp: currentMode.bossHp, maxHp: currentMode.bossHp, size: 130, vy: 1, isBoss: true });
             }
 
             bullets.forEach((b, i) => {
-                b.y -= 20; // x方向の移動(b.vx)を削除
+                b.y -= 20;
                 enemies.forEach((e, ei) => {
                     if(Math.hypot(b.x-e.x, b.y-e.y) < e.size) {
                         e.hp -= b.p; score += 20; bullets.splice(i, 1);
@@ -264,8 +263,7 @@
                             createExplosion(e.x, e.y, currentMode.color);
                             if(e.isBoss) finish(true);
                             else {
-                                score += 500;
-                                userData.gold += Math.floor(10 * currentMode.diff);
+                                score += 500; userData.gold += Math.floor(10 * currentMode.diff);
                                 burstGauge += 10;
                                 if(burstGauge >= 100) { burstGauge = 0; userData.bombs++; showMsg("BOMB READY!", "#ff0"); }
                                 enemies.splice(ei, 1);
@@ -277,17 +275,9 @@
 
             enemies.forEach(e => {
                 e.y += e.vy;
-                if(e.type === 'sin') e.x += Math.sin(frame/10)*8;
                 if(e.isBoss && e.y > 150) e.vy = 0;
-                
                 if(e.isBoss && bombActive <= 0) {
                     if(frame % 4 === 0) eBullets.push({ x: e.x, y: e.y, vx: Math.cos(frame*0.25)*8, vy: Math.sin(frame*0.25)*8, size: 8 });
-                    if(frame % 50 === 0) {
-                        for(let j=0; j<20; j++) {
-                            const a = (Math.PI*2/20)*j;
-                            eBullets.push({ x: e.x, y: e.y, vx: Math.cos(a)*6, vy: Math.sin(a)*6, size: 12, color: "#f00" });
-                        }
-                    }
                 } else if(Math.random() < 0.04 * currentMode.diff && bombActive <= 0) {
                     eBullets.push({ x: e.x, y: e.y, vx: 0, vy: 6 + currentMode.diff/2, size: 6 });
                 }
@@ -313,20 +303,9 @@
 
         function draw() {
             ctx.fillStyle = "rgba(0, 8, 20, 0.4)"; ctx.fillRect(0,0,canvas.width, canvas.height);
+            if(bombActive > 0) { ctx.fillStyle = `rgba(255, 255, 255, ${bombActive/60})`; ctx.fillRect(0,0,canvas.width, canvas.height); }
             
-            if(bombActive > 0) {
-                ctx.fillStyle = `rgba(255, 255, 255, ${bombActive/60})`; ctx.fillRect(0,0,canvas.width, canvas.height);
-            }
-
-            if(currentMode.gimmick === 'fog' && !userData.items.includes('anti_fog') && frame % 16 < 8) return;
-
-            if(userData.aura === 'cyan') {
-                ctx.strokeStyle = "cyan"; ctx.lineWidth = 4; ctx.beginPath();
-                ctx.arc(player.x, player.y, 28+Math.sin(frame/5)*5, 0, 7); ctx.stroke();
-            }
-
-            ctx.fillStyle = userData.skin;
-            ctx.beginPath();
+            ctx.fillStyle = userData.skin; ctx.beginPath();
             ctx.moveTo(player.x, player.y - 18); ctx.lineTo(player.x + 14, player.y + 12); ctx.lineTo(player.x - 14, player.y + 12);
             ctx.closePath(); ctx.fill();
 
@@ -338,11 +317,8 @@
                     ctx.fillStyle = "#f00"; ctx.fillRect(e.x-70, e.y-95, 140*(e.hp/e.maxHp), 12);
                 }
             });
-
             ctx.fillStyle = "#0ff"; bullets.forEach(b => ctx.fillRect(b.x-4, b.y, 8, 22));
-            eBullets.forEach(eb => {
-                ctx.fillStyle = eb.color || "#ff00ff"; ctx.beginPath(); ctx.arc(eb.x, eb.y, eb.size, 0, 7); ctx.fill();
-            });
+            eBullets.forEach(eb => { ctx.fillStyle = "#ff00ff"; ctx.beginPath(); ctx.arc(eb.x, eb.y, eb.size, 0, 7); ctx.fill(); });
             particles.forEach(p => { ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, 4, 4); });
         }
 
@@ -358,7 +334,7 @@
 
         function showEnding() {
             document.getElementById('ending').style.display = 'flex';
-            const msg = "中央線のオレンジが宇宙を包み込む…。すべての路線を制覇したあなたに、最高の敬意を。2026年、南プロジェクト完結。ご愛読、ご協力ありがとうございました！";
+            const msg = "中央線のオレンジが宇宙を包み込む…。すべての路線を制覇したあなたに、最高の敬意を。2026年、南プロジェクト完結。";
             let i = 0;
             const timer = setInterval(() => {
                 document.getElementById('end-text').innerText += msg[i];
