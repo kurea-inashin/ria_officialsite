@@ -6,218 +6,324 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+JP:wght@300;700&display=swap');
         
-        body { margin: 0; background: #000810; color: #e0e0e0; font-family: 'Press Start 2P', cursive; overflow: hidden; transition: background 0.6s ease; }
+        body { margin: 0; background: #000810; color: #e0e0e0; font-family: 'Press Start 2P', cursive; overflow: hidden; }
         canvas { display: block; }
 
         /* HUD */
-        #hud { position: absolute; top: 30px; left: 30px; z-index: 10; pointer-events: none; }
-        #score-val { font-size: 26px; color: #fff; margin-bottom: 10px; text-shadow: 0 0 8px rgba(255,255,255,0.5); }
-        #hp-bar { width: 240px; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; }
-        #hp-fill { height: 100%; background: #fff; width: 100%; transition: width 0.3s ease; }
+        #hud { position: absolute; top: 20px; left: 20px; z-index: 10; pointer-events: none; }
+        #hp-bar { width: 200px; height: 10px; background: rgba(255,255,255,0.1); border: 1px solid #fff; margin-top: 5px; }
+        #hp-fill { height: 100%; background: #00ff00; width: 100%; transition: width 0.3s; }
+        #coin-display { color: #ffd700; font-size: 14px; margin-top: 5px; }
 
-        /* メニュー */
-        #menu { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20; }
-        h1 { font-size: 20px; margin-bottom: 40px; letter-spacing: 6px; color: #fff; }
+        /* メインメニュー層 */
+        #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20; }
+        .panel { display: none; flex-direction: column; align-items: center; width: 80%; max-height: 80vh; overflow-y: auto; }
+        .active { display: flex; }
 
-        .mode-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 40px; }
+        h1 { font-size: 18px; color: #fff; margin-bottom: 30px; text-shadow: 0 0 10px #0088ff; }
+        .main-nav { display: flex; gap: 20px; margin-bottom: 40px; }
+        .nav-btn { padding: 15px 25px; border: 2px solid #fff; background: none; color: #fff; cursor: pointer; font-family: 'Press Start 2P'; font-size: 10px; }
+        .nav-btn:hover { background: #fff; color: #000; }
+
+        /* ステージセレクト */
+        .mode-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        .mode-btn { width: 140px; padding: 10px; border: 2px solid #444; background: #111; color: #888; cursor: pointer; text-align: center; }
+        .mode-btn.unlocked { border-color: var(--c); color: var(--c); }
+        .mode-btn.unlocked:hover { background: var(--c); color: #000; box-shadow: 0 0 15px var(--c); }
+
+        /* ショップ */
+        .shop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; width: 100%; }
+        .shop-item { padding: 15px; border: 1px solid #555; background: rgba(255,255,255,0.05); cursor: pointer; }
+        .shop-item:hover { background: rgba(255,255,255,0.1); }
+
+        /* 説明書 */
+        #guide-text { font-family: 'Noto Sans JP'; font-size: 14px; line-height: 1.8; color: #ccc; text-align: left; max-width: 600px; }
         
-        /* ボタン基本スタイル：ここを共通化して枠を維持 */
-        .mode-btn { 
-            width: 160px; height: 70px; background: rgba(0,0,0,0.5); 
-            cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; border-radius: 4px;
-            border: 2px solid #334; /* デフォルトの枠線 */
-        }
-        .m-id { font-size: 11px; margin-bottom: 8px; font-weight: bold; }
-        .m-stars { font-size: 7px; opacity: 0.8; }
-
-        /* --- 標準ステージカラー --- */
-        .SB { border-color: #ccaa00; color: #ccaa00; } 
-        .KT { border-color: #0088cc; color: #0088cc; } 
-        .SK { border-color: #008844; color: #008844; } 
-        .KY { border-color: #aa0022; color: #aa0022; } 
-        .PK { border-color: #cc5588; color: #cc5588; }
-        .JB { border-color: #006666; color: #006666; }
-
-        /* --- 隠しステージ：銅・銀・金 --- */
-        .HA { border-color: #CD7F32; color: #CD7F32; display: none; } /* 銅 */
-        .HB { border-color: #C0C0C0; color: #C0C0C0; display: none; } /* 銀 */
-        .HC { border-color: #FFD700; color: #FFD700; display: none; } /* 金 */
-        
-        /* --- 究極ステージ --- */
-        .CO { border: 3px solid #cc6600; color: #cc6600; display: none; grid-column: span 3; width: 100%; }
-
-        /* --- ホバー演出（光の共鳴） --- */
-        .mode-btn:hover { transform: scale(1.08) translateY(-5px); background: rgba(255,255,255,0.1); }
-        .SB:hover { box-shadow: 0 0 20px #ccaa00; }
-        .KT:hover { box-shadow: 0 0 20px #0088cc; }
-        .SK:hover { box-shadow: 0 0 20px #008844; }
-        .KY:hover { box-shadow: 0 0 20px #aa0022; }
-        .HA:hover { box-shadow: 0 0 20px #CD7F32; }
-        .HB:hover { box-shadow: 0 0 20px #C0C0C0; }
-        .HC:hover { box-shadow: 0 0 25px #FFD700; }
-        .CO:hover { box-shadow: 0 0 30px #cc6600; }
-
-        #guide { max-width: 600px; padding: 20px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03); font-family: 'Noto Sans JP'; font-size: 12px; line-height: 1.8; color: #88a0b0; }
-        .copy-right { margin-top: 30px; font-size: 8px; color: #222; }
+        .status-msg { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 30px; pointer-events: none; opacity: 0; transition: 0.5s; }
     </style>
 </head>
 <body>
+
     <div id="hud">
-        <div id="score-val">000000</div>
+        <div id="score-val">SCORE: 000000</div>
         <div id="hp-bar"><div id="hp-fill"></div></div>
+        <div id="coin-display">COINS: 0</div>
     </div>
 
-    <div id="menu">
+    <div id="overlay">
         <h1>MINAMI PROJECT 2026</h1>
-        <div class="mode-grid" id="grid">
-            <div id="btn-SB" class="mode-btn SB" onmouseover="bg('#1a1800')" onmouseout="bg('#000810')" onclick="start('SB')"><span class="m-id">STーSB</span><span class="m-stars">★☆☆☆☆</span></div>
-            <div id="btn-KT" class="mode-btn KT" onmouseover="bg('#00101a')" onmouseout="bg('#000810')" onclick="start('KT')"><span class="m-id">STーKT</span><span class="m-stars">★☆☆☆☆</span></div>
-            <div id="btn-SK" class="mode-btn SK" onmouseover="bg('#00150a')" onmouseout="bg('#000810')" onclick="start('SK')"><span class="m-id">STーSK</span><span class="m-stars">★★☆☆☆</span></div>
-            <div id="btn-KY" class="mode-btn KY" onmouseover="bg('#1a0005')" onmouseout="bg('#000810')" onclick="start('KY')"><span class="m-id">STーKY</span><span class="m-stars">★★★☆☆</span></div>
-            <div id="btn-PK" class="mode-btn PK" onmouseover="bg('#1a001a')" onmouseout="bg('#000810')" onclick="start('PK')"><span class="m-id">STーPK</span><span class="m-stars">★★★☆☆</span></div>
-            <div id="btn-JB" class="mode-btn JB" onmouseover="bg('#001515')" onmouseout="bg('#000810')" onclick="start('JB')"><span class="m-id">STーJB</span><span class="m-stars">★★★★☆</span></div>
-            
-            <div id="btn-HA" class="mode-btn HA" onmouseover="bg('#1a1005')" onmouseout="bg('#000810')" onclick="start('HA')"><span class="m-id">STーHA</span><span class="m-stars">★★★★★</span></div>
-            <div id="btn-HB" class="mode-btn HB" onmouseover="bg('#1a1a1a')" onmouseout="bg('#000810')" onclick="start('HB')"><span class="m-id">STーHB</span><span class="m-stars">★★★★★★</span></div>
-            <div id="btn-HC" class="mode-btn HC" onmouseover="bg('#1a1500')" onmouseout="bg('#000810')" onclick="start('HC')"><span class="m-id">STーHC</span><span class="m-stars">★★★★★★★</span></div>
-            
-            <div id="btn-CO" class="mode-btn CO" onmouseover="bg('#221100')" onmouseout="bg('#000810')" onclick="start('CO')"><span class="m-id">ULTIMATE: STーCO</span><span class="m-stars">★★★★★★★★★★</span></div>
+        
+        <div class="main-nav" id="main-nav">
+            <button class="nav-btn" onclick="openPanel('stage-select')">STAGE SELECT</button>
+            <button class="nav-btn" onclick="openPanel('shop')">SHOP</button>
+            <button class="nav-btn" onclick="openPanel('how-to')">HOW TO PLAY</button>
         </div>
-        <div id="guide">
-            マウスで「雫」を導き、左クリックで「想い」を放ちなさい。<br>
-            全記録を塗り替えた時、銅・銀・金、そして橙の深淵が現れます。
+
+        <div id="stage-select" class="panel">
+            <div class="mode-grid" id="grid">
+                </div>
+            <button class="nav-btn" style="margin-top:20px;" onclick="backToMain()">BACK</button>
         </div>
-        <div class="copy-right">MINAMI PROJECT 2026 / Chromatic Resonance</div>
+
+        <div id="shop" class="panel">
+            <div id="shop-coins" style="color:#ffd700; margin-bottom:20px;"></div>
+            <div class="shop-grid">
+                <div class="shop-item" onclick="buyItem('atk')">ATK UP (500C)<br><small>攻撃力上昇</small></div>
+                <div class="shop-item" onclick="buyItem('heal')">HP RECOVER (200C)<br><small>HP全回復</small></div>
+                <div class="shop-item" onclick="buyItem('special')">BOMB (1000C)<br><small>必殺技ストック</small></div>
+                <div class="shop-item" onclick="buyItem('aura_blue')">BLUE AURA (2000C)<br><small>青のオーラを纏う</small></div>
+            </div>
+            <button class="nav-btn" style="margin-top:20px;" onclick="backToMain()">BACK</button>
+        </div>
+
+        <div id="how-to" class="panel">
+            <div id="guide-text">
+                <h3>■ 操作方法</h3>
+                ・マウス移動：自機の操縦<br>
+                ・左クリック：ショット（想いの放流）<br>
+                ・右クリック/スペース：必殺技（所持時のみ）<br><br>
+                <h3>■ ゲームの仕組み</h3>
+                各ステージは3つのフェーズで構成されます。第3フェーズの最後に現れるボスを撃破すればクリアです。
+                敵を倒すとコインが手に入り、ショップで強化が可能です。
+            </div>
+            <button class="nav-btn" style="margin-top:20px;" onclick="backToMain()">BACK</button>
+        </div>
     </div>
+
+    <div id="msg" class="status-msg">PHASE 1</div>
     <canvas id="game"></canvas>
 
     <script>
-        // --- 以前のスクリプト（ロジック）をそのまま継続 ---
         const canvas = document.getElementById('game');
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth; canvas.height = window.innerHeight;
 
-        let gameActive = false, score = 0, hp = 100, frame = 0;
-        let bullets = [], eBullets = [], enemies = [], ripples = [];
+        // --- ゲーム状態管理 ---
+        let gameActive = false, score = 0, hp = 100, frame = 0, phase = 1, phaseKills = 0;
+        let bullets = [], eBullets = [], enemies = [], coins = [], particles = [];
         let player = { x: canvas.width/2, y: canvas.height/2 };
         let currentMode = null;
 
-        const config = {
-            SB: { color: '#ccaa00', spawn: 0.05, hp: 2, target: 3000, g: 'warp' },
-            KT: { color: '#0088cc', spawn: 0.1, hp: 2, target: 5000, g: 'dash' },
-            SK: { color: '#008844', spawn: 0.08, hp: 5, target: 7000, g: 'shield' },
-            KY: { color: '#aa0022', spawn: 0.12, hp: 3, target: 8000, g: 'wind' },
-            PK: { color: '#cc5588', spawn: 0.12, hp: 3, target: 8000, g: 'none' },
-            JB: { color: '#006666', spawn: 0.15, hp: 5, target: 10000, g: 'none' },
-            HA: { color: '#CD7F32', spawn: 0.2, hp: 12, target: 20000, g: 'mix' },
-            HB: { color: '#C0C0C0', spawn: 0.25, hp: 15, target: 25000, g: 'mix' },
-            HC: { color: '#FFD700', spawn: 0.3, hp: 20, target: 30000, g: 'mix' },
-            CO: { color: '#cc6600', spawn: 1.0, hp: 80, target: 373000, g: 'rush' }
+        // --- セーブデータ (Local Storage) ---
+        let userData = JSON.parse(localStorage.getItem('minami_save_2026')) || {
+            coins: 0,
+            atkLevel: 1,
+            unlocked: ['SB'],
+            cleared: [],
+            aura: 'none',
+            bombs: 0
         };
 
-        function bg(c) { document.body.style.background = c; }
+        const save = () => localStorage.setItem('minami_save_2026', JSON.stringify(userData));
 
-        function init() {
-            const cl = JSON.parse(localStorage.getItem('minami_cleared') || '[]');
-            cl.forEach(id => {
-                const b = document.getElementById(`btn-${id}`);
-                if(b) b.style.backgroundColor = 'rgba(255,255,255,0.1)';
+        // --- ステージ定義 (全15ステージ) ---
+        const STAGES = {
+            'SB': { name: 'ST=SB', color: '#ccaa00', stars: '★', difficulty: 1, bossHp: 50 },
+            'KT': { name: 'ST=KT', color: '#0088cc', stars: '★', difficulty: 1.2, bossHp: 60 },
+            'SK': { name: 'ST=SK', color: '#008844', stars: '★★', difficulty: 1.5, bossHp: 80 },
+            'KY': { name: 'ST=KY', color: '#aa0022', stars: '★★★', difficulty: 2, bossHp: 100 },
+            'PK': { name: 'ST=PK', color: '#cc5588', stars: '★★★', difficulty: 2.2, bossHp: 120 },
+            'JB': { name: 'ST=JB', color: '#006666', stars: '★★★★', difficulty: 2.5, bossHp: 150 },
+            'S1': { name: 'ST=S1', color: '#6600cc', stars: '★★★★', difficulty: 2.8, bossHp: 180 },
+            'S2': { name: 'ST=S2', color: '#cc00cc', stars: '★★★★★', difficulty: 3, bossHp: 200 },
+            'S3': { name: 'ST=S3', color: '#00cccc', stars: '★★★★★', difficulty: 3.5, bossHp: 250 },
+            // 隠し（表）
+            'HA': { name: 'ST=HA', color: '#CD7F32', stars: '★★★★★★', difficulty: 4.5, bossHp: 400, type: 'hidden' },
+            'HB': { name: 'ST=HB', color: '#C0C0C0', stars: '★★★★★★★', difficulty: 5.5, bossHp: 600, type: 'hidden' },
+            'HC': { name: 'ST=HC', color: '#FFD700', stars: '★★★★★★★★', difficulty: 7, bossHp: 800, type: 'hidden' },
+            // 隠し（裏）
+            'UA': { name: 'ST=UA', color: '#444444', stars: '★★★★★★★★★', difficulty: 9, bossHp: 1200, type: 'hidden_back' },
+            'UB': { name: 'ST=UB', color: '#ffffff', stars: '★★★★★★★★★', difficulty: 11, bossHp: 1500, type: 'hidden_back' },
+            // 隠し（真）
+            'CO': { name: 'ST=CO', color: '#cc6600', stars: '★★★★★★★★★★', difficulty: 15, bossHp: 3000, type: 'ultimate' }
+        };
+
+        // --- UI 操作 ---
+        function openPanel(id) {
+            document.getElementById('main-nav').style.display = 'none';
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            if(id === 'stage-select') renderStages();
+            if(id === 'shop') document.getElementById('shop-coins').innerText = `BALANCE: ${userData.coins} C`;
+        }
+
+        function backToMain() {
+            document.getElementById('main-nav').style.display = 'flex';
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        }
+
+        function renderStages() {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+            Object.keys(STAGES).forEach(id => {
+                const s = STAGES[id];
+                const btn = document.createElement('div');
+                const isUnlocked = userData.unlocked.includes(id);
+                btn.className = `mode-btn ${isUnlocked ? 'unlocked' : ''}`;
+                btn.style.setProperty('--c', s.color);
+                btn.innerHTML = `<div>${s.name}</div><div style="font-size:7px;">${s.stars}</div>`;
+                if(isUnlocked) btn.onclick = () => startGame(id);
+                grid.appendChild(btn);
             });
-            if(['SB','KT','SK','KY','PK','JB'].every(s => cl.includes(s))) {
-                ['btn-HA','btn-HB','btn-HC'].forEach(id => document.getElementById(id).style.display = 'flex');
-            }
-            if(['SB','KT','SK','KY','PK','JB', 'HA', 'HB', 'HC'].every(s => cl.includes(s))) {
-                document.getElementById('btn-CO').style.display = 'flex';
-            }
         }
 
-        function start(id) {
-            currentMode = { ...config[id], id: id };
-            score = 0; hp = 100; frame = 0; enemies = []; bullets = []; eBullets = []; ripples = [];
-            document.getElementById('menu').style.display = 'none';
-            gameActive = true; loop();
+        function buyItem(type) {
+            if(type === 'atk' && userData.coins >= 500) { userData.coins -= 500; userData.atkLevel++; }
+            if(type === 'heal' && userData.coins >= 200) { userData.coins -= 200; hp = 100; }
+            if(type === 'aura_blue' && userData.coins >= 2000) { userData.coins -= 2000; userData.aura = 'cyan'; }
+            save();
+            openPanel('shop');
         }
 
-        window.addEventListener('mousemove', e => { 
-            player.x = e.clientX; player.y = e.clientY; 
-            if(currentMode && currentMode.g === 'wind') player.x += Math.sin(frame/15)*20;
-        });
-        let isDown = false; window.addEventListener('mousedown', () => isDown = true); window.addEventListener('mouseup', () => isDown = false);
+        // --- ゲームロジック ---
+        function startGame(id) {
+            currentMode = { ...STAGES[id], id: id };
+            document.getElementById('overlay').style.display = 'none';
+            gameActive = true;
+            score = 0; hp = 100; phase = 1; phaseKills = 0;
+            enemies = []; bullets = []; eBullets = []; coins = [];
+            showMsg("PHASE 1");
+            loop();
+        }
+
+        function showMsg(t) {
+            const m = document.getElementById('msg');
+            m.innerText = t; m.style.opacity = 1;
+            setTimeout(() => m.style.opacity = 0, 2000);
+        }
+
+        function spawnEnemy(isBoss = false) {
+            const e = {
+                x: Math.random() * canvas.width,
+                y: -50,
+                hp: isBoss ? currentMode.bossHp : 2 * currentMode.difficulty,
+                maxHp: isBoss ? currentMode.bossHp : 2 * currentMode.difficulty,
+                isBoss: isBoss,
+                vx: (Math.random() - 0.5) * 2,
+                vy: isBoss ? 1 : 2 + Math.random() * 2,
+                size: isBoss ? 60 : 20
+            };
+            enemies.push(e);
+        }
 
         function update() {
             frame++;
-            if(isDown && frame % 4 === 0) bullets.push({x: player.x, y: player.y-10, vy: -18, size: hp < 30 ? 15 : 4});
-            bullets.forEach((b, i) => { b.y += b.vy; if(b.y < -30) bullets.splice(i, 1); });
+            // 自機移動
+            if(currentMode.id === 'KY' && userData.aura !== 'cyan') player.x += Math.sin(frame/10)*5; // ギミック：風
 
-            if(Math.random() < currentMode.spawn) {
-                enemies.push({ 
-                    x: Math.random()*canvas.width, y: -50, hp: currentMode.hp, 
-                    vx: (Math.random()-0.5)*4, vy: 3, 
-                    type: currentMode.g === 'mix' ? ['warp','dash','shield'][Math.floor(Math.random()*3)] : currentMode.g
-                });
+            // ショット
+            if(isDown && frame % 5 === 0) {
+                bullets.push({ x: player.x, y: player.y - 15, power: userData.atkLevel });
             }
 
-            enemies.forEach((e, i) => {
-                if(e.type === 'warp') { if(frame % 80 < 30) { e.y += 0.5; e.inv = true; } else { e.y += 6; e.inv = false; } }
-                else if(e.type === 'dash') { e.y += (e.y < 150) ? 1 : 15; }
-                else if(e.type === 'rush') { e.y += 6; e.x += Math.cos(frame/10)*8; }
-                else { e.y += 4; }
+            // 敵生成
+            if(!enemies.some(e => e.isBoss) && frame % 60 === 0) {
+                if(phase < 3 || (phase === 3 && phaseKills < 10)) spawnEnemy();
+            }
 
-                bullets.forEach((b, bi) => {
-                    if(Math.hypot(e.x-b.x, e.y-b.y) < 25 && !e.inv) {
-                        e.hp--; bullets.splice(bi, 1);
-                        if(e.hp <= 0) { score += 100; enemies.splice(i, 1); if(score >= currentMode.target) finish(true); }
+            // フェーズ進行
+            if(phase < 3 && phaseKills >= 10) {
+                phase++; phaseKills = 0;
+                showMsg("PHASE " + phase);
+            } else if(phase === 3 && phaseKills >= 10 && !enemies.some(e => e.isBoss)) {
+                spawnEnemy(true);
+                showMsg("BOSS ALERT");
+            }
+
+            // 当たり判定・移動
+            bullets.forEach((b, i) => {
+                b.y -= 15;
+                enemies.forEach((e, ei) => {
+                    if(Math.hypot(b.x - e.x, b.y - e.y) < e.size) {
+                        e.hp -= b.power;
+                        bullets.splice(i, 1);
+                        if(e.hp <= 0) {
+                            if(e.isBoss) finish(true);
+                            userData.coins += 10;
+                            phaseKills++;
+                            enemies.splice(ei, 1);
+                        }
                     }
                 });
-                if(Math.random() < 0.03) eBullets.push({x: e.x, y: e.y, vy: 8, vx: (e.type === 'rush' ? Math.sin(frame)*5 : 0)});
-                if(e.y > canvas.height + 50) enemies.splice(i, 1);
+            });
+
+            enemies.forEach(e => {
+                e.x += e.vx; e.y += e.vy;
+                if(e.isBoss && e.y > 100) e.vy = 0;
+                if(Math.random() < 0.02 * currentMode.difficulty) {
+                    eBullets.push({ x: e.x, y: e.y, vx: 0, vy: 5 });
+                }
             });
 
             eBullets.forEach((eb, i) => {
-                eb.y += eb.vy; eb.x += eb.vx;
-                if(Math.hypot(eb.x-player.x, eb.y-player.y) < 15) {
-                    hp -= 10; eBullets.splice(i,1); ripples.push({x: player.x, y: player.y, r: 5, a: 1});
+                eb.y += eb.vy;
+                if(Math.hypot(eb.x - player.x, eb.y - player.y) < 15) {
+                    hp -= 10; eBullets.splice(i, 1);
                     if(hp <= 0) finish(false);
                 }
-                if(eb.y > canvas.height) eBullets.splice(i, 1);
             });
 
-            ripples.forEach((r, i) => { r.r += 4; r.a -= 0.04; if(r.a <= 0) ripples.splice(i, 1); });
             document.getElementById('hp-fill').style.width = hp + "%";
-            document.getElementById('score-val').innerText = score.toString().padStart(6, '0');
+            document.getElementById('coin-display').innerText = `COINS: ${userData.coins}`;
         }
 
         function draw() {
-            ctx.fillStyle = "rgba(0, 8, 16, 0.4)"; ctx.fillRect(0,0,canvas.width, canvas.height);
-            ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.moveTo(player.x, player.y-15);
-            ctx.bezierCurveTo(player.x+10, player.y+5, player.x+10, player.y+15, player.x, player.y+15);
-            ctx.bezierCurveTo(player.x-10, player.y+15, player.x-10, player.y+5, player.x, player.y-15); ctx.fill();
-            ripples.forEach(r => { ctx.strokeStyle = `rgba(0,223,255,${r.a})`; ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, Math.PI*2); ctx.stroke(); });
-            ctx.fillStyle = "#fff"; bullets.forEach(b => ctx.fillRect(b.x-b.size/2, b.y, b.size, b.size*2));
-            ctx.fillStyle = "#ff00ff"; eBullets.forEach(eb => { ctx.beginPath(); ctx.arc(eb.x, eb.y, 4, 0, Math.PI*2); ctx.fill(); });
-            ctx.strokeStyle = currentMode.color; ctx.lineWidth = 2;
+            ctx.fillStyle = "rgba(0, 8, 20, 0.3)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // プレイヤー & オーラ
+            if(userData.aura !== 'none') {
+                ctx.strokeStyle = userData.aura;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(player.x, player.y, 25 + Math.sin(frame/5)*5, 0, Math.PI*2);
+                ctx.stroke();
+            }
+            ctx.fillStyle = "#fff";
+            ctx.beginPath(); ctx.arc(player.x, player.y, 10, 0, Math.PI*2); ctx.fill();
+
+            // 敵
             enemies.forEach(e => {
-                if(e.inv) ctx.setLineDash([2, 4]); else ctx.setLineDash([]);
-                ctx.strokeRect(e.x-15, e.y-15, 30, 30);
-                if(e.type === 'shield') { ctx.beginPath(); ctx.arc(e.x, e.y, 25, 0, Math.PI*2); ctx.stroke(); }
+                ctx.strokeStyle = e.isBoss ? "#ff0000" : currentMode.color;
+                ctx.strokeRect(e.x - e.size/2, e.y - e.size/2, e.size, e.size);
+                // ボスHPバー
+                if(e.isBoss) {
+                    ctx.fillStyle = "#440000"; ctx.fillRect(e.x-30, e.y-45, 60, 5);
+                    ctx.fillStyle = "#ff0000"; ctx.fillRect(e.x-30, e.y-45, 60 * (e.hp/e.maxHp), 5);
+                }
             });
-            ctx.setLineDash([]);
+
+            // 弾
+            ctx.fillStyle = "#0ff"; bullets.forEach(b => ctx.fillRect(b.x-2, b.y, 4, 10));
+            ctx.fillStyle = "#f0f"; eBullets.forEach(eb => ctx.beginPath() || ctx.arc(eb.x, eb.y, 4, 0, Math.PI*2) || ctx.fill());
         }
 
-        function finish(isClear) {
+        function finish(clear) {
             gameActive = false;
-            if(isClear) {
-                let cl = JSON.parse(localStorage.getItem('minami_cleared') || '[]');
-                cl.push(currentMode.id);
-                localStorage.setItem('minami_cleared', JSON.stringify([...new Set(cl)]));
-                alert("RESONANCE SUCCESS");
-            } else { alert("RESONANCE FAILED"); }
+            if(clear) {
+                alert("STAGE CLEAR!");
+                if(!userData.cleared.includes(currentMode.id)) {
+                    userData.cleared.push(currentMode.id);
+                    // 次のステージ解禁ロジック
+                    const keys = Object.keys(STAGES);
+                    const nextIdx = keys.indexOf(currentMode.id) + 1;
+                    if(keys[nextIdx]) userData.unlocked.push(keys[nextIdx]);
+                }
+            } else {
+                alert("GAME OVER");
+            }
+            save();
             location.reload();
         }
 
         function loop() { if(!gameActive) return; update(); draw(); requestAnimationFrame(loop); }
-        init();
+
+        let isDown = false;
+        window.addEventListener('mousedown', () => isDown = true);
+        window.addEventListener('mouseup', () => isDown = false);
+        window.addEventListener('mousemove', e => { player.x = e.clientX; player.y = e.clientY; });
+
+        renderStages();
     </script>
 </body>
 </html>
