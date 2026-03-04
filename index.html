@@ -3,201 +3,242 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Railway Shooting Game - ST=KY</title>
+    <title>Railway Shooting - ST=KY</title>
     <style>
-        body { margin: 0; overflow: hidden; background: #000; font-family: sans-serif; }
-        canvas { display: block; cursor: crosshair; }
-        #ui {
-            position: absolute; top: 10px; left: 10px; color: white;
-            pointer-events: none; text-shadow: 2px 2px 2px #000;
-        }
-        .btn-container {
-            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
-            display: flex; gap: 10px;
-        }
-        button {
-            padding: 10px; cursor: pointer; border: none; font-weight: bold; color: white;
-        }
+        body { margin: 0; overflow: hidden; background: #000; font-family: sans-serif; color: #fff; }
+        canvas { display: block; }
+        #ui { position: absolute; top: 10px; left: 10px; pointer-events: none; text-shadow: 2px 2px 2px #000; }
+        #menu { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; background: rgba(0,0,0,0.8); padding: 20px; border: 2px solid #fff; }
+        .btn { padding: 10px 20px; margin: 5px; cursor: pointer; border: none; font-weight: bold; color: #fff; display: block; width: 200px; }
+        #boss-hp-bar { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); width: 60%; height: 10px; background: #333; display: none; border: 1px solid #fff; }
+        #boss-hp-fill { width: 100%; height: 100%; background: #f00; transition: width 0.2s; }
     </style>
 </head>
 <body>
 
 <div id="ui">
-    <div id="status">MODE: LOADING...</div>
-    <div id="hp">HP: 100</div>
-    <div id="score">SCORE: 0</div>
-    <div id="coins">COINS: 0</div>
+    <div id="mode-display" style="font-size: 24px;">MODE: ST=KY</div>
+    <div>SCORE: <span id="score">0</span></div>
+    <div>HP: <span id="hp">100</span></div>
+    <div>COINS: <span id="coins">0</span></div>
 </div>
 
-<div class="btn-container">
-    <button onclick="game.setMode('SOBU')" style="background:#FCCE19; color:black;">総武線</button>
-    <button onclick="game.setMode('SAIKYO')" style="background:#00AC9A;">埼京線</button>
-    <button onclick="game.setMode('KEIHIN')" style="background:#00A1E2;">京浜東北線</button>
-    <button onclick="game.setMode('KEIYO')" style="background:#C9242F;">ST=KY</button>
-    <button id="extra-btn" onclick="game.setMode('CHUO')" style="background:#F39800; display:none;">超鬼むず(中央線)</button>
+<div id="boss-hp-bar"><div id="boss-hp-fill"></div></div>
+
+<div id="menu">
+    <h2>路線（モード）選択</h2>
+    <button class="btn" onclick="startGame('SOBU')" style="background:#FCCE19; color:#000;">総武線 (Easy)</button>
+    <button class="btn" onclick="startGame('SAIKYO')" style="background:#00AC9A;">埼京線 (Normal)</button>
+    <button class="btn" onclick="startGame('KEIHIN')" style="background:#00A1E2;">京浜東北線 (Hard)</button>
+    <button class="btn" onclick="startGame('KEIYO')" style="background:#C9242F;">ST=KY (Very Hard)</button>
+    <button id="extra-btn" class="btn" onclick="startGame('CHUO')" style="background:#F39800; display:none;">中央線 (超鬼むず)</button>
+    <p id="msg">全路線クリアで隠し解禁</p>
 </div>
 
 <canvas id="gameCanvas"></canvas>
 
 <script>
-/**
- * 1. データ定義 (JSON構造)
- */
-const GAME_DATA = {
-    modes: {
-        "SOBU":   { name: "Easy", color: "#FCCE19", line: "総武線" },
-        "SAIKYO": { name: "Normal", color: "#00AC9A", line: "埼京線" },
-        "KEIHIN": { name: "Hard", color: "#00A1E2", line: "京浜東北線" },
-        "KEIYO":  { name: "Very Hard", color: "#C9242F", line: "ST=KY" },
-        "CHUO":   { name: "Extra", color: "#F39800", line: "中央線(超鬼むず)" }
-    }
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+// --- 定数・データ ---
+const MODES = {
+    SOBU:   { name: "Easy", color: "#FCCE19", line: "総武線" },
+    SAIKYO: { name: "Normal", color: "#00AC9A", line: "埼京線" },
+    KEIHIN: { name: "Hard", color: "#00A1E2", line: "京浜東北線" },
+    KEIYO:  { name: "ST=KY", color: "#C9242F", line: "ST=KY" },
+    CHUO:   { name: "Extra", color: "#F39800", line: "中央線" }
 };
 
-/**
- * 2. セーブマネージャー
- */
-class SaveManager {
-    constructor() {
-        this.key = "railway_shooter_data";
-    }
-    save(data) {
-        localStorage.setItem(this.key, JSON.stringify(data));
-    }
-    load() {
-        const saved = localStorage.getItem(this.key);
-        return saved ? JSON.parse(saved) : { 
-            cleared_modes: [], 
-            total_coins: 0, 
-            high_score: 0 
-        };
+// --- ゲーム状態 ---
+let gameState = "MENU";
+let currentMode = MODES.KEIYO;
+let score = 0;
+let hp = 100;
+let coins = 0;
+let clearedModes = JSON.parse(localStorage.getItem('clearedModes') || "[]");
+
+let player = { x: canvas.width/2, y: canvas.height-80, size: 25 };
+let bullets = [];
+let enemies = [];
+let particles = [];
+let enemyProjectiles = [];
+let boss = null;
+let frameCount = 0;
+
+// --- 操作 ---
+let mouseX = canvas.width/2;
+window.addEventListener('mousemove', e => mouseX = e.clientX);
+window.addEventListener('touchmove', e => { e.preventDefault(); mouseX = e.touches[0].clientX; }, {passive:false});
+window.addEventListener('mousedown', shoot);
+window.addEventListener('touchstart', shoot);
+
+function shoot() {
+    if(gameState === "PLAYING") {
+        bullets.push({ x: player.x, y: player.y - 20, v: -10 });
     }
 }
 
-/**
- * 3. メインゲームクラス
- */
-class Game {
-    constructor() {
-        this.canvas = document.getElementById('gameCanvas');
-        this.ctx = this.canvas.getContext('2d');
-        this.saveManager = new SaveManager();
-        this.saveData = this.saveManager.load();
-        
-        this.mode = GAME_DATA.modes.KEIYO;
-        this.score = 0;
-        this.hp = 100;
-        this.coins = this.saveData.total_coins;
-        
-        this.player = { x: 0, y: 0, size: 20, speed: 5 };
-        this.bullets = [];
-        this.keys = {};
+// --- ゲームループ ---
+function startGame(modeKey) {
+    currentMode = MODES[modeKey];
+    gameState = "PLAYING";
+    score = 0; hp = 100; bullets = []; enemies = []; enemyProjectiles = []; boss = null;
+    document.getElementById('menu').style.display = 'none';
+    document.getElementById('mode-display').innerText = `MODE: ${currentMode.line}`;
+    document.getElementById('mode-display').style.color = currentMode.color;
+}
 
-        this.init();
+function update() {
+    if(gameState !== "PLAYING") return;
+
+    frameCount++;
+    player.x += (mouseX - player.x) * 0.1; // 滑らかな追従
+
+    // 弾の移動
+    bullets.forEach((b, i) => {
+        b.y += b.v;
+        if(b.y < 0) bullets.splice(i, 1);
+    });
+
+    // 敵の生成 (15種類の出現パターンをシミュレート)
+    if(frameCount % 40 === 0 && !boss) {
+        enemies.push({ 
+            x: Math.random() * (canvas.width - 40) + 20, 
+            y: -50, 
+            hp: currentMode === MODES.CHUO ? 5 : 2,
+            type: "zako" 
+        });
     }
 
-    init() {
-        this.resize();
-        window.addEventListener('resize', () => this.resize());
-        window.addEventListener('keydown', (e) => this.keys[e.code] = true);
-        window.addEventListener('keyup', (e) => this.keys[e.code] = false);
-        
-        // スマホ/マウス操作
-        this.canvas.addEventListener('mousemove', (e) => this.handlePointer(e.clientX, e.clientY));
-        this.canvas.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-            this.handlePointer(e.touches[0].clientX, e.touches[0].clientY);
-        }, { passive: false });
-
-        this.player.x = this.canvas.width / 2;
-        this.player.y = this.canvas.height - 100;
-
-        this.checkUnlockStatus();
-        this.loop();
+    // ボス出現 (スコア1000ごと)
+    if(score > 0 && score % 1000 === 0 && !boss) {
+        boss = { x: canvas.width/2, y: -100, hp: 50, maxHp: 50, phase: 1 };
+        document.getElementById('boss-hp-bar').style.display = 'block';
     }
 
-    resize() {
-        this.canvas.width = window.innerWidth;
-        this.canvas.height = window.innerHeight;
-    }
+    // 敵・ボスの挙動
+    enemies.forEach((en, i) => {
+        en.y += 2;
+        // 衝突判定
+        bullets.forEach((b, bi) => {
+            if(Math.hypot(en.x - b.x, en.y - b.y) < 25) {
+                en.hp--;
+                bullets.splice(bi, 1);
+                if(en.hp <= 0) {
+                    enemies.splice(i, 1);
+                    score += 100;
+                    coins += Math.random() > 0.7 ? 1 : 0;
+                }
+            }
+        });
+        if(en.y > canvas.height) { enemies.splice(i, 1); hp -= 10; }
+    });
 
-    handlePointer(x, y) {
-        this.player.x = x;
-        this.player.y = y;
-    }
-
-    setMode(modeKey) {
-        this.mode = GAME_DATA.modes[modeKey];
-        // モード変更時にクリア実績をテスト追加（本来はボス撃破時に実行）
-        if(!this.saveData.cleared_modes.includes(modeKey)) {
-            this.saveData.cleared_modes.push(modeKey);
-            this.saveManager.save(this.saveData);
-        }
-        this.checkUnlockStatus();
-    }
-
-    checkUnlockStatus() {
-        const required = ["SOBU", "SAIKYO", "KEIHIN", "KEIYO"];
-        const isAllCleared = required.every(m => this.saveData.cleared_modes.includes(m));
-        if (isAllCleared) {
-            document.getElementById('extra-btn').style.display = 'block';
-        }
-    }
-
-    update() {
-        // キーボード移動
-        if (this.keys['ArrowUp'] || this.keys['KeyW']) this.player.y -= this.player.speed;
-        if (this.keys['ArrowDown'] || this.keys['KeyS']) this.player.y += this.player.speed;
-        if (this.keys['ArrowLeft'] || this.keys['KeyA']) this.player.x -= this.player.speed;
-        if (this.keys['ArrowRight'] || this.keys['KeyD']) this.player.x += this.player.speed;
-
-        // 自動攻撃（スペースキー）
-        if (this.keys['Space']) {
-            if(Date.now() % 5 === 0) { // 連射速度調整
-                this.bullets.push({ x: this.player.x, y: this.player.y - 20 });
+    if(boss) {
+        if(boss.y < 100) boss.y += 2;
+        else {
+            boss.x = canvas.width/2 + Math.sin(frameCount/20) * 100;
+            if(frameCount % 30 === 0) {
+                enemyProjectiles.push({x: boss.x, y: boss.y, vx: Math.sin(frameCount)*5, vy: 5});
             }
         }
-
-        // 弾の移動
-        this.bullets.forEach((b, i) => {
-            b.y -= 10;
-            if (b.y < 0) this.bullets.splice(i, 1);
-        });
-
-        // UI更新
-        document.getElementById('status').innerText = `MODE: ${this.mode.line}`;
-        document.getElementById('status').style.color = this.mode.color;
-        document.getElementById('score').innerText = `SCORE: ${this.score}`;
-        document.getElementById('coins').innerText = `COINS: ${this.coins}`;
-    }
-
-    draw() {
-        this.ctx.fillStyle = '#000';
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-        // 自機描画（鉄道カラーを反映）
-        this.ctx.fillStyle = this.mode.color;
-        this.ctx.beginPath();
-        this.ctx.moveTo(this.player.x, this.player.y - this.player.size);
-        this.ctx.lineTo(this.player.x - this.player.size, this.player.y + this.player.size);
-        this.ctx.lineTo(this.player.x + this.player.size, this.player.y + this.player.size);
-        this.ctx.fill();
-
-        // 弾描画
-        this.ctx.fillStyle = 'white';
-        this.bullets.forEach(b => {
-            this.ctx.fillRect(b.x - 2, b.y, 4, 10);
+        
+        bullets.forEach((b, bi) => {
+            if(Math.hypot(boss.x - b.x, boss.y - b.y) < 50) {
+                boss.hp--;
+                bullets.splice(bi, 1);
+                document.getElementById('boss-hp-fill').style.width = (boss.hp/boss.maxHp)*100 + "%";
+                if(boss.hp <= 0) {
+                    score += 1000;
+                    finishStage();
+                }
+            }
         });
     }
 
-    loop() {
-        this.update();
-        this.draw();
-        requestAnimationFrame(() => this.loop());
-    }
+    enemyProjectiles.forEach((ep, i) => {
+        ep.x += ep.vx || 0;
+        ep.y += ep.vy;
+        if(Math.hypot(ep.x - player.x, ep.y - player.y) < 20) {
+            hp -= 5;
+            enemyProjectiles.splice(i, 1);
+        }
+    });
+
+    if(hp <= 0) gameOver();
+    
+    document.getElementById('score').innerText = score;
+    document.getElementById('hp').innerText = hp;
+    document.getElementById('coins').innerText = coins;
 }
 
-// 起動
-const game = new Game();
+function finishStage() {
+    boss = null;
+    document.getElementById('boss-hp-bar').style.display = 'none';
+    if(!clearedModes.includes(currentMode.name)) {
+        clearedModes.push(currentMode.name);
+        localStorage.setItem('clearedModes', JSON.stringify(clearedModes));
+    }
+    checkExtraUnlock();
+    gameState = "MENU";
+    document.getElementById('menu').style.display = 'block';
+}
+
+function gameOver() {
+    alert("GAME OVER! スコア: " + score);
+    gameState = "MENU";
+    document.getElementById('menu').style.display = 'block';
+    document.getElementById('boss-hp-bar').style.display = 'none';
+}
+
+function checkExtraUnlock() {
+    const keys = ["Easy", "Normal", "Hard", "ST=KY"];
+    const all = keys.every(k => clearedModes.includes(k));
+    if(all) document.getElementById('extra-btn').style.display = 'block';
+}
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    if(gameState === "PLAYING") {
+        // 自機 (路線カラー)
+        ctx.fillStyle = currentMode.color;
+        ctx.beginPath();
+        ctx.moveTo(player.x, player.y - player.size);
+        ctx.lineTo(player.x - player.size, player.y + player.size);
+        ctx.lineTo(player.x + player.size, player.y + player.size);
+        ctx.fill();
+
+        // 弾
+        ctx.fillStyle = "#fff";
+        bullets.forEach(b => ctx.fillRect(b.x-2, b.y, 4, 15));
+
+        // 敵
+        ctx.fillStyle = "#f0f";
+        enemies.forEach(en => {
+            ctx.fillRect(en.x-15, en.y-15, 30, 30);
+        });
+
+        // ボス
+        if(boss) {
+            ctx.fillStyle = "#ff0";
+            ctx.beginPath();
+            ctx.arc(boss.x, boss.y, 40, 0, Math.PI*2);
+            ctx.fill();
+        }
+
+        // 敵の弾
+        ctx.fillStyle = "#f00";
+        enemyProjectiles.forEach(ep => ctx.beginPath() || ctx.arc(ep.x, ep.y, 5, 0, Math.PI*2) || ctx.fill());
+    }
+    requestAnimationFrame(() => { update(); draw(); });
+}
+
+checkExtraUnlock();
+draw();
 </script>
 </body>
 </html>
