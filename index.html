@@ -2,21 +2,17 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>MINAMI PROJECT 2026: TRUE FULL-SPEC EDITION</title>
+    <title>MINAMI PROJECT 2026: TRUE FULL-SPEC FIXED</title>
     <style>
         /* =========================================
-           1. CSS RESET & BASE DESIGN
+           1. CSS DESIGN & UI
            ========================================= */
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+JP:wght@900&display=swap');
         
         body { margin: 0; background: #000; color: #fff; font-family: 'Press Start 2P', cursive; overflow: hidden; user-select: none; }
         canvas { display: block; background: #000; }
 
-        /* =========================================
-           2. UI LAYERS (HUD & MENUS)
-           ========================================= */
         .ui-root { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; }
-        
         #hud { display: none; padding: 30px; background: linear-gradient(180deg, rgba(0,0,0,0.8), transparent); }
         .score-box { font-size: 24px; color: #0ff; text-shadow: 0 0 15px #0ff; margin-bottom: 15px; }
         
@@ -28,7 +24,6 @@
         
         .stats-info { font-size: 11px; color: #ffd700; margin-top: 10px; display: flex; gap: 20px; }
 
-        /* --- MAIN OVERLAY --- */
         #overlay { position: absolute; inset: 0; background: radial-gradient(circle, #001, #000); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; pointer-events: auto; }
         .title-glitch { font-size: 32px; letter-spacing: 12px; margin-bottom: 60px; text-shadow: 3px 0 #f05, -3px 0 #0cf; }
         
@@ -42,25 +37,16 @@
         .nav-card .box-icon { width: 50px; height: 50px; border: 3px solid currentColor; margin-bottom: 30px; position: relative; }
         .nav-card .box-icon::after { content: ''; position: absolute; inset: 12px; background: currentColor; }
         
-        /* --- PANELS --- */
         .panel { display: none; flex-direction: column; align-items: center; width: 92%; height: 88%; background: #000; border: 5px solid #fff; padding: 40px; overflow-y: auto; box-sizing: border-box; }
         .panel.active { display: flex; }
         .stage-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; width: 100%; margin: 30px 0; }
         
-        .grid-item { 
-            border: 2px solid #444; padding: 25px 10px; text-align: center; font-size: 10px; cursor: pointer; 
-            position: relative; transition: 0.2s; background: #050505;
-        }
+        .grid-item { border: 2px solid #444; padding: 25px 10px; text-align: center; font-size: 10px; cursor: pointer; position: relative; transition: 0.2s; background: #050505; }
         .grid-item:hover:not(.locked) { border-color: #fff; background: rgba(255,255,255,0.1); }
         .grid-item.locked { opacity: 0.2; cursor: not-allowed; border-style: dashed; }
         .grid-item.cleared::before { content: 'COMPLETE'; position: absolute; top: 5px; right: 5px; color: #0f0; font-size: 7px; }
 
-        /* --- BRIEFING & SYSTEM MESSAGES --- */
-        #briefing-modal { 
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 550px; background: #000; border: 6px solid #fff; padding: 40px;
-            display: none; flex-direction: column; z-index: 200; box-shadow: 0 0 100px #000;
-        }
+        #briefing-modal { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 550px; background: #000; border: 6px solid #fff; padding: 40px; display: none; flex-direction: column; z-index: 200; box-shadow: 0 0 100px #000; }
         #msg-layer { position: absolute; top: 40%; width: 100%; text-align: center; pointer-events: none; z-index: 60; display: none; }
         #msg-text { font-size: 36px; color: #f00; text-shadow: 0 0 20px #f00; font-weight: 900; }
 
@@ -74,11 +60,11 @@
         <div id="hud">
             <div id="score-display" class="score-box">SCORE: 000000</div>
             <div class="bar-container">
-                <div class="bar-label">SHIELD INTEGRITY (HP)</div>
+                <div class="bar-label">SHIELD (HP)</div>
                 <div class="bar-frame"><div id="hp-bar"></div></div>
             </div>
             <div class="bar-container">
-                <div class="bar-label">BOMB CHARGE SYSTEM</div>
+                <div class="bar-label">BOMB CHARGE</div>
                 <div class="bar-frame"><div id="bomb-bar"></div></div>
             </div>
             <div class="stats-info">
@@ -92,90 +78,65 @@
 
     <div id="overlay">
         <h1 class="title-glitch">MINAMI PROJECT 2026</h1>
-        <div class="nav-menu">
+        <div class="nav-menu" id="main-nav">
             <div class="nav-card" onclick="ui.open('stage-panel')">
                 <div class="box-icon" style="color:#0ff;"></div>
-                <span>SORTIE<br>MISSION</span>
+                <span>SORTIE</span>
             </div>
             <div class="nav-card" onclick="ui.open('shop-panel')">
                 <div class="box-icon" style="color:#ffd700;"></div>
-                <span>UPGRADE<br>HANGAR</span>
+                <span>HANGAR</span>
             </div>
             <div class="nav-card" onclick="ui.open('manual-panel')">
                 <div class="box-icon" style="color:#fff;"></div>
-                <span>DATA<br>LOG</span>
+                <span>MANUAL</span>
             </div>
         </div>
 
         <div id="stage-panel" class="panel">
-            <h2>OPERATIONAL SECTORS</h2>
+            <h2>SECTOR SELECT</h2>
             <div class="stage-grid" id="stage-list"></div>
-            <button onclick="ui.back()">RETURN TO BRIDGE</button>
+            <button onclick="ui.back()">BACK</button>
         </div>
 
         <div id="shop-panel" class="panel">
             <h2 id="shop-credits" style="color:#ffd700;">CREDITS: 0</h2>
-            <div style="margin-bottom: 20px;">
-                <button onclick="shop.render('weapon')">WEAPONS</button>
-                <button onclick="shop.render('support')">SUPPORT</button>
-            </div>
+            <div><button onclick="shop.render('weapon')">WEAPONS</button><button onclick="shop.render('support')">SUPPORT</button></div>
             <div class="stage-grid" id="shop-list"></div>
-            <button onclick="ui.back()">RETURN TO BRIDGE</button>
+            <button onclick="ui.back()">BACK</button>
         </div>
 
         <div id="manual-panel" class="panel">
-            <h2>SYSTEM MANUAL</h2>
-            <div style="font-family:'Noto Sans JP'; line-height:2.8; font-size:16px; color:#bbb; text-align:left; width:85%;">
-                ・【移動】マウスまたはタッチ：自機の追従<br>
-                ・【攻撃】クリック/ホールド：ショット連射<br>
-                ・【自動ボム】被弾時、ストックがあれば自動で発動し無敵化<br>
-                ・【道中フェーズ】Phase1(通常) → Phase2(精鋭) → BOSSの三段階構成<br>
-                ・【クリアボーナス】残りHPに応じてリザルトで追加クレジット獲得
+            <h2>MANUAL</h2>
+            <div style="font-family:'Noto Sans JP'; line-height:2.5; font-size:15px; color:#bbb; text-align:left;">
+                ・【移動】マウス【攻撃】クリック<br>
+                ・【ボム】自動発動（被弾時）<br>
+                ・【クリア】残りHPでボーナス加算
             </div>
-            <button onclick="ui.back()">ACKNOWLEDGED</button>
+            <button onclick="ui.back()">OK</button>
         </div>
     </div>
 
     <div id="briefing-modal">
-        <h2 id="br-title" style="font-size:18px;"></h2>
-        <div id="br-desc" style="font-family:'Noto Sans JP'; font-size:14px; color:#ccc; margin:30px 0; border-left:5px solid #fff; padding-left:25px; line-height:2;"></div>
-        <div style="font-size:11px; color:#ffd700; margin-bottom:30px;">ESTIMATED REWARD: <span id="br-reward"></span> CREDITS</div>
-        <div style="display:flex; justify-content:space-between;">
-            <button onclick="document.getElementById('briefing-modal').style.display='none'">ABORT</button>
-            <button id="br-start-btn" style="border-color:#0f0; color:#0f0;">LAUNCH</button>
-        </div>
+        <h2 id="br-title"></h2>
+        <div id="br-desc" style="font-family:'Noto Sans JP'; font-size:14px; color:#ccc; margin:20px 0; border-left:5px solid #fff; padding-left:20px;"></div>
+        <div style="font-size:11px; color:#ffd700; margin-bottom:20px;">REWARD: <span id="br-reward"></span> G</div>
+        <div style="display:flex; justify-content:space-between;"><button onclick="document.getElementById('briefing-modal').style.display='none'">CANCEL</button><button id="br-start-btn" style="color:#0f0;">LAUNCH</button></div>
     </div>
 
     <canvas id="game"></canvas>
 
     <script>
-        /* =========================================
-           3. GAME ENGINE CORE
-           ========================================= */
         const canvas = document.getElementById('game');
         const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
 
-        // --- GLOBAL STATE ---
-        let gameActive = false;
-        let score = 0;
-        let hp = 100;
-        let frame = 0;
-        let charge = 0;
-        let invul = 0;
-        let currentPhase = 1; // 1:Normal, 2:Elite, 3:Boss
-        
+        let gameActive = false, score = 0, hp = 100, frame = 0, charge = 0, invul = 0, currentPhase = 1;
         let player = { x: canvas.width/2, y: canvas.height/2, tx: canvas.width/2, ty: canvas.height/2 };
-        let bullets = [], eBullets = [], enemies = [], particles = [], boss = null;
-        let isClicking = false;
-        let currentStageData = null;
+        let bullets = [], eBullets = [], enemies = [], particles = [], boss = null, isClicking = false, currentStageData = null;
 
-        // --- PERSISTENT DATA ---
-        const STORAGE_KEY = "MINAMI_ULTIMATE_2026";
-        let user = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
-            gold: 0, bombs: 2, cleared: [], skin: '#fff', licenses: ['#fff']
-        };
+        const STORAGE_KEY = "MINAMI_ULTIMATE_2026_FIXED";
+        let user = JSON.parse(localStorage.getItem(STORAGE_KEY)) || { gold: 0, bombs: 2, cleared: [], skin: '#fff', licenses: ['#fff'] };
 
         const saveUserData = () => {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
@@ -184,50 +145,40 @@
             document.getElementById('shop-credits').innerText = `CREDITS: ${user.gold}`;
         };
 
-        // =========================================
-        /* 4. DATA DEFINITIONS (STAGES & WEAPONS) */
-        // =========================================
         const STAGES = {
-            'SB': { n: 'ST=SB', c: '#ccaa00', d: 1.0, r: 2500, bh: 1000, g: 'VIB', s: false, desc: '総武線セクター。局地的な激しい振動を検知。' },
-            'KT': { n: 'ST=KT', c: '#0088cc', d: 1.2, r: 3500, bh: 1500, g: 'WTR', s: false, desc: '京浜東北線セクター。高水圧エリアにつき機動力が低下。' },
-            'SK': { n: 'ST=SK', c: '#008844', d: 1.5, r: 4500, bh: 2000, g: 'FOG', s: false, desc: '埼京線セクター。濃霧による視界不良に注意せよ。' },
-            'KY': { n: 'ST=KY', c: '#aa0022', d: 2.0, r: 6000, bh: 3000, g: 'WND', s: false, desc: '京葉線セクター。海沿いの強風が機体を左へ流す。' },
-            'PK': { n: 'ST=PK', c: '#cc5588', d: 2.5, r: 8000, bh: 4500, g: 'REV', s: false, desc: '各停セクター。制御系に異常。左右の操作が反転する。' },
-            'JB': { n: 'ST=JB', c: '#006666', d: 3.0, r: 10000, bh: 6000, g: 'JAM', s: false, desc: '常磐線セクター。強力な妨害電波により敵弾の視認が困難。' },
-            'S1': { n: 'ST=S1', c: '#6600cc', d: 3.5, r: 15000, bh: 8000, g: 'WRP', s: false, desc: '地下セクター1。時空の歪みによる瞬間移動現象。' },
-            'S2': { n: 'ST=S2', c: '#cc00cc', d: 4.2, r: 20000, bh: 12000, g: 'PSN', s: false, desc: '地下セクター2。腐食性ガスが装甲を徐々に削り取る。' },
-            'S3': { n: 'ST=S3', c: '#00cccc', d: 5.0, r: 30000, bh: 18000, g: 'GRV', s: false, desc: '地下セクター3。超重力圏。全回避行動が制限される。' },
-            'F1': { n: 'F15-ALPHA', c: '#778', d: 8.0, r: 50000, bh: 30000, g: 'SPD', s: true, desc: 'F15部隊：α小隊。高速迎撃システムの突破。' },
-            'F2': { n: 'F15-BETA', c: '#778', d: 10.0, r: 70000, bh: 45000, g: 'SPD', s: true, desc: 'F15部隊：β小隊。高密度弾幕網の展開を確認。' },
-            'F3': { n: 'F15-GAMMA', c: '#778', d: 13.0, r: 100000, bh: 65000, g: 'SPD', s: true, desc: 'F15部隊：γ小隊。エースパイロットによる猛攻。' },
-            'F4': { n: 'F15-DELTA', c: '#778', d: 16.0, r: 150000, bh: 90000, g: 'SPD', s: true, desc: 'F15部隊：δ小隊。最終防衛ラインの死守部隊。' },
-            'F5': { n: 'F15-EPSILON', c: '#b0c', d: 20.0, r: 250000, bh: 150000, g: 'SPD', s: true, desc: 'F15部隊：司令官。最速かつ最強の敵機を堕とせ。' },
-            'CO': { n: 'ST=CO', c: '#ff6600', d: 50.0, r: 1000000, bh: 500000, g: 'ULT', s: true, desc: '中央線セクター：超鬼むず。オレンジの地獄。生存不能。' }
+            'SB': { n: 'ST=SB', c: '#ccaa00', d: 1.0, r: 2500, bh: 1000, g: 'VIB', s: false, desc: '総武線：激しい振動。' },
+            'KT': { n: 'ST=KT', c: '#0088cc', d: 1.2, r: 3500, bh: 1500, g: 'WTR', s: false, desc: '京浜東北線：水圧エリア。' },
+            'SK': { n: 'ST=SK', c: '#008844', d: 1.5, r: 4500, bh: 2000, g: 'FOG', s: false, desc: '埼京線：視界不良。' },
+            'KY': { n: 'ST=KY', c: '#aa0022', d: 2.0, r: 6000, bh: 3000, g: 'WND', s: false, desc: '京葉線：左へ流される強風。' },
+            'PK': { n: 'ST=PK', c: '#cc5588', d: 2.5, r: 8000, bh: 4500, g: 'REV', s: false, desc: '各停：左右操作反転。' },
+            'JB': { n: 'ST=JB', c: '#006666', d: 3.0, r: 10000, bh: 6000, g: 'JAM', s: false, desc: '常磐線：敵弾の視認困難。' },
+            'S1': { n: 'ST=S1', c: '#6600cc', d: 3.5, r: 15000, bh: 8000, g: 'WRP', s: false, desc: '地下1：ワープ現象。' },
+            'S2': { n: 'ST=S2', c: '#cc00cc', d: 4.2, r: 20000, bh: 12000, g: 'PSN', s: false, desc: '地下2：腐食ガス。' },
+            'S3': { n: 'ST=S3', c: '#00cccc', d: 5.0, r: 30000, bh: 18000, g: 'GRV', s: false, desc: '地下3：重力。' },
+            'F1': { n: 'F15-ALPHA', c: '#778', d: 8, r: 50000, bh: 30000, g: 'SPD', s: true, desc: 'F15α：高速戦闘。' },
+            'F2': { n: 'F15-BETA', c: '#778', d: 10, r: 70000, bh: 45000, g: 'SPD', s: true, desc: 'F15β：高密度弾幕。' },
+            'F3': { n: 'F15-GAMMA', c: '#778', d: 13, r: 100000, bh: 65000, g: 'SPD', s: true, desc: 'F15γ：エース機。' },
+            'F4': { n: 'F15-DELTA', c: '#778', d: 16, r: 150000, bh: 90000, g: 'SPD', s: true, desc: 'F15δ：最終防衛。' },
+            'F5': { n: 'F15-EPSILON', c: '#b0c', d: 20, r: 250000, bh: 150000, g: 'SPD', s: true, desc: 'F15司令官。' },
+            'CO': { n: 'ST=CO', c: '#ff6600', d: 50, r: 1000000, bh: 500000, g: 'ULT', s: true, desc: '中央線：オレンジの地獄。' }
         };
 
         const WEAPONS = [
-            { id: '#fff', n: 'BASIC-W', cost: 0, p: 2, t: 'std' },
+            { id: '#fff', n: 'BASIC', cost: 0, p: 2, t: 'std' },
             { id: '#0f0', n: 'V-SPREAD', cost: 8000, p: 1.8, t: 'v' },
-            { id: '#0ff', n: 'C-RAPID', cost: 15000, p: 1.5, t: 'fast' },
-            { id: '#ff0', n: 'Y-HEAVY', cost: 25000, p: 6, t: 'std' },
-            { id: '#f0f', n: 'M-WAVE', cost: 40000, p: 2.2, t: 'wave' },
-            { id: '#55f', n: 'B-LASER', cost: 70000, p: 12, t: 'std' },
-            { id: '#f80', n: 'C-ORANGE', cost: 120000, p: 5, t: 'v' },
+            { id: '#0ff', n: 'RAPID', cost: 15000, p: 1.5, t: 'fast' },
+            { id: '#ff0', n: 'HEAVY', cost: 25000, p: 6, t: 'std' },
+            { id: '#f0f', n: 'WAVE', cost: 40000, p: 2.2, t: 'wave' },
             { id: '#a02', n: 'KY-RED', cost: 200000, p: 25, t: 'std' },
-            { id: '#333', n: 'VOID', cost: 500000, p: 60, t: 'std' },
             { id: '#fff2', n: 'ZENITH', cost: 1000000, p: 15, t: 'all' }
         ];
 
-        // =========================================
-        /* 5. UI & SHOP LOGIC */
-        // =========================================
         const ui = {
             open: (id) => {
                 document.getElementById('main-nav').style.display = 'none';
                 document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
                 document.getElementById(id).classList.add('active');
                 if(id === 'stage-panel') ui.renderStages();
-                if(id === 'shop-panel') shop.render('weapon');
             },
             back: () => {
                 document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
@@ -237,27 +188,22 @@
                 const list = document.getElementById('stage-list'); list.innerHTML = '';
                 const baseCleared = Object.keys(STAGES).filter(k => !STAGES[k].s && user.cleared.includes(k)).length;
                 const secretUnlocked = baseCleared >= 9;
-
                 Object.keys(STAGES).forEach((key, idx) => {
-                    const s = STAGES[key];
-                    const isLocked = s.s && !secretUnlocked;
+                    const s = STAGES[key]; const isLocked = s.s && !secretUnlocked;
                     const item = document.createElement('div');
                     item.className = `grid-item ${isLocked ? 'locked' : ''} ${user.cleared.includes(key) ? 'cleared' : ''}`;
-                    item.style.color = isLocked ? '#222' : s.c;
-                    item.style.borderColor = isLocked ? '#222' : s.c;
+                    item.style.color = isLocked ? '#222' : s.c; item.style.borderColor = isLocked ? '#222' : s.c;
                     item.innerHTML = `${idx + 1}<br>${s.n}`;
-                    if(!isLocked) item.onclick = () => ui.showBriefing(key);
+                    if(!isLocked) item.onclick = () => {
+                        currentStageData = { ...s, id: key };
+                        document.getElementById('br-title').innerText = s.n;
+                        document.getElementById('br-desc').innerText = s.desc;
+                        document.getElementById('br-reward').innerText = s.r;
+                        document.getElementById('briefing-modal').style.display = 'flex';
+                        document.getElementById('br-start-btn').onclick = engine.start;
+                    };
                     list.appendChild(item);
                 });
-            },
-            showBriefing: (key) => {
-                currentStageData = { ...STAGES[key], id: key };
-                document.getElementById('br-title').innerText = `MISSION: ${STAGES[key].n}`;
-                document.getElementById('br-title').style.color = STAGES[key].c;
-                document.getElementById('br-desc').innerText = STAGES[key].desc;
-                document.getElementById('br-reward').innerText = STAGES[key].r;
-                document.getElementById('briefing-modal').style.display = 'flex';
-                document.getElementById('br-start-btn').onclick = engine.start;
             }
         };
 
@@ -268,8 +214,7 @@
                     WEAPONS.forEach(w => {
                         const owned = user.licenses.includes(w.id);
                         const item = document.createElement('div');
-                        item.className = 'grid-item';
-                        item.style.color = (w.id === '#333') ? '#fff' : w.id;
+                        item.className = 'grid-item'; item.style.color = w.id==='#fff2'?'#fff':w.id;
                         item.innerHTML = `${w.n}<br>${owned ? 'EQUIP' : w.cost + 'G'}`;
                         item.onclick = () => {
                             if(!owned && user.gold >= w.cost) { user.gold -= w.cost; user.licenses.push(w.id); saveUserData(); shop.render('weapon'); }
@@ -278,266 +223,103 @@
                         list.appendChild(item);
                     });
                 } else {
-                    const items = [
-                        { n: 'HULL REPAIR', c: 3000, action: () => { hp = 100; alert("REPAIRED"); } },
-                        { n: 'EXTRA BOMB', c: 5000, action: () => { user.bombs++; saveUserData(); alert("BOMB ADDED"); } }
-                    ];
-                    items.forEach(i => {
-                        const item = document.createElement('div');
-                        item.className = 'grid-item';
-                        item.innerHTML = `${i.n}<br>${i.c}G`;
-                        item.onclick = () => { if(user.gold >= i.c) { user.gold -= i.c; i.action(); saveUserData(); } };
-                        list.appendChild(item);
-                    });
+                    const box = document.createElement('div'); box.className = 'grid-item'; box.innerHTML = "EXTRA BOMB<br>5000G";
+                    box.onclick = () => { if(user.gold >= 5000) { user.gold -= 5000; user.bombs++; saveUserData(); alert("BOMB ADDED"); } };
+                    list.appendChild(box);
                 }
             }
         };
 
-        // =========================================
-        /* 6. GAMEPLAY LOGIC */
-        // =========================================
         const engine = {
             start: () => {
                 document.getElementById('briefing-modal').style.display = 'none';
                 document.getElementById('overlay').style.display = 'none';
                 document.getElementById('hud').style.display = 'block';
-                
                 gameActive = true; score = 0; hp = 100; frame = 0; charge = 0; invul = 0;
                 currentPhase = 1; bullets = []; eBullets = []; enemies = []; particles = []; boss = null;
-                player.x = canvas.width/2; player.y = canvas.height/2;
-
-                engine.flashMsg("PHASE 1: INFILTRATION", 2000);
-                engine.loop();
+                engine.flashMsg("PHASE 1: START", 2000); engine.loop();
             },
             flashMsg: (txt, dur) => {
-                const lyr = document.getElementById('msg-layer');
-                const t = document.getElementById('msg-text');
-                t.innerText = txt; lyr.style.display = 'block';
-                setTimeout(() => lyr.style.display = 'none', dur);
+                const lyr = document.getElementById('msg-layer'); const t = document.getElementById('msg-text');
+                t.innerText = txt; lyr.style.display = 'block'; setTimeout(() => lyr.style.display = 'none', dur);
             },
-            spawnParticle: (x, y, color, count = 6) => {
-                for(let i=0; i<count; i++) {
-                    particles.push({
-                        x, y, 
-                        vx: (Math.random()-0.5)*12, 
-                        vy: (Math.random()-0.5)*12, 
-                        a: 1, 
-                        c: color 
-                    });
-                }
-            },
-            useBomb: () => {
-                user.bombs--;
-                invul = 150; // 2.5s invincibility
-                eBullets = [];
-                charge = 0;
-                saveUserData();
-                engine.flashMsg("HYPER BOMB DEPLOYED", 1500);
-                engine.spawnParticle(player.x, player.y, "#0ff", 40);
-            },
-            end: (success) => {
-                gameActive = false;
-                const bonus = success ? Math.floor(hp * 50) : 0;
-                if(success) {
-                    if(!user.cleared.includes(currentStageData.id)) user.cleared.push(currentStageData.id);
-                    user.gold += currentStageData.r + bonus;
-                }
-                saveUserData();
-                engine.flashMsg(success ? `MISSION CLEAR\nBONUS: +${bonus}` : "MISSION FAILED", 4000);
-                setTimeout(() => location.reload(), 4000);
-            },
-            update: () => {
-                frame++;
-                if(invul > 0) invul--;
-
-                // Phase Management
-                if(currentPhase === 1 && score > 15000) {
-                    currentPhase = 2;
-                    engine.flashMsg("PHASE 2: ELITE SQUADRON", 2500);
-                }
+            loop: () => {
+                if(!gameActive) return;
+                frame++; if(invul > 0) invul--;
+                if(currentPhase === 1 && score > 15000) { currentPhase = 2; engine.flashMsg("PHASE 2: ELITE", 2000); }
                 if(currentPhase === 2 && score > 40000 && !boss) {
-                    currentPhase = 3;
-                    engine.flashMsg("WARNING: BOSS APPROACHING", 3500);
-                    boss = { 
-                        x: canvas.width/2, y: -250, 
-                        hp: currentStageData.bh, 
-                        maxHp: currentStageData.bh,
-                        size: 180, vy: 1.2, p2: false 
-                    };
+                    currentPhase = 3; engine.flashMsg("BOSS WARNING", 3000);
+                    boss = { x: canvas.width/2, y: -200, hp: currentStageData.bh, maxHp: currentStageData.bh, size: 160, vy: 1, p2: false };
                     enemies.push(boss);
                 }
 
-                // Player Movement (Gimmick Integration)
-                let moveSpeed = 0.22;
-                if(currentStageData.g === 'GRV') moveSpeed = 0.06;
-                if(currentStageData.g === 'SPD') moveSpeed = 0.48;
+                let mv = (currentStageData.g === 'GRV' ? 0.05 : (currentStageData.g === 'SPD' ? 0.45 : 0.2));
+                let tx = (currentStageData.g === 'REV' ? canvas.width - player.tx : player.tx);
+                let ty = (currentStageData.g === 'REV' ? canvas.height - player.ty : player.ty);
+                player.x += (tx - player.x) * mv; player.y += (ty - player.y) * mv;
+                if(currentStageData.g === 'WND') player.x -= 3;
+                if(currentStageData.g === 'PSN' && frame % 60 === 0) hp -= 0.6;
 
-                let targetX = player.tx;
-                let targetY = player.ty;
-                if(currentStageData.g === 'REV') { targetX = canvas.width - targetX; targetY = canvas.height - targetY; }
-                
-                player.x += (targetX - player.x) * moveSpeed;
-                player.y += (targetY - player.y) * moveSpeed;
-
-                if(currentStageData.g === 'WND') player.x -= 3.5;
-                if(currentStageData.g === 'VIB') { player.x += (Math.random()-0.5)*18; player.y += (Math.random()-0.5)*18; }
-                if(currentStageData.g === 'PSN' && frame % 60 === 0) hp -= 0.8;
-
-                // Weapons Logic
                 if(isClicking && frame % (user.skin === '#0ff' ? 3 : 6) === 0) {
                     const w = WEAPONS.find(v => v.id === user.skin);
-                    if(w.t === 'v') {
-                        bullets.push({ x: player.x, y: player.y-25, vx: -4, vy: -28, p: w.p });
-                        bullets.push({ x: player.x, y: player.y-25, vx: 0, vy: -30, p: w.p });
-                        bullets.push({ x: player.x, y: player.y-25, vx: 4, vy: -28, p: w.p });
-                    } else if(w.t === 'wave') {
-                        bullets.push({ x: player.x, y: player.y-25, vx: Math.sin(frame/4)*12, vy: -28, p: w.p });
-                    } else if(w.t === 'all') {
-                        for(let a=0; a<Math.PI*2; a+=Math.PI/4) {
-                            bullets.push({ x: player.x, y: player.y, vx: Math.cos(a)*15, vy: Math.sin(a)*15, p: w.p });
-                        }
-                    } else {
-                        bullets.push({ x: player.x, y: player.y-25, vx: 0, vy: -32, p: w.p });
-                    }
+                    if(w.t === 'v') { bullets.push({ x: player.x - 10, y: player.y - 20, vx: -3, vy: -25, p: w.p }); bullets.push({ x: player.x + 10, y: player.y - 20, vx: 3, vy: -25, p: w.p }); }
+                    else if(w.t === 'all') { for(let a=0; a<Math.PI*2; a+=Math.PI/4) bullets.push({ x: player.x, y: player.y, vx: Math.cos(a)*15, vy: Math.sin(a)*15, p: w.p }); }
+                    else bullets.push({ x: player.x, y: player.y - 20, vx: 0, vy: -30, p: w.p });
                 }
 
-                // Enemy Spawning
                 if(currentPhase < 3 && frame % (currentPhase === 1 ? 25 : 12) === 0) {
-                    enemies.push({
-                        x: Math.random() * canvas.width,
-                        y: -60,
-                        hp: (currentPhase === 1 ? 25 : 85) * currentStageData.d,
-                        size: (currentPhase === 1 ? 40 : 65),
-                        vy: (2.5 + currentStageData.d) * (currentPhase === 2 ? 1.4 : 1),
-                        elite: currentPhase === 2
-                    });
+                    enemies.push({ x: Math.random() * canvas.width, y: -50, hp: (currentPhase === 1 ? 25 : 80) * currentStageData.d, size: (currentPhase === 1 ? 40 : 60), vy: 3 + currentStageData.d, elite: currentPhase === 2 });
                 }
 
-                // Collision & Logic
                 bullets.forEach((b, bi) => {
                     b.x += b.vx || 0; b.y += b.vy;
                     enemies.forEach((e, ei) => {
                         if(Math.hypot(b.x - e.x, b.y - e.y) < e.size) {
                             e.hp -= b.p; bullets.splice(bi, 1);
-                            engine.spawnParticle(b.x, b.y, user.skin, 4);
                             if(e.hp <= 0) {
-                                if(e === boss) engine.end(true);
-                                else {
-                                    engine.spawnParticle(e.x, e.y, currentStageData.c, 10);
-                                    enemies.splice(ei, 1);
-                                    score += (e.elite ? 2000 : 600);
-                                    user.gold += (e.elite ? 50 : 20);
-                                    charge += 12;
-                                    if(charge >= 100) { charge = 0; user.bombs++; }
-                                    saveUserData();
-                                }
+                                if(e === boss) { gameActive = false; const bonus = Math.floor(hp * 50); if(!user.cleared.includes(currentStageData.id)) user.cleared.push(currentStageData.id); user.gold += currentStageData.r + bonus; saveUserData(); engine.flashMsg("CLEAR!", 3000); setTimeout(() => location.reload(), 3000); }
+                                else { enemies.splice(ei, 1); score += (e.elite ? 2000 : 500); user.gold += 20; charge += 10; if(charge >= 100) { charge = 0; user.bombs++; } saveUserData(); }
                             }
                         }
                     });
-                    if(b.y < -100 || b.y > canvas.height + 100) bullets.splice(bi, 1);
+                    if(b.y < -100) bullets.splice(bi, 1);
                 });
 
                 enemies.forEach(e => {
-                    e.y += e.vy;
-                    if(e === boss && e.y > 180) e.vy = 0;
-                    
-                    // Boss Phase 2 Transition
-                    if(e === boss && !e.p2 && e.hp < e.maxHp / 2) {
-                        e.p2 = true;
-                        engine.flashMsg("BOSS PHASE 2: LIMITER RELEASE", 2500);
-                    }
-
-                    const rate = (e === boss ? (e.p2 ? 0.25 : 0.12) : (e.elite ? 0.12 : 0.06)) * currentStageData.d;
+                    e.y += e.vy; if(e === boss && e.y > 150) e.vy = 0;
+                    if(e === boss && !e.p2 && e.hp < e.maxHp / 2) { e.p2 = true; engine.flashMsg("PHASE 2", 2000); }
+                    let rate = (e === boss ? 0.15 : 0.06) * currentStageData.d;
                     if(Math.random() < rate) {
-                        if(e === boss && e.p2) {
-                            for(let a=0; a<Math.PI*2; a+=Math.PI/8) {
-                                eBullets.push({ x: e.x, y: e.y, vx: Math.cos(a)*10, vy: Math.sin(a)*10 });
-                            }
-                        } else {
-                            const bSpd = (6 * currentStageData.d) * (e.elite ? 1.3 : 1);
-                            eBullets.push({ x: e.x, y: e.y, vx: 0, vy: bSpd });
-                        }
+                        if(e === boss && e.p2) { for(let a=0; a<Math.PI*2; a+=Math.PI/6) eBullets.push({ x: e.x, y: e.y, vx: Math.cos(a)*8, vy: Math.sin(a)*8 }); }
+                        else eBullets.push({ x: e.x, y: e.y, vx: 0, vy: 6 * currentStageData.d });
                     }
-                    if(e.y > canvas.height + 200) enemies.splice(enemies.indexOf(e), 1);
                 });
 
                 eBullets.forEach((eb, ebi) => {
                     eb.x += eb.vx || 0; eb.y += eb.vy;
-                    if(invul <= 0 && Math.hypot(eb.x - player.x, eb.y - player.y) < 22) {
-                        if(user.bombs > 0) engine.useBomb();
-                        else { hp -= 15; eBullets.splice(ebi, 1); if(hp <= 0) engine.end(false); }
+                    if(invul <= 0 && Math.hypot(eb.x - player.x, eb.y - player.y) < 20) {
+                        if(user.bombs > 0) { user.bombs--; invul = 150; eBullets = []; saveUserData(); engine.flashMsg("AUTO BOMB", 1000); }
+                        else { hp -= 15; if(hp <= 0) { gameActive = false; engine.flashMsg("FAILED", 3000); setTimeout(() => location.reload(), 3000); } }
                     }
-                    if(eb.y > canvas.height + 50 || eb.y < -50) eBullets.splice(ebi, 1);
+                    if(eb.y > canvas.height) eBullets.splice(ebi, 1);
                 });
 
-                particles.forEach((p, pi) => { p.x += p.vx; p.y += p.vy; p.a -= 0.02; if(p.a <= 0) particles.splice(pi, 1); });
+                ctx.fillStyle = "#000"; ctx.fillRect(0,0,canvas.width,canvas.height);
+                if(currentStageData.g==='FOG'){ctx.fillStyle="rgba(255,255,255,0.15)";ctx.fillRect(0,0,canvas.width,canvas.height);}
+                if(invul%4 < 2) { ctx.fillStyle = user.skin; ctx.beginPath(); ctx.moveTo(player.x, player.y-30); ctx.lineTo(player.x+20, player.y+15); ctx.lineTo(player.x-20, player.y+15); ctx.fill(); }
+                enemies.forEach(e => { ctx.strokeStyle = (e===boss && e.p2) ? "#f00" : (e.elite ? "#f0f" : currentStageData.c); ctx.lineWidth = e===boss?5:2; ctx.strokeRect(e.x-e.size/2, e.y-e.size/2, e.size, e.size); if(e===boss){ctx.fillStyle="#222";ctx.fillRect(e.x-100,e.y-120,200,10);ctx.fillStyle="#f00";ctx.fillRect(e.x-100,e.y-120,200*(e.hp/e.maxHp),10);} });
+                bullets.forEach(b => { ctx.fillStyle = user.skin; ctx.fillRect(b.x-2, b.y, 4, 15); });
+                eBullets.forEach(eb => { ctx.fillStyle = "#f0f"; ctx.beginPath(); ctx.arc(eb.x, eb.y, 6, 0, 7); ctx.fill(); });
 
-                // Update HUD
-                document.getElementById('hp-bar').style.width = Math.max(0, hp) + "%";
+                document.getElementById('hp-bar').style.width = hp + "%";
                 document.getElementById('bomb-bar').style.width = charge + "%";
                 document.getElementById('score-display').innerText = `SCORE: ${score.toString().padStart(6, '0')}`;
-            },
-            draw: () => {
-                ctx.fillStyle = "#000"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
-                if(currentStageData.g === 'FOG') {
-                    ctx.fillStyle = "rgba(255,255,255,0.18)"; ctx.fillRect(0, 0, canvas.width, canvas.height);
-                }
-
-                // Particles
-                particles.forEach(p => {
-                    ctx.fillStyle = `rgba(${p.c === '#fff' ? '255,255,255' : '0,255,255'}, ${p.a})`;
-                    ctx.fillRect(p.x, p.y, 4, 4);
-                });
-
-                // Player
-                if(invul % 4 < 2) {
-                    ctx.shadowBlur = 20; ctx.shadowColor = user.skin;
-                    ctx.fillStyle = user.skin === '#333' ? '#444' : user.skin;
-                    ctx.beginPath();
-                    ctx.moveTo(player.x, player.y - 35);
-                    ctx.lineTo(player.x + 25, player.y + 20);
-                    ctx.lineTo(player.x - 25, player.y + 20);
-                    ctx.fill();
-                    ctx.shadowBlur = 0;
-                }
-
-                // Enemies
-                enemies.forEach(e => {
-                    ctx.strokeStyle = (e === boss && e.p2) ? "#f00" : (e.elite ? "#f0f" : currentStageData.c);
-                    ctx.lineWidth = (e === boss) ? 6 : 3;
-                    ctx.strokeRect(e.x - e.size/2, e.y - e.size/2, e.size, e.size);
-                    
-                    if(e === boss) {
-                        ctx.fillStyle = "#222"; ctx.fillRect(e.x - 100, e.y - 130, 200, 14);
-                        ctx.fillStyle = e.p2 ? "#f00" : "#0f0";
-                        ctx.fillRect(e.x - 100, e.y - 130, 200 * (e.hp / e.maxHp), 14);
-                    }
-                });
-
-                // Projectiles
-                bullets.forEach(b => { ctx.fillStyle = user.skin; ctx.fillRect(b.x - 3, b.y, 6, 25); });
-                eBullets.forEach(eb => {
-                    ctx.fillStyle = (currentStageData.g === 'JAM') ? "rgba(255,0,255,0.3)" : "#f0f";
-                    ctx.beginPath(); ctx.arc(eb.x, eb.y, 8, 0, Math.PI*2); ctx.fill();
-                });
-            },
-            loop: () => {
-                if(gameActive) {
-                    engine.update();
-                    engine.draw();
-                    requestAnimationFrame(engine.loop);
-                }
+                requestAnimationFrame(engine.loop);
             }
         };
 
-        // --- INPUTS ---
-        window.onmousedown = () => isClicking = true;
-        window.onmouseup = () => isClicking = false;
+        window.onmousedown = () => isClicking = true; window.onmouseup = () => isClicking = false;
         window.onmousemove = e => { player.tx = e.clientX; player.ty = e.clientY; };
-        window.ontouchmove = e => { player.tx = e.touches[0].clientX; player.ty = e.touches[0].clientY; };
-
-        // --- INITIALIZE ---
         saveUserData();
     </script>
 </body>
