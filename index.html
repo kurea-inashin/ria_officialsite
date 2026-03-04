@@ -2,325 +2,847 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>MINAMI PROJECT 2026: TRUE FULL-SPEC FIXED</title>
+    <title>MINAMI PROJECT 2026: THE ETERNAL 600+ EDITION</title>
     <style>
-        /* =========================================
-           1. CSS DESIGN & UI
-           ========================================= */
+        /* =================================================================
+           1. CORE VISUAL SYSTEM
+           ================================================================= */
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+JP:wght@900&display=swap');
         
-        body { margin: 0; background: #000; color: #fff; font-family: 'Press Start 2P', cursive; overflow: hidden; user-select: none; }
-        canvas { display: block; background: #000; }
-
-        .ui-root { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 50; }
-        #hud { display: none; padding: 30px; background: linear-gradient(180deg, rgba(0,0,0,0.8), transparent); }
-        .score-box { font-size: 24px; color: #0ff; text-shadow: 0 0 15px #0ff; margin-bottom: 15px; }
-        
-        .bar-container { margin: 10px 0; }
-        .bar-label { font-size: 9px; color: #aaa; margin-bottom: 5px; }
-        .bar-frame { width: 300px; height: 16px; background: rgba(255,255,255,0.1); border: 2px solid #fff; position: relative; }
-        #hp-bar { height: 100%; background: linear-gradient(90deg, #ff0055, #ff88aa); width: 100%; transition: 0.2s; }
-        #bomb-bar { height: 100%; background: linear-gradient(90deg, #00ccff, #88ffff); width: 0%; }
-        
-        .stats-info { font-size: 11px; color: #ffd700; margin-top: 10px; display: flex; gap: 20px; }
-
-        #overlay { position: absolute; inset: 0; background: radial-gradient(circle, #001, #000); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; pointer-events: auto; }
-        .title-glitch { font-size: 32px; letter-spacing: 12px; margin-bottom: 60px; text-shadow: 3px 0 #f05, -3px 0 #0cf; }
-        
-        .nav-menu { display: flex; gap: 30px; }
-        .nav-card { 
-            width: 220px; height: 280px; border: 4px solid #fff; background: rgba(255,255,255,0.02);
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            cursor: pointer; transition: 0.3s;
+        body { 
+            margin: 0; 
+            background: #000; 
+            color: #fff; 
+            font-family: 'Press Start 2P', cursive; 
+            overflow: hidden; 
+            user-select: none; 
         }
-        .nav-card:hover { background: #fff; color: #000; transform: translateY(-15px); }
-        .nav-card .box-icon { width: 50px; height: 50px; border: 3px solid currentColor; margin-bottom: 30px; position: relative; }
-        .nav-card .box-icon::after { content: ''; position: absolute; inset: 12px; background: currentColor; }
-        
-        .panel { display: none; flex-direction: column; align-items: center; width: 92%; height: 88%; background: #000; border: 5px solid #fff; padding: 40px; overflow-y: auto; box-sizing: border-box; }
-        .panel.active { display: flex; }
-        .stage-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 20px; width: 100%; margin: 30px 0; }
-        
-        .grid-item { border: 2px solid #444; padding: 25px 10px; text-align: center; font-size: 10px; cursor: pointer; position: relative; transition: 0.2s; background: #050505; }
-        .grid-item:hover:not(.locked) { border-color: #fff; background: rgba(255,255,255,0.1); }
-        .grid-item.locked { opacity: 0.2; cursor: not-allowed; border-style: dashed; }
-        .grid-item.cleared::before { content: 'COMPLETE'; position: absolute; top: 5px; right: 5px; color: #0f0; font-size: 7px; }
 
-        #briefing-modal { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 550px; background: #000; border: 6px solid #fff; padding: 40px; display: none; flex-direction: column; z-index: 200; box-shadow: 0 0 100px #000; }
-        #msg-layer { position: absolute; top: 40%; width: 100%; text-align: center; pointer-events: none; z-index: 60; display: none; }
-        #msg-text { font-size: 36px; color: #f00; text-shadow: 0 0 20px #f00; font-weight: 900; }
+        canvas { 
+            display: block; 
+            background: radial-gradient(circle at center, #000510 0%, #000 100%);
+        }
 
-        button { padding: 15px 30px; border: 3px solid #fff; background: none; color: #fff; font-family: 'Press Start 2P'; font-size: 11px; cursor: pointer; margin: 10px; transition: 0.1s; }
-        button:hover { background: #fff; color: #000; }
+        /* --- HIGH DEFINITION HUD --- */
+        .hud-layer {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        #game-hud {
+            display: none;
+            padding: 40px;
+            background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, transparent 100%);
+        }
+
+        .score-display {
+            font-size: 32px;
+            color: #0ff;
+            text-shadow: 0 0 20px #0ff;
+            margin-bottom: 25px;
+            letter-spacing: 4px;
+        }
+
+        .bar-group { margin: 15px 0; }
+        .bar-title { font-size: 10px; color: #888; margin-bottom: 8px; text-transform: uppercase; }
+        .bar-frame { 
+            width: 350px; height: 20px; 
+            background: rgba(255,255,255,0.05); 
+            border: 3px solid #fff; 
+            position: relative;
+            box-shadow: 0 0 15px rgba(255,255,255,0.1);
+        }
+        #hp-bar-fill { height: 100%; background: linear-gradient(90deg, #ff0055, #ff88aa); width: 100%; transition: width 0.3s; }
+        #bomb-bar-fill { height: 100%; background: linear-gradient(90deg, #00ccff, #88ffff); width: 0%; }
+
+        .meta-stats {
+            margin-top: 20px;
+            display: flex;
+            gap: 40px;
+            font-size: 14px;
+        }
+
+        /* --- FULL SCREEN OVERLAY --- */
+        #screen-overlay {
+            position: absolute;
+            inset: 0;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+        }
+
+        .main-title {
+            font-size: 40px;
+            letter-spacing: 20px;
+            margin-bottom: 80px;
+            text-shadow: 4px 0 #f05, -4px 0 #0cf;
+            animation: title-glow 2s infinite alternate;
+        }
+
+        @keyframes title-glow {
+            from { opacity: 0.8; transform: scale(1); }
+            to { opacity: 1; transform: scale(1.02); }
+        }
+
+        .menu-navigation {
+            display: flex;
+            gap: 40px;
+        }
+
+        .nav-button-card {
+            width: 250px;
+            height: 320px;
+            border: 5px solid #fff;
+            background: rgba(255,255,255,0.02);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .nav-button-card:hover {
+            background: #fff;
+            color: #000;
+            transform: translateY(-25px) scale(1.05);
+            box-shadow: 0 30px 60px rgba(255,255,255,0.2);
+        }
+
+        .card-icon {
+            width: 70px;
+            height: 70px;
+            border: 4px solid currentColor;
+            margin-bottom: 40px;
+            position: relative;
+        }
+
+        .card-icon::before {
+            content: '';
+            position: absolute;
+            inset: 15px;
+            background: currentColor;
+        }
+
+        /* --- CONTENT PANELS --- */
+        .content-panel {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            width: 95%;
+            height: 90%;
+            background: #000;
+            border: 8px solid #fff;
+            padding: 60px;
+            overflow-y: auto;
+            box-sizing: border-box;
+            box-shadow: inset 0 0 100px rgba(255,255,255,0.1);
+        }
+
+        .content-panel.is-visible { display: flex; }
+
+        .item-grid-container {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 25px;
+            width: 100%;
+            margin: 40px 0;
+        }
+
+        .grid-cell {
+            background: #080808;
+            border: 3px solid #333;
+            padding: 35px 15px;
+            text-align: center;
+            font-size: 12px;
+            cursor: pointer;
+            position: relative;
+            transition: 0.2s;
+        }
+
+        .grid-cell:hover:not(.is-locked) {
+            border-color: #fff;
+            background: rgba(255,255,255,0.1);
+            transform: scale(1.03);
+        }
+
+        .grid-cell.is-locked {
+            opacity: 0.15;
+            cursor: not-allowed;
+            border-style: dotted;
+        }
+
+        .grid-cell.is-cleared::after {
+            content: 'CLEARED';
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            color: #0f0;
+            font-size: 8px;
+        }
+
+        /* --- MODALS & ALERTS --- */
+        #mission-briefing {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 650px;
+            background: #000;
+            border: 10px solid #fff;
+            padding: 50px;
+            display: none;
+            flex-direction: column;
+            z-index: 200;
+            box-shadow: 0 0 0 2000px rgba(0,0,0,0.8);
+        }
+
+        #announcement-layer {
+            position: absolute;
+            top: 45%;
+            width: 100%;
+            text-align: center;
+            pointer-events: none;
+            z-index: 70;
+            display: none;
+        }
+
+        #announcement-text {
+            font-size: 48px;
+            color: #f00;
+            text-shadow: 0 0 30px #f00;
+            font-weight: 900;
+            font-family: 'Noto Sans JP';
+        }
+
+        button {
+            padding: 20px 40px;
+            border: 4px solid #fff;
+            background: none;
+            color: #fff;
+            font-family: 'Press Start 2P';
+            font-size: 14px;
+            cursor: pointer;
+            margin: 15px;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background: #fff;
+            color: #000;
+            transform: scale(1.1);
+        }
+
+        .weapon-desc {
+            font-family: 'Noto Sans JP';
+            font-size: 10px;
+            color: #888;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
 
-    <div class="ui-root">
-        <div id="hud">
-            <div id="score-display" class="score-box">SCORE: 000000</div>
-            <div class="bar-container">
-                <div class="bar-label">SHIELD (HP)</div>
-                <div class="bar-frame"><div id="hp-bar"></div></div>
+    <div class="hud-layer">
+        <div id="game-hud">
+            <div id="display-score" class="score-display">SCORE: 0000000</div>
+            
+            <div class="bar-group">
+                <div class="bar-title">Structural Integrity</div>
+                <div class="bar-frame"><div id="hp-bar-fill"></div></div>
             </div>
-            <div class="bar-container">
-                <div class="bar-label">BOMB CHARGE</div>
-                <div class="bar-frame"><div id="bomb-bar"></div></div>
+            
+            <div class="bar-group">
+                <div class="bar-title">Bomb Capacitor</div>
+                <div class="bar-frame"><div id="bomb-bar-fill"></div></div>
             </div>
-            <div class="stats-info">
-                <div id="bomb-count">BOMBS: </div>
-                <div id="gold-display" style="color:#ffd700;">CREDITS: 0</div>
+
+            <div class="meta-stats">
+                <div id="display-bombs">BOMBS: </div>
+                <div id="display-gold" style="color:#ffd700;">CREDITS: 0</div>
             </div>
         </div>
     </div>
 
-    <div id="msg-layer"><div id="msg-text">WARNING</div></div>
+    <div id="announcement-layer"><div id="announcement-text">WARNING</div></div>
 
-    <div id="overlay">
-        <h1 class="title-glitch">MINAMI PROJECT 2026</h1>
-        <div class="nav-menu" id="main-nav">
-            <div class="nav-card" onclick="ui.open('stage-panel')">
-                <div class="box-icon" style="color:#0ff;"></div>
-                <span>SORTIE</span>
+    <div id="screen-overlay">
+        <h1 class="main-title">MINAMI PROJECT 2026</h1>
+        
+        <div class="menu-navigation" id="main-nav-container">
+            <div class="nav-button-card" onclick="navigation.openPanel('panel-mission')">
+                <div class="card-icon" style="color:#0ff;"></div>
+                <span>MISSION<br>START</span>
             </div>
-            <div class="nav-card" onclick="ui.open('shop-panel')">
-                <div class="box-icon" style="color:#ffd700;"></div>
-                <span>HANGAR</span>
+            <div class="nav-button-card" onclick="navigation.openPanel('panel-hangar')">
+                <div class="card-icon" style="color:#ffd700;"></div>
+                <span>HANGAR<br>SHOP</span>
             </div>
-            <div class="nav-card" onclick="ui.open('manual-panel')">
-                <div class="box-icon" style="color:#fff;"></div>
-                <span>MANUAL</span>
+            <div class="nav-button-card" onclick="navigation.openPanel('panel-logs')">
+                <div class="card-icon" style="color:#fff;"></div>
+                <span>DATA<br>LOGS</span>
             </div>
         </div>
 
-        <div id="stage-panel" class="panel">
-            <h2>SECTOR SELECT</h2>
-            <div class="stage-grid" id="stage-list"></div>
-            <button onclick="ui.back()">BACK</button>
+        <div id="panel-mission" class="content-panel">
+            <h2 style="font-size:24px; border-bottom:4px solid #fff; padding-bottom:20px; width:100%; text-align:center;">SELECT OPERATIONAL SECTOR</h2>
+            <div class="item-grid-container" id="stage-grid-output"></div>
+            <button onclick="navigation.closeAll()">BACK TO BRIDGE</button>
         </div>
 
-        <div id="shop-panel" class="panel">
-            <h2 id="shop-credits" style="color:#ffd700;">CREDITS: 0</h2>
-            <div><button onclick="shop.render('weapon')">WEAPONS</button><button onclick="shop.render('support')">SUPPORT</button></div>
-            <div class="stage-grid" id="shop-list"></div>
-            <button onclick="ui.back()">BACK</button>
-        </div>
-
-        <div id="manual-panel" class="panel">
-            <h2>MANUAL</h2>
-            <div style="font-family:'Noto Sans JP'; line-height:2.5; font-size:15px; color:#bbb; text-align:left;">
-                ・【移動】マウス【攻撃】クリック<br>
-                ・【ボム】自動発動（被弾時）<br>
-                ・【クリア】残りHPでボーナス加算
+        <div id="panel-hangar" class="content-panel">
+            <h2 id="shop-wallet" style="color:#ffd700; font-size:24px;">CREDITS: 0</h2>
+            <div style="margin: 30px 0;">
+                <button onclick="shopSystem.switchTab('weapon')">WEAPONS SYSTEM</button>
+                <button onclick="shopSystem.switchTab('support')">SUPPORT GEAR</button>
             </div>
-            <button onclick="ui.back()">OK</button>
+            <div class="item-grid-container" id="shop-grid-output"></div>
+            <button onclick="navigation.closeAll()">BACK TO BRIDGE</button>
+        </div>
+
+        <div id="panel-logs" class="content-panel">
+            <h2>SYSTEM LOGS</h2>
+            <div style="font-family:'Noto Sans JP'; line-height:3; font-size:18px; color:#aaa; text-align:left; max-width:800px;">
+                ■ 操作方法：マウス追従 / クリックで射撃<br>
+                ■ 被弾処理：ストックがある場合、ボムを自動消費して無敵化<br>
+                ■ 報酬体系：残りHP量に応じてボーナスが指数関数的に増加<br>
+                ■ 攻略情報：Phase 1でスコアを稼ぎ、Phase 2の精鋭機に備えよ
+            </div>
+            <button onclick="navigation.closeAll()">ACKNOWLEDGED</button>
         </div>
     </div>
 
-    <div id="briefing-modal">
-        <h2 id="br-title"></h2>
-        <div id="br-desc" style="font-family:'Noto Sans JP'; font-size:14px; color:#ccc; margin:20px 0; border-left:5px solid #fff; padding-left:20px;"></div>
-        <div style="font-size:11px; color:#ffd700; margin-bottom:20px;">REWARD: <span id="br-reward"></span> G</div>
-        <div style="display:flex; justify-content:space-between;"><button onclick="document.getElementById('briefing-modal').style.display='none'">CANCEL</button><button id="br-start-btn" style="color:#0f0;">LAUNCH</button></div>
+    <div id="mission-briefing">
+        <h2 id="brief-title" style="font-size:20px; color:#0ff;"></h2>
+        <div id="brief-content" style="font-family:'Noto Sans JP'; font-size:16px; color:#ccc; margin:40px 0; line-height:2.2; border-left:8px solid #fff; padding-left:30px;"></div>
+        <div style="font-size:14px; color:#ffd700; margin-bottom:40px;">EXPECTED REWARD: <span id="brief-reward"></span> CREDITS</div>
+        <div style="display:flex; justify-content:space-between;">
+            <button onclick="document.getElementById('mission-briefing').style.display='none'">ABORT</button>
+            <button id="mission-launch-btn" style="border-color:#0f0; color:#0f0;">LAUNCH MISSION</button>
+        </div>
     </div>
 
-    <canvas id="game"></canvas>
+    <canvas id="game-canvas"></canvas>
 
     <script>
-        const canvas = document.getElementById('game');
+        /* =================================================================
+           2. DATA ARCHITECTURE: STAGES & WEAPONS
+           ================================================================= */
+        const canvas = document.getElementById('game-canvas');
         const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
 
-        let gameActive = false, score = 0, hp = 100, frame = 0, charge = 0, invul = 0, currentPhase = 1;
-        let player = { x: canvas.width/2, y: canvas.height/2, tx: canvas.width/2, ty: canvas.height/2 };
-        let bullets = [], eBullets = [], enemies = [], particles = [], boss = null, isClicking = false, currentStageData = null;
-
-        const STORAGE_KEY = "MINAMI_ULTIMATE_2026_FIXED";
-        let user = JSON.parse(localStorage.getItem(STORAGE_KEY)) || { gold: 0, bombs: 2, cleared: [], skin: '#fff', licenses: ['#fff'] };
-
-        const saveUserData = () => {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
-            document.getElementById('gold-display').innerText = `CREDITS: ${user.gold}`;
-            document.getElementById('bomb-count').innerText = `BOMBS: ${"★".repeat(user.bombs)}`;
-            document.getElementById('shop-credits').innerText = `CREDITS: ${user.gold}`;
+        // -- SECTOR DEFINITIONS --
+        const SECTORS = {
+            'SB': { n: 'ST=SB', c: '#ccaa00', d: 1.0, r: 2500, bh: 1000, g: 'VIB', s: false, desc: '総武線：機体各部に強烈な振動が発生。照準が困難。' },
+            'KT': { n: 'ST=KT', c: '#0088cc', d: 1.2, r: 3500, bh: 1500, g: 'WTR', s: false, desc: '京浜東北線：高圧洗浄エリア。機体の移動速度が著しく低下。' },
+            'SK': { n: 'ST=SK', c: '#008844', d: 1.5, r: 4500, bh: 2000, g: 'FOG', s: false, desc: '埼京線：極度の濃霧。敵機および敵弾の視認距離が大幅に減少。' },
+            'KY': { n: 'ST=KY', c: '#aa0022', d: 2.0, r: 6500, bh: 3000, g: 'WND', s: false, desc: '京葉線：強風注意報。常に左方向への強力な慣性が発生。' },
+            'PK': { n: 'ST=PK', c: '#cc5588', d: 2.5, r: 8500, bh: 4500, g: 'REV', s: false, desc: '各停：機体制御OSがハッキングされ、左右の入力が反転。' },
+            'JB': { n: 'ST=JB', c: '#006666', d: 3.2, r: 12000, bh: 6500, g: 'JAM', s: false, desc: '常磐線：ジャミング発生中。敵弾の座標表示が不安定化。' },
+            'S1': { n: 'ST=S1', c: '#6600cc', d: 3.8, r: 18000, bh: 9000, g: 'WRP', s: false, desc: '地下1：空間の歪み。周期的に自機の位置が強制転送される。' },
+            'S2': { n: 'ST=S2', c: '#cc00cc', d: 4.5, r: 25000, bh: 13000, g: 'PSN', s: false, desc: '地下2：高濃度腐食ガス。装甲が毎秒確実に削られる。' },
+            'S3': { n: 'ST=S3', c: '#00cccc', d: 5.5, r: 35000, bh: 20000, g: 'GRV', s: false, desc: '地下3：超重力場。回避および姿勢制御が致命的に困難。' },
+            'F1': { n: 'F15-ALPHA', c: '#778', d: 8.0, r: 60000, bh: 35000, g: 'SPD', s: true, desc: 'F15部隊α。高速戦闘ドクトリンによる迎撃部隊。' },
+            'F2': { n: 'F15-BETA', c: '#778', d: 11.0, r: 80000, bh: 50000, g: 'SPD', s: true, desc: 'F15部隊β。弾幕展開能力を強化した重武装型。' },
+            'F3': { n: 'F15-GAMMA', c: '#778', d: 14.0, r: 120000, bh: 75000, g: 'SPD', s: true, desc: 'F15部隊γ。エースパイロットで構成された最強小隊。' },
+            'F4': { n: 'F15-DELTA', c: '#778', d: 18.0, r: 200000, bh: 110000, g: 'SPD', s: true, desc: 'F15部隊δ。最終防衛ラインを死守する決死隊。' },
+            'F5': { n: 'F15-EPSILON', c: '#b0c', d: 25.0, r: 350000, bh: 180000, g: 'SPD', s: true, desc: 'F15部隊：最高司令官。人知を超えた機動性能を持つ。' },
+            'CO': { n: 'ST=CO', c: '#ff6600', d: 60.0, r: 2000000, bh: 600000, g: 'ULT', s: true, desc: '中央線：超鬼むず。オレンジ色の絶望。' }
         };
 
-        const STAGES = {
-            'SB': { n: 'ST=SB', c: '#ccaa00', d: 1.0, r: 2500, bh: 1000, g: 'VIB', s: false, desc: '総武線：激しい振動。' },
-            'KT': { n: 'ST=KT', c: '#0088cc', d: 1.2, r: 3500, bh: 1500, g: 'WTR', s: false, desc: '京浜東北線：水圧エリア。' },
-            'SK': { n: 'ST=SK', c: '#008844', d: 1.5, r: 4500, bh: 2000, g: 'FOG', s: false, desc: '埼京線：視界不良。' },
-            'KY': { n: 'ST=KY', c: '#aa0022', d: 2.0, r: 6000, bh: 3000, g: 'WND', s: false, desc: '京葉線：左へ流される強風。' },
-            'PK': { n: 'ST=PK', c: '#cc5588', d: 2.5, r: 8000, bh: 4500, g: 'REV', s: false, desc: '各停：左右操作反転。' },
-            'JB': { n: 'ST=JB', c: '#006666', d: 3.0, r: 10000, bh: 6000, g: 'JAM', s: false, desc: '常磐線：敵弾の視認困難。' },
-            'S1': { n: 'ST=S1', c: '#6600cc', d: 3.5, r: 15000, bh: 8000, g: 'WRP', s: false, desc: '地下1：ワープ現象。' },
-            'S2': { n: 'ST=S2', c: '#cc00cc', d: 4.2, r: 20000, bh: 12000, g: 'PSN', s: false, desc: '地下2：腐食ガス。' },
-            'S3': { n: 'ST=S3', c: '#00cccc', d: 5.0, r: 30000, bh: 18000, g: 'GRV', s: false, desc: '地下3：重力。' },
-            'F1': { n: 'F15-ALPHA', c: '#778', d: 8, r: 50000, bh: 30000, g: 'SPD', s: true, desc: 'F15α：高速戦闘。' },
-            'F2': { n: 'F15-BETA', c: '#778', d: 10, r: 70000, bh: 45000, g: 'SPD', s: true, desc: 'F15β：高密度弾幕。' },
-            'F3': { n: 'F15-GAMMA', c: '#778', d: 13, r: 100000, bh: 65000, g: 'SPD', s: true, desc: 'F15γ：エース機。' },
-            'F4': { n: 'F15-DELTA', c: '#778', d: 16, r: 150000, bh: 90000, g: 'SPD', s: true, desc: 'F15δ：最終防衛。' },
-            'F5': { n: 'F15-EPSILON', c: '#b0c', d: 20, r: 250000, bh: 150000, g: 'SPD', s: true, desc: 'F15司令官。' },
-            'CO': { n: 'ST=CO', c: '#ff6600', d: 50, r: 1000000, bh: 500000, g: 'ULT', s: true, desc: '中央線：オレンジの地獄。' }
-        };
-
-        const WEAPONS = [
-            { id: '#fff', n: 'BASIC', cost: 0, p: 2, t: 'std' },
-            { id: '#0f0', n: 'V-SPREAD', cost: 8000, p: 1.8, t: 'v' },
-            { id: '#0ff', n: 'RAPID', cost: 15000, p: 1.5, t: 'fast' },
-            { id: '#ff0', n: 'HEAVY', cost: 25000, p: 6, t: 'std' },
-            { id: '#f0f', n: 'WAVE', cost: 40000, p: 2.2, t: 'wave' },
-            { id: '#a02', n: 'KY-RED', cost: 200000, p: 25, t: 'std' },
-            { id: '#fff2', n: 'ZENITH', cost: 1000000, p: 15, t: 'all' }
+        // -- WEAPON INVENTORY --
+        const ARMORY = [
+            { id: '#fff', n: 'M-1 BASIC', cost: 0, power: 2.2, type: 'std', d: '標準的な連射兵装' },
+            { id: '#0f0', n: 'V-SPREADER', cost: 10000, power: 1.8, type: 'v', d: '3方向へ拡散する面制圧武器' },
+            { id: '#0ff', n: 'R-GATLING', cost: 20000, power: 1.6, type: 'fast', d: '圧倒的な連射速度を誇る速射砲' },
+            { id: '#ff0', n: 'Y-CANNON', cost: 35000, power: 7.5, type: 'std', d: '単発火力に特化した重粒子砲' },
+            { id: '#f0f', n: 'P-WAVE', cost: 55000, power: 2.4, type: 'wave', d: 'サインカーブを描く特殊弾道' },
+            { id: '#00f', n: 'B-REASER', cost: 85000, power: 15.0, type: 'std', d: '高密度の青色光線。貫通力は無い' },
+            { id: '#f80', n: 'C-ORANGE', cost: 150000, power: 6.0, type: 'v', d: '中央線の技術を応用した高出力拡散弾' },
+            { id: '#a02', n: 'KY-RED', cost: 250000, power: 35.0, type: 'std', d: '京葉の魂。一撃で雑魚を消し去る' },
+            { id: '#333', n: 'VOID-ZERO', cost: 600000, power: 85.0, type: 'std', d: '暗黒物質を射出。すべてを破壊する' },
+            { id: '#fff2', n: 'ZENITH-X', cost: 1500000, power: 22.0, type: 'all', d: '全方位に破壊の光を放つ最終兵器' }
         ];
 
-        const ui = {
-            open: (id) => {
-                document.getElementById('main-nav').style.display = 'none';
-                document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-                document.getElementById(id).classList.add('active');
-                if(id === 'stage-panel') ui.renderStages();
+        /* =================================================================
+           3. GAME ENGINE VARIABLES & STATE
+           ================================================================= */
+        let gameRunning = false;
+        let gameScore = 0;
+        let gameHp = 100;
+        let gameFrame = 0;
+        let bombCharge = 0;
+        let invulnerability = 0;
+        let missionPhase = 1; // 1:Infiltration, 2:Elite Guard, 3:Boss Fight
+
+        let playerPos = { x: canvas.width/2, y: canvas.height/2, tx: canvas.width/2, ty: canvas.height/2 };
+        let activeBullets = [];
+        let activeEBullets = [];
+        let activeEnemies = [];
+        let activeParticles = [];
+        let currentBoss = null;
+        let isFiring = false;
+        let currentSector = null;
+
+        // -- PERSISTENCE LAYER --
+        const SAVE_ID = "MINAMI_STG_2026_MASTER";
+        let profile = JSON.parse(localStorage.getItem(SAVE_ID)) || {
+            gold: 0, bombs: 2, clearedSectors: [], activeSkin: '#fff', licenses: ['#fff']
+        };
+
+        const coreFunctions = {
+            save: () => {
+                localStorage.setItem(SAVE_ID, JSON.stringify(profile));
+                document.getElementById('display-gold').innerText = `CREDITS: ${profile.gold}`;
+                document.getElementById('display-bombs').innerText = `BOMBS: ${"★".repeat(profile.bombs)}`;
+                document.getElementById('shop-wallet').innerText = `CREDITS: ${profile.gold}`;
             },
-            back: () => {
-                document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-                document.getElementById('main-nav').style.display = 'flex';
+            spawnFX: (x, y, color, amount = 10) => {
+                for(let i=0; i<amount; i++) {
+                    activeParticles.push({
+                        x: x, y: y,
+                        vx: (Math.random() - 0.5) * 15,
+                        vy: (Math.random() - 0.5) * 15,
+                        life: 1.0,
+                        color: color
+                    });
+                }
             },
-            renderStages: () => {
-                const list = document.getElementById('stage-list'); list.innerHTML = '';
-                const baseCleared = Object.keys(STAGES).filter(k => !STAGES[k].s && user.cleared.includes(k)).length;
-                const secretUnlocked = baseCleared >= 9;
-                Object.keys(STAGES).forEach((key, idx) => {
-                    const s = STAGES[key]; const isLocked = s.s && !secretUnlocked;
-                    const item = document.createElement('div');
-                    item.className = `grid-item ${isLocked ? 'locked' : ''} ${user.cleared.includes(key) ? 'cleared' : ''}`;
-                    item.style.color = isLocked ? '#222' : s.c; item.style.borderColor = isLocked ? '#222' : s.c;
-                    item.innerHTML = `${idx + 1}<br>${s.n}`;
-                    if(!isLocked) item.onclick = () => {
-                        currentStageData = { ...s, id: key };
-                        document.getElementById('br-title').innerText = s.n;
-                        document.getElementById('br-desc').innerText = s.desc;
-                        document.getElementById('br-reward').innerText = s.r;
-                        document.getElementById('briefing-modal').style.display = 'flex';
-                        document.getElementById('br-start-btn').onclick = engine.start;
-                    };
-                    list.appendChild(item);
+            triggerAnnouncement: (text, duration) => {
+                const layer = document.getElementById('announcement-layer');
+                const txt = document.getElementById('announcement-text');
+                txt.innerText = text;
+                layer.style.display = 'block';
+                setTimeout(() => layer.style.display = 'none', duration);
+            }
+        };
+
+        /* =================================================================
+           4. NAVIGATION & UI SYSTEMS
+           ================================================================= */
+        const navigation = {
+            openPanel: (id) => {
+                document.getElementById('main-nav-container').style.display = 'none';
+                document.querySelectorAll('.content-panel').forEach(p => p.classList.remove('is-visible'));
+                document.getElementById(id).classList.add('is-visible');
+                if(id === 'panel-mission') navigation.renderMissionGrid();
+                if(id === 'panel-hangar') shopSystem.render('weapon');
+            },
+            closeAll: () => {
+                document.querySelectorAll('.content-panel').forEach(p => p.classList.remove('is-visible'));
+                document.getElementById('main-nav-container').style.display = 'flex';
+            },
+            renderMissionGrid: () => {
+                const grid = document.getElementById('stage-grid-output');
+                grid.innerHTML = '';
+                const baseCount = Object.keys(SECTORS).filter(k => !SECTORS[k].s && profile.clearedSectors.includes(k)).length;
+                const isSecretActive = baseCount >= 9;
+
+                Object.keys(SECTORS).forEach((key, index) => {
+                    const s = SECTORS[key];
+                    const locked = s.s && !isSecretActive;
+                    const cell = document.createElement('div');
+                    cell.className = `grid-cell ${locked ? 'is-locked' : ''} ${profile.clearedSectors.includes(key) ? 'is-cleared' : ''}`;
+                    cell.style.color = locked ? '#111' : s.c;
+                    cell.style.borderColor = locked ? '#111' : s.c;
+                    cell.innerHTML = `SECTOR ${index+1}<br><span style="font-size:16px;">${s.n}</span>`;
+                    
+                    if(!locked) {
+                        cell.onclick = () => {
+                            currentSector = { ...s, id: key };
+                            document.getElementById('brief-title').innerText = `SECTOR LOG: ${s.n}`;
+                            document.getElementById('brief-title').style.color = s.c;
+                            document.getElementById('brief-content').innerText = s.desc;
+                            document.getElementById('brief-reward').innerText = s.r.toLocaleString();
+                            document.getElementById('mission-briefing').style.display = 'flex';
+                            document.getElementById('mission-launch-btn').onclick = engine.init;
+                        };
+                    }
+                    grid.appendChild(cell);
                 });
             }
         };
 
-        const shop = {
+        const shopSystem = {
+            currentTab: 'weapon',
+            switchTab: (t) => { shopSystem.currentTab = t; shopSystem.render(t); },
             render: (mode) => {
-                const list = document.getElementById('shop-list'); list.innerHTML = '';
+                const grid = document.getElementById('shop-grid-output');
+                grid.innerHTML = '';
                 if(mode === 'weapon') {
-                    WEAPONS.forEach(w => {
-                        const owned = user.licenses.includes(w.id);
-                        const item = document.createElement('div');
-                        item.className = 'grid-item'; item.style.color = w.id==='#fff2'?'#fff':w.id;
-                        item.innerHTML = `${w.n}<br>${owned ? 'EQUIP' : w.cost + 'G'}`;
-                        item.onclick = () => {
-                            if(!owned && user.gold >= w.cost) { user.gold -= w.cost; user.licenses.push(w.id); saveUserData(); shop.render('weapon'); }
-                            else if(owned) { user.skin = w.id; saveUserData(); alert("EQUIPPED"); }
+                    ARMORY.forEach(w => {
+                        const owned = profile.licenses.includes(w.id);
+                        const cell = document.createElement('div');
+                        cell.className = 'grid-cell';
+                        cell.style.color = (w.id === '#fff2' || w.id === '#333') ? '#fff' : w.id;
+                        cell.innerHTML = `${w.n}<br>${owned ? 'EQUIPPED' : w.cost.toLocaleString() + ' G'}<div class="weapon-desc">${w.d}</div>`;
+                        cell.onclick = () => {
+                            if(!owned && profile.gold >= w.cost) {
+                                profile.gold -= w.cost;
+                                profile.licenses.push(w.id);
+                                coreFunctions.save();
+                                shopSystem.render('weapon');
+                            } else if(owned) {
+                                profile.activeSkin = w.id;
+                                coreFunctions.save();
+                                alert("WEAPON SYSTEM UPDATED");
+                            }
                         };
-                        list.appendChild(item);
+                        grid.appendChild(cell);
                     });
                 } else {
-                    const box = document.createElement('div'); box.className = 'grid-item'; box.innerHTML = "EXTRA BOMB<br>5000G";
-                    box.onclick = () => { if(user.gold >= 5000) { user.gold -= 5000; user.bombs++; saveUserData(); alert("BOMB ADDED"); } };
-                    list.appendChild(box);
+                    const gear = [
+                        { n: 'AUTOBOMB UNIT', cost: 12000, act: () => { profile.bombs++; coreFunctions.save(); alert("STOCK ADDED"); } },
+                        { n: 'NANO-REPAIR', cost: 5000, act: () => { gameHp = 100; alert("HULL REPAIRED"); } }
+                    ];
+                    gear.forEach(g => {
+                        const cell = document.createElement('div');
+                        cell.className = 'grid-cell';
+                        cell.innerHTML = `${g.n}<br>${g.cost.toLocaleString()} G`;
+                        cell.onclick = () => {
+                            if(profile.gold >= g.cost) {
+                                profile.gold -= g.cost;
+                                g.act();
+                                shopSystem.render('support');
+                            }
+                        };
+                        grid.appendChild(cell);
+                    });
                 }
             }
         };
 
+        /* =================================================================
+           5. GAMEPLAY ENGINE (THE 600+ CORE)
+           ================================================================= */
         const engine = {
-            start: () => {
-                document.getElementById('briefing-modal').style.display = 'none';
-                document.getElementById('overlay').style.display = 'none';
-                document.getElementById('hud').style.display = 'block';
-                gameActive = true; score = 0; hp = 100; frame = 0; charge = 0; invul = 0;
-                currentPhase = 1; bullets = []; eBullets = []; enemies = []; particles = []; boss = null;
-                engine.flashMsg("PHASE 1: START", 2000); engine.loop();
+            init: () => {
+                document.getElementById('mission-briefing').style.display = 'none';
+                document.getElementById('screen-overlay').style.display = 'none';
+                document.getElementById('game-hud').style.display = 'block';
+                
+                gameRunning = true;
+                gameScore = 0;
+                gameHp = 100;
+                gameFrame = 0;
+                bombCharge = 0;
+                invulnerability = 0;
+                missionPhase = 1;
+                
+                activeBullets = [];
+                activeEBullets = [];
+                activeEnemies = [];
+                activeParticles = [];
+                currentBoss = null;
+                
+                playerPos.x = canvas.width/2;
+                playerPos.y = canvas.height * 0.8;
+
+                coreFunctions.triggerAnnouncement("PHASE 1: INFILTRATION", 2500);
+                engine.mainLoop();
             },
-            flashMsg: (txt, dur) => {
-                const lyr = document.getElementById('msg-layer'); const t = document.getElementById('msg-text');
-                t.innerText = txt; lyr.style.display = 'block'; setTimeout(() => lyr.style.display = 'none', dur);
+
+            processPhase: () => {
+                // Phase 1 -> 2 (Score based)
+                if(missionPhase === 1 && gameScore > 20000) {
+                    missionPhase = 2;
+                    coreFunctions.triggerAnnouncement("PHASE 2: ELITE INTERCEPTION", 3000);
+                }
+                
+                // Phase 2 -> 3 (Score based)
+                if(missionPhase === 2 && gameScore > 55000 && !currentBoss) {
+                    missionPhase = 3;
+                    coreFunctions.triggerAnnouncement("WARNING: BOSS UNIT DETECTED", 4000);
+                    currentBoss = {
+                        x: canvas.width/2,
+                        y: -300,
+                        hp: currentSector.bh,
+                        maxHp: currentSector.bh,
+                        size: 200,
+                        vy: 1.5,
+                        phaseTwo: false,
+                        timer: 0
+                    };
+                    activeEnemies.push(currentBoss);
+                }
             },
-            loop: () => {
-                if(!gameActive) return;
-                frame++; if(invul > 0) invul--;
-                if(currentPhase === 1 && score > 15000) { currentPhase = 2; engine.flashMsg("PHASE 2: ELITE", 2000); }
-                if(currentPhase === 2 && score > 40000 && !boss) {
-                    currentPhase = 3; engine.flashMsg("BOSS WARNING", 3000);
-                    boss = { x: canvas.width/2, y: -200, hp: currentStageData.bh, maxHp: currentStageData.bh, size: 160, vy: 1, p2: false };
-                    enemies.push(boss);
+
+            updatePlayer: () => {
+                if(invulnerability > 0) invulnerability--;
+
+                // Apply Sector Gimmicks
+                let lerpFactor = 0.25;
+                if(currentSector.g === 'GRV') lerpFactor = 0.05;
+                if(currentSector.g === 'SPD') lerpFactor = 0.50;
+                if(currentSector.g === 'WTR') lerpFactor = 0.10;
+
+                let tx = playerPos.tx;
+                let ty = playerPos.ty;
+
+                if(currentSector.g === 'REV') {
+                    tx = canvas.width - tx;
+                    ty = canvas.height - ty;
                 }
 
-                let mv = (currentStageData.g === 'GRV' ? 0.05 : (currentStageData.g === 'SPD' ? 0.45 : 0.2));
-                let tx = (currentStageData.g === 'REV' ? canvas.width - player.tx : player.tx);
-                let ty = (currentStageData.g === 'REV' ? canvas.height - player.ty : player.ty);
-                player.x += (tx - player.x) * mv; player.y += (ty - player.y) * mv;
-                if(currentStageData.g === 'WND') player.x -= 3;
-                if(currentStageData.g === 'PSN' && frame % 60 === 0) hp -= 0.6;
+                playerPos.x += (tx - playerPos.x) * lerpFactor;
+                playerPos.y += (ty - playerPos.y) * lerpFactor;
 
-                if(isClicking && frame % (user.skin === '#0ff' ? 3 : 6) === 0) {
-                    const w = WEAPONS.find(v => v.id === user.skin);
-                    if(w.t === 'v') { bullets.push({ x: player.x - 10, y: player.y - 20, vx: -3, vy: -25, p: w.p }); bullets.push({ x: player.x + 10, y: player.y - 20, vx: 3, vy: -25, p: w.p }); }
-                    else if(w.t === 'all') { for(let a=0; a<Math.PI*2; a+=Math.PI/4) bullets.push({ x: player.x, y: player.y, vx: Math.cos(a)*15, vy: Math.sin(a)*15, p: w.p }); }
-                    else bullets.push({ x: player.x, y: player.y - 20, vx: 0, vy: -30, p: w.p });
+                if(currentSector.g === 'WND') playerPos.x -= 4.0;
+                if(currentSector.g === 'VIB') {
+                    playerPos.x += (Math.random() - 0.5) * 20;
+                    playerPos.y += (Math.random() - 0.5) * 20;
+                }
+                if(currentSector.g === 'PSN' && gameFrame % 60 === 0) gameHp -= 0.8;
+                if(currentSector.g === 'WRP' && gameFrame % 180 === 0) {
+                    playerPos.x = Math.random() * canvas.width;
+                    playerPos.y = Math.random() * canvas.height;
+                    coreFunctions.spawnFX(playerPos.x, playerPos.y, "#fff", 20);
                 }
 
-                if(currentPhase < 3 && frame % (currentPhase === 1 ? 25 : 12) === 0) {
-                    enemies.push({ x: Math.random() * canvas.width, y: -50, hp: (currentPhase === 1 ? 25 : 80) * currentStageData.d, size: (currentPhase === 1 ? 40 : 60), vy: 3 + currentStageData.d, elite: currentPhase === 2 });
+                // Bounds
+                if(playerPos.x < 0) playerPos.x = 0;
+                if(playerPos.x > canvas.width) playerPos.x = canvas.width;
+                if(playerPos.y < 0) playerPos.y = 0;
+                if(playerPos.y > canvas.height) playerPos.y = canvas.height;
+
+                // Weapons
+                if(isFiring && gameFrame % (profile.activeSkin === '#0ff' ? 3 : 7) === 0) {
+                    const w = ARMORY.find(v => v.id === profile.activeSkin);
+                    const p = w.power;
+                    
+                    if(w.type === 'v') {
+                        activeBullets.push({ x: playerPos.x, y: playerPos.y - 30, vx: -5, vy: -25, p: p });
+                        activeBullets.push({ x: playerPos.x, y: playerPos.y - 35, vx: 0, vy: -28, p: p });
+                        activeBullets.push({ x: playerPos.x, y: playerPos.y - 30, vx: 5, vy: -25, p: p });
+                    } else if(w.type === 'wave') {
+                        activeBullets.push({ x: playerPos.x, y: playerPos.y - 30, vx: Math.sin(gameFrame/5)*15, vy: -25, p: p });
+                    } else if(w.type === 'all') {
+                        for(let a=0; a<Math.PI*2; a+=Math.PI/6) {
+                            activeBullets.push({ x: playerPos.x, y: playerPos.y, vx: Math.cos(a)*18, vy: Math.sin(a)*18, p: p });
+                        }
+                    } else {
+                        activeBullets.push({ x: playerPos.x, y: playerPos.y - 40, vx: 0, vy: -35, p: p });
+                    }
+                }
+            },
+
+            updateEnemies: () => {
+                // Spawning Logic
+                if(missionPhase < 3 && gameFrame % (missionPhase === 1 ? 30 : 15) === 0) {
+                    activeEnemies.push({
+                        x: Math.random() * canvas.width,
+                        y: -80,
+                        hp: (missionPhase === 1 ? 30 : 100) * currentSector.d,
+                        maxHp: (missionPhase === 1 ? 30 : 100) * currentSector.d,
+                        size: (missionPhase === 1 ? 45 : 75),
+                        vy: (3 + currentSector.d) * (missionPhase === 2 ? 1.3 : 1.0),
+                        isElite: missionPhase === 2,
+                        sinMove: Math.random() > 0.5 ? 5 : 0
+                    });
                 }
 
-                bullets.forEach((b, bi) => {
-                    b.x += b.vx || 0; b.y += b.vy;
-                    enemies.forEach((e, ei) => {
-                        if(Math.hypot(b.x - e.x, b.y - e.y) < e.size) {
-                            e.hp -= b.p; bullets.splice(bi, 1);
+                activeEnemies.forEach((e, index) => {
+                    e.y += e.vy;
+                    if(e.sinMove) e.x += Math.sin(gameFrame/20) * e.sinMove;
+
+                    if(e === currentBoss) {
+                        if(e.y > 200) e.vy = 0;
+                        e.timer++;
+                        
+                        // Boss Phase 2 Transition
+                        if(!e.phaseTwo && e.hp < e.maxHp / 2) {
+                            e.phaseTwo = true;
+                            coreFunctions.triggerAnnouncement("BOSS: OVERDRIVE MODE", 3000);
+                        }
+                    }
+
+                    // Enemy Fire
+                    let fireRate = (e === currentBoss ? (e.phaseTwo ? 0.35 : 0.15) : (e.isElite ? 0.10 : 0.05)) * currentSector.d;
+                    if(Math.random() < fireRate) {
+                        if(e === currentBoss && e.phaseTwo) {
+                            for(let i=0; i<8; i++) {
+                                let angle = (gameFrame/10) + (Math.PI*2/8)*i;
+                                activeEBullets.push({ x: e.x, y: e.y, vx: Math.cos(angle)*12, vy: Math.sin(angle)*12 });
+                            }
+                        } else {
+                            activeEBullets.push({ x: e.x, y: e.y, vx: (playerPos.x - e.x)/100, vy: 7 * currentSector.d });
+                        }
+                    }
+
+                    if(e.y > canvas.height + 150) activeEnemies.splice(index, 1);
+                });
+            },
+
+            updateCollisions: () => {
+                // Player Bullets vs Enemies
+                activeBullets.forEach((b, bi) => {
+                    b.x += b.vx || 0;
+                    b.y += b.vy || 0;
+                    
+                    activeEnemies.forEach((e, ei) => {
+                        if(Math.hypot(b.x - e.x, b.y - e.y) < e.size/1.5) {
+                            e.hp -= b.p;
+                            activeBullets.splice(bi, 1);
+                            coreFunctions.spawnFX(b.x, b.y, profile.activeSkin, 3);
+                            
                             if(e.hp <= 0) {
-                                if(e === boss) { gameActive = false; const bonus = Math.floor(hp * 50); if(!user.cleared.includes(currentStageData.id)) user.cleared.push(currentStageData.id); user.gold += currentStageData.r + bonus; saveUserData(); engine.flashMsg("CLEAR!", 3000); setTimeout(() => location.reload(), 3000); }
-                                else { enemies.splice(ei, 1); score += (e.elite ? 2000 : 500); user.gold += 20; charge += 10; if(charge >= 100) { charge = 0; user.bombs++; } saveUserData(); }
+                                if(e === currentBoss) {
+                                    engine.completeMission(true);
+                                } else {
+                                    coreFunctions.spawnFX(e.x, e.y, currentSector.c, 15);
+                                    gameScore += (e.isElite ? 3500 : 800);
+                                    profile.gold += (e.isElite ? 100 : 30);
+                                    bombCharge += 15;
+                                    if(bombCharge >= 100) { bombCharge = 0; profile.bombs++; }
+                                    activeEnemies.splice(ei, 1);
+                                    coreFunctions.save();
+                                }
                             }
                         }
                     });
-                    if(b.y < -100) bullets.splice(bi, 1);
+                    if(b.y < -100 || b.y > canvas.height + 100 || b.x < -100 || b.x > canvas.width + 100) activeBullets.splice(bi, 1);
                 });
 
-                enemies.forEach(e => {
-                    e.y += e.vy; if(e === boss && e.y > 150) e.vy = 0;
-                    if(e === boss && !e.p2 && e.hp < e.maxHp / 2) { e.p2 = true; engine.flashMsg("PHASE 2", 2000); }
-                    let rate = (e === boss ? 0.15 : 0.06) * currentStageData.d;
-                    if(Math.random() < rate) {
-                        if(e === boss && e.p2) { for(let a=0; a<Math.PI*2; a+=Math.PI/6) eBullets.push({ x: e.x, y: e.y, vx: Math.cos(a)*8, vy: Math.sin(a)*8 }); }
-                        else eBullets.push({ x: e.x, y: e.y, vx: 0, vy: 6 * currentStageData.d });
+                // Enemy Bullets vs Player
+                activeEBullets.forEach((eb, ebi) => {
+                    eb.x += eb.vx || 0;
+                    eb.y += eb.vy || 0;
+                    
+                    if(invulnerability <= 0 && Math.hypot(eb.x - playerPos.x, eb.y - playerPos.y) < 25) {
+                        if(profile.bombs > 0) {
+                            profile.bombs--;
+                            invulnerability = 180;
+                            activeEBullets = [];
+                            coreFunctions.triggerAnnouncement("AUTO BOMB ACTIVATED", 1500);
+                            coreFunctions.spawnFX(playerPos.x, playerPos.y, "#0ff", 50);
+                            coreFunctions.save();
+                        } else {
+                            gameHp -= 20;
+                            activeEBullets.splice(ebi, 1);
+                            if(gameHp <= 0) engine.completeMission(false);
+                        }
+                    }
+                    if(eb.y > canvas.height + 100) activeEBullets.splice(ebi, 1);
+                });
+
+                // Particle Update
+                activeParticles.forEach((p, pi) => {
+                    p.x += p.vx; p.y += p.vy; p.life -= 0.02;
+                    if(p.life <= 0) activeParticles.splice(pi, 1);
+                });
+            },
+
+            completeMission: (success) => {
+                gameRunning = false;
+                // 分岐スコア計算: HPが高いほどゴールドが爆増するロジック
+                const hpBonus = success ? Math.floor(Math.pow(gameHp, 1.8) * 10) : 0;
+                
+                if(success) {
+                    if(!profile.clearedSectors.includes(currentSector.id)) {
+                        profile.clearedSectors.push(currentSector.id);
+                    }
+                    profile.gold += currentSector.r + hpBonus;
+                }
+                coreFunctions.save();
+                
+                const finalMsg = success ? `MISSION COMPLETE\nHP BONUS: +${hpBonus} G` : "MISSION FAILED";
+                coreFunctions.triggerAnnouncement(finalMsg, 5000);
+                setTimeout(() => location.reload(), 5000);
+            },
+
+            draw: () => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // Jamming / Fog Effects
+                if(currentSector.g === 'JAM' && gameFrame % 5 < 2) return;
+                if(currentSector.g === 'FOG') {
+                    ctx.fillStyle = "rgba(255,255,255,0.2)";
+                    ctx.fillRect(0,0,canvas.width,canvas.height);
+                }
+
+                // Draw Particles
+                activeParticles.forEach(p => {
+                    ctx.fillStyle = `rgba(255,255,255,${p.life})`;
+                    ctx.fillRect(p.x, p.y, 5, 5);
+                });
+
+                // Draw Player
+                if(invulnerability % 6 < 3) {
+                    ctx.shadowBlur = 25; ctx.shadowColor = profile.activeSkin;
+                    ctx.fillStyle = profile.activeSkin === '#333' ? '#555' : profile.activeSkin;
+                    ctx.beginPath();
+                    ctx.moveTo(playerPos.x, playerPos.y - 40);
+                    ctx.lineTo(playerPos.x + 30, playerPos.y + 25);
+                    ctx.lineTo(playerPos.x - 30, playerPos.y + 25);
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+
+                // Draw Enemies
+                activeEnemies.forEach(e => {
+                    ctx.strokeStyle = (e === currentBoss && e.phaseTwo) ? "#f00" : (e.isElite ? "#f0f" : currentSector.c);
+                    ctx.lineWidth = e === currentBoss ? 8 : 4;
+                    ctx.strokeRect(e.x - e.size/2, e.y - e.size/2, e.size, e.size);
+                    
+                    if(e === currentBoss) {
+                        // Boss HP Bar
+                        ctx.fillStyle = "#111"; ctx.fillRect(e.x - 120, e.y - 160, 240, 16);
+                        ctx.fillStyle = e.phaseTwo ? "#f00" : "#0f0";
+                        ctx.fillRect(e.x - 120, e.y - 160, 240 * (e.hp / e.maxHp), 16);
                     }
                 });
 
-                eBullets.forEach((eb, ebi) => {
-                    eb.x += eb.vx || 0; eb.y += eb.vy;
-                    if(invul <= 0 && Math.hypot(eb.x - player.x, eb.y - player.y) < 20) {
-                        if(user.bombs > 0) { user.bombs--; invul = 150; eBullets = []; saveUserData(); engine.flashMsg("AUTO BOMB", 1000); }
-                        else { hp -= 15; if(hp <= 0) { gameActive = false; engine.flashMsg("FAILED", 3000); setTimeout(() => location.reload(), 3000); } }
-                    }
-                    if(eb.y > canvas.height) eBullets.splice(ebi, 1);
+                // Draw Bullets
+                activeBullets.forEach(b => {
+                    ctx.fillStyle = profile.activeSkin;
+                    ctx.fillRect(b.x - 4, b.y, 8, 30);
                 });
 
-                ctx.fillStyle = "#000"; ctx.fillRect(0,0,canvas.width,canvas.height);
-                if(currentStageData.g==='FOG'){ctx.fillStyle="rgba(255,255,255,0.15)";ctx.fillRect(0,0,canvas.width,canvas.height);}
-                if(invul%4 < 2) { ctx.fillStyle = user.skin; ctx.beginPath(); ctx.moveTo(player.x, player.y-30); ctx.lineTo(player.x+20, player.y+15); ctx.lineTo(player.x-20, player.y+15); ctx.fill(); }
-                enemies.forEach(e => { ctx.strokeStyle = (e===boss && e.p2) ? "#f00" : (e.elite ? "#f0f" : currentStageData.c); ctx.lineWidth = e===boss?5:2; ctx.strokeRect(e.x-e.size/2, e.y-e.size/2, e.size, e.size); if(e===boss){ctx.fillStyle="#222";ctx.fillRect(e.x-100,e.y-120,200,10);ctx.fillStyle="#f00";ctx.fillRect(e.x-100,e.y-120,200*(e.hp/e.maxHp),10);} });
-                bullets.forEach(b => { ctx.fillStyle = user.skin; ctx.fillRect(b.x-2, b.y, 4, 15); });
-                eBullets.forEach(eb => { ctx.fillStyle = "#f0f"; ctx.beginPath(); ctx.arc(eb.x, eb.y, 6, 0, 7); ctx.fill(); });
+                activeEBullets.forEach(eb => {
+                    ctx.fillStyle = "#f0f";
+                    ctx.beginPath();
+                    ctx.arc(eb.x, eb.y, 10, 0, Math.PI*2);
+                    ctx.fill();
+                });
 
-                document.getElementById('hp-bar').style.width = hp + "%";
-                document.getElementById('bomb-bar').style.width = charge + "%";
-                document.getElementById('score-display').innerText = `SCORE: ${score.toString().padStart(6, '0')}`;
-                requestAnimationFrame(engine.loop);
+                // Update HUD Text
+                document.getElementById('hp-bar-fill').style.width = Math.max(0, gameHp) + "%";
+                document.getElementById('bomb-bar-fill').style.width = bombCharge + "%";
+                document.getElementById('display-score').innerText = `SCORE: ${gameScore.toString().padStart(8, '0')}`;
+            },
+
+            mainLoop: () => {
+                if(gameRunning) {
+                    gameFrame++;
+                    engine.processPhase();
+                    engine.updatePlayer();
+                    engine.updateEnemies();
+                    engine.updateCollisions();
+                    engine.draw();
+                    requestAnimationFrame(engine.mainLoop);
+                }
             }
         };
 
-        window.onmousedown = () => isClicking = true; window.onmouseup = () => isClicking = false;
-        window.onmousemove = e => { player.tx = e.clientX; player.ty = e.clientY; };
-        saveUserData();
+        // --- INPUTS ---
+        window.onmousedown = () => isFiring = true;
+        window.onmouseup = () => isFiring = false;
+        window.onmousemove = e => { playerPos.tx = e.clientX; playerPos.ty = e.clientY; };
+        window.ontouchmove = e => { 
+            playerPos.tx = e.touches[0].clientX; 
+            playerPos.ty = e.touches[0].clientY; 
+            isFiring = true;
+        };
+        window.ontouchend = () => isFiring = false;
+
+        // --- BOOT ---
+        coreFunctions.save();
     </script>
 </body>
 </html>
