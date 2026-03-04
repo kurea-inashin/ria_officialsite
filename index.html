@@ -2,284 +2,247 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>MINAMI SHOOTING 2026 - Advanced Edition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MINAMI PROJECT 2026</title>
     <style>
-        body { background: #000; color: #fff; font-family: 'Courier New', Courier, monospace; margin: 0; overflow: hidden; }
-        canvas { display: block; margin: 0 auto; background: linear-gradient(to bottom, #000428, #004e92); border: 2px solid #555; }
-        .ui-overlay { position: absolute; top: 10px; width: 100%; display: flex; justify-content: space-around; pointer-events: none; text-shadow: 2px 2px 4px #000; }
-        .panel { background: rgba(0,0,0,0.8); padding: 15px; border: 1px solid #fff; border-radius: 10px; min-width: 150px; }
-        #menu-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
-        .btn { background: #222; color: #fff; border: 2px solid #fff; padding: 15px 40px; margin: 10px; cursor: pointer; font-size: 1.2rem; transition: 0.3s; width: 300px; }
-        .btn:hover { background: #fff; color: #000; }
-        .hidden { display: none !important; }
-        #boss-hp-bar { position: absolute; top: 80px; left: 50%; transform: translateX(-50%); width: 600px; height: 10px; border: 1px solid #fff; display: none; }
-        #boss-hp-inner { width: 100%; height: 100%; background: #ff0000; transition: width 0.2s; }
-        .rail-sobu { border-color: #f1ca00; color: #f1ca00; }
-        .rail-saikyo { border-color: #00ac4a; color: #00ac4a; }
-        .rail-keihin { border-color: #00a4e4; color: #00a4e4; }
-        .rail-keiyo { border-color: #e50012; color: #e50012; }
-        .rail-chuo { border-color: #f39700; color: #f39700; font-weight: bold; box-shadow: 0 0 15px #f39700; }
+        /* ================= CSS: デザインとレイアウト ================= */
+        :root {
+            --sobu: #f1ca00; --saikyo: #00ac4a; --keihin: #00a4e4;
+            --keiyo: #e50012; --chuo: #f39700; --bg: #000000;
+        }
+        body { background-color: var(--bg); color: #ffffff; font-family: 'Courier New', monospace; margin: 0; overflow: hidden; }
+        
+        /* 画面レイヤー管理 */
+        .layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.5s; }
+        .hidden { opacity: 0; pointer-events: none; display: none; }
+
+        /* キャンバス */
+        canvas { background: radial-gradient(circle, #000428 0%, #000000 100%); display: block; border: 1px solid #333; }
+
+        /* UI要素 */
+        .title { font-size: 3rem; letter-spacing: 0.5rem; margin-bottom: 2rem; text-shadow: 0 0 10px #fff; }
+        .container { width: 900px; text-align: center; background: rgba(0,0,0,0.8); padding: 20px; border: 1px solid #444; }
+        
+        /* ステージグリッド */
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 20px; }
+        .stage-card { border: 2px solid #444; padding: 15px; cursor: pointer; position: relative; transition: 0.3s; }
+        .stage-card:hover { background: rgba(255,255,255,0.1); transform: scale(1.05); }
+        .complete-badge { position: absolute; bottom: 5px; right: 5px; font-size: 0.6rem; background: #00a4e4; padding: 2px 5px; }
+
+        /* ショップ要素 */
+        .item-card { border: 1px solid #666; padding: 10px; margin: 5px; display: inline-block; width: 200px; cursor: pointer; }
+        .item-card.equipped { border-color: var(--saikyo); background: rgba(0,172,74,0.2); }
+
+        /* ステータスバー */
+        #game-ui { position: absolute; top: 0; left: 0; width: 100%; padding: 10px; display: flex; justify-content: space-between; z-index: 10; pointer-events: none; }
     </style>
 </head>
 <body>
 
-<div class="ui-overlay">
-    <div class="panel">HP: <span id="hp-val">100</span><br>SCORE: <span id="score-val">0</span></div>
-    <div class="panel">COIN: <span id="coin-val">0</span><br>ATK LV: <span id="atk-val">1</span></div>
+<div id="game-ui" class="hidden">
+    <div>SCORE: <span id="score">0</span> | COIN: <span id="coins">0</span></div>
+    <div>HP: <progress id="hp-bar" value="100" max="100" style="width:200px;"></progress></div>
 </div>
 
-<div id="boss-hp-bar"><div id="boss-hp-inner"></div></div>
+<div id="layer-home" class="layer">
+    <div class="title">MINAMI PROJECT 2026</div>
+    <div class="container">
+        <p>【操作】マウス移動: 自機操作 / クリック: 攻撃 / スペース: 必殺技</p>
+        <button onclick="changeLayer('layer-stage')">STAGE SELECT</button>
+        <button onclick="changeLayer('layer-shop')">SHOP & SKINS</button>
+    </div>
+</div>
+
+<div id="layer-stage" class="layer hidden">
+    <h2>SELECT STAGE</h2>
+    <div class="container">
+        <div id="stage-grid" class="grid"></div>
+        <br><button onclick="changeLayer('layer-home')">BACK</button>
+    </div>
+</div>
+
+<div id="layer-shop" class="layer hidden">
+    <h2>SHOP & SKINS</h2>
+    <div class="container">
+        <div id="skin-list"></div>
+        <hr>
+        <div id="equip-list">
+            <div class="item-card" onclick="buyItem('heal')">HP全回復 (30C)</div>
+            <div class="item-card" onclick="buyItem('atk')">攻撃力UP (100C)</div>
+        </div>
+        <br><button onclick="changeLayer('layer-home')">BACK</button>
+    </div>
+</div>
 
 <canvas id="gameCanvas"></canvas>
 
-<div id="menu-layer">
-    <h1 id="title-text">MINAMI SHOOTING 2026</h1>
-    <div id="main-btns">
-        <button class="btn" onclick="showStageSelect()">STAGE SELECT</button><br>
-        <button class="btn" onclick="showShop()">SHOP</button>
-    </div>
-    
-    <div id="stage-list" class="hidden"></div>
-    
-    <div id="shop-ui" class="hidden">
-        <h2>SHOP (Coin Exchange)</h2>
-        <button class="btn" onclick="buyItem('atk')">攻撃力UP (50枚)</button><br>
-        <button class="btn" onclick="buyItem('hp')">HP全回復 (30枚)</button><br>
-        <button class="btn" onclick="backToMenu()">BACK</button>
-    </div>
-</div>
-
 <script>
+/* ================= JS: ゲームロジック ================= */
+
+// 1. 基本データ設定
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
-canvas.width = 800;
-canvas.height = 600;
+canvas.width = 1000; canvas.height = 600;
 
-// --- セーブデータ構造 ---
-let saveData = JSON.parse(localStorage.getItem('minami_save_2026')) || {
-    coins: 0,
-    clearedStages: [],
-    atkLevel: 1,
-    unlockedSkins: ['Normal']
+let saveData = JSON.parse(localStorage.getItem('minami_2026_fullsave')) || {
+    coins: 0, cleared: [], ownedSkins: ['雫(Default)'], currentSkin: '雫(Default)', atk: 1
 };
 
-function save() {
-    localStorage.setItem('minami_save_2026', JSON.stringify(saveData));
-    updateUI();
-}
-
-// --- ステージデータ ---
 const STAGES = [
-    { id: "ST=KY 01", color: "#f1ca00", type: "Sobu" },
-    { id: "ST=KY 02", color: "#f1ca00", type: "Sobu" },
-    { id: "ST=KY 03", color: "#f1ca00", type: "Sobu" },
-    { id: "ST=KY 04", color: "#00ac4a", type: "Saikyo" },
-    { id: "ST=KY 05", color: "#00ac4a", type: "Saikyo" },
-    { id: "ST=KY 06", color: "#00ac4a", type: "Saikyo" },
-    { id: "ST=KY 07", color: "#00a4e4", type: "Keihin" },
-    { id: "ST=KY 08", color: "#00a4e4", type: "Keihin" },
-    { id: "ST=KY 09", color: "#00a4e4", type: "Keihin" },
-    { id: "EX-FRONT", color: "#e50012", type: "Keiyo", hidden: true },
-    { id: "EX-BACK", color: "#e50012", type: "Keiyo", hidden: true },
-    { id: "TRUE-FINAL", color: "#f39700", type: "Chuo", hidden: true }
+    { id: "ST=SB", color: "#f1ca00", diff: 1 }, { id: "ST=KT", color: "#00a4e4", diff: 1 }, { id: "ST=SK", color: "#00ac4a", diff: 1 },
+    { id: "ST=KY", color: "#e50012", diff: 2 }, { id: "ST=PK", color: "#ff69b4", diff: 2 }, { id: "ST=JB", color: "#008080", diff: 2 },
+    { id: "ST=HM", color: "#9370db", diff: 3 }, { id: "ST=KS", color: "#ffffff", diff: 3 }, { id: "ST=TY", color: "#00bfff", diff: 3 },
+    { id: "EX-FRONT", color: "#e50012", diff: 4, hidden: true },
+    { id: "EX-BACK", color: "#e50012", diff: 4, hidden: true },
+    { id: "TRUE-FINAL", color: "#f39700", diff: 5, hidden: true }
 ];
 
-// --- ゲームオブジェクト ---
-let player = { x: 400, y: 550, hp: 100, maxHp: 100, score: 0, size: 20 };
-let bullets = [];
-let enemies = [];
-let enemyBullets = [];
-let boss = null;
-let keys = {};
-let gameActive = false;
-let currentStage = null;
+const SKINS = [
+    { name: '雫(Default)', price: 0 }, { name: '星(KiraKira)', price: 500 }, 
+    { name: '円(Shield)', price: 800 }, { name: '電車(Express)', price: 3000 }
+];
 
-window.addEventListener('keydown', e => keys[e.code] = true);
-window.addEventListener('keyup', e => keys[e.code] = false);
-
-// --- UI操作 ---
-function updateUI() {
-    document.getElementById('hp-val').innerText = player.hp;
-    document.getElementById('score-val').innerText = player.score;
-    document.getElementById('coin-val').innerText = saveData.coins;
-    document.getElementById('atk-val').innerText = saveData.atkLevel;
+// 2. システム関数
+function save() {
+    localStorage.setItem('minami_2026_fullsave', JSON.stringify(saveData));
+    renderStageSelect(); renderShop();
 }
 
-function showStageSelect() {
-    document.getElementById('main-btns').classList.add('hidden');
-    const list = document.getElementById('stage-list');
-    list.classList.remove('hidden');
-    list.innerHTML = '<h2>STAGE SELECT</h2>';
-    
-    const normalCleared = STAGES.filter(s => !s.hidden).every(s => saveData.clearedStages.includes(s.id));
-    const allExCleared = saveData.clearedStages.includes("EX-FRONT") && saveData.clearedStages.includes("EX-BACK");
+function changeLayer(id) {
+    document.querySelectorAll('.layer').forEach(l => l.classList.add('hidden'));
+    document.getElementById(id).classList.remove('hidden');
+    if(id === 'layer-home') document.getElementById('game-ui').classList.add('hidden');
+}
+
+function renderStageSelect() {
+    const grid = document.getElementById('stage-grid');
+    grid.innerHTML = '';
+    const allNormalCleared = STAGES.filter(s => !s.hidden).every(s => saveData.cleared.includes(s.id));
+    const allExCleared = saveData.cleared.includes("EX-FRONT") && saveData.cleared.includes("EX-BACK");
 
     STAGES.forEach(s => {
-        let locked = s.hidden;
-        if (s.type === "Keiyo" && normalCleared) locked = false;
-        if (s.type === "Chuo" && normalCleared && allExCleared) locked = false;
+        let isLocked = s.hidden;
+        if(s.id.includes("EX") && allNormalCleared) isLocked = false;
+        if(s.id === "TRUE-FINAL" && allExCleared) isLocked = false;
 
-        if (!locked) {
-            const btn = document.createElement('button');
-            btn.className = `btn rail-${s.type.toLowerCase()}`;
-            btn.innerText = s.id;
-            btn.onclick = () => initGame(s);
-            list.appendChild(btn);
+        if(!isLocked) {
+            const card = document.createElement('div');
+            card.className = 'stage-card';
+            card.style.borderColor = s.color;
+            card.innerHTML = `<span style="color:${s.color}">${s.id}</span>`;
+            if(saveData.cleared.includes(s.id)) card.innerHTML += `<div class="complete-badge">COMPLETE</div>`;
+            card.onclick = () => initGame(s);
+            grid.appendChild(card);
         }
     });
-    const back = document.createElement('button');
-    back.className = "btn";
-    back.innerText = "BACK";
-    back.onclick = backToMenu;
-    list.appendChild(back);
 }
 
-function showShop() {
-    document.getElementById('main-btns').classList.add('hidden');
-    document.getElementById('shop-ui').classList.remove('hidden');
-}
-
-function backToMenu() {
-    document.getElementById('stage-list').classList.add('hidden');
-    document.getElementById('shop-ui').classList.add('hidden');
-    document.getElementById('main-btns').classList.remove('hidden');
+function renderShop() {
+    const list = document.getElementById('skin-list');
+    list.innerHTML = `<h3>SKINS (Coins: ${saveData.coins})</h3>`;
+    SKINS.forEach(s => {
+        const isOwned = saveData.ownedSkins.includes(s.name);
+        const card = document.createElement('div');
+        card.className = `item-card ${saveData.currentSkin === s.name ? 'equipped' : ''}`;
+        card.innerHTML = `${s.name}<br>${isOwned ? 'OWNED' : s.price + ' C'}`;
+        card.onclick = () => {
+            if(isOwned) { saveData.currentSkin = s.name; }
+            else if(saveData.coins >= s.price) {
+                saveData.coins -= s.price; saveData.ownedSkins.push(s.name);
+            }
+            save();
+        };
+        list.appendChild(card);
+    });
 }
 
 function buyItem(type) {
-    if (type === 'atk' && saveData.coins >= 50) {
-        saveData.coins -= 50; saveData.atkLevel++;
-    } else if (type === 'hp' && saveData.coins >= 30) {
-        saveData.coins -= 30; player.hp = 100;
-    }
+    if(type === 'heal' && saveData.coins >= 30) { saveData.coins -= 30; alert("HP回復"); }
+    if(type === 'atk' && saveData.coins >= 100) { saveData.coins -= 100; saveData.atk++; alert("攻撃UP"); }
     save();
 }
 
-// --- ゲームロジック ---
+// 3. ゲームエンジン
+let gState = { active: false, player: {x:500, y:500, hp:100}, bullets: [], enemies: [], boss: null, score: 0 };
+let mouse = { x: 500, y: 500 };
+
+window.addEventListener('mousemove', e => { mouse.x = e.clientX - canvas.offsetLeft; mouse.y = e.clientY - canvas.offsetTop; });
+window.addEventListener('mousedown', () => { if(gState.active) spawnBullet(); });
+
+function spawnBullet() {
+    gState.bullets.push({ x: gState.player.x, y: gState.player.y - 20, v: -10 });
+}
+
 function initGame(stage) {
-    currentStage = stage;
-    document.getElementById('menu-layer').classList.add('hidden');
-    player.hp = 100;
-    player.score = 0;
-    player.x = 400;
-    bullets = []; enemies = []; enemyBullets = [];
-    boss = { x: 400, y: -100, hp: 500, maxHp: 500, phase: 1, timer: 0 };
-    gameActive = true;
-    updateUI();
+    gState = { active: true, player: {x:500, y:500, hp:100}, bullets: [], enemies: [], score: 0,
+               boss: { x: 500, y: -100, hp: 500 * stage.diff, maxHp: 500 * stage.diff, phase: 1, timer: 0, color: stage.color } };
+    document.getElementById('game-ui').classList.remove('hidden');
+    document.querySelectorAll('.layer').forEach(l => l.classList.add('hidden'));
     loop();
 }
 
-function spawnEnemy() {
-    if (Math.random() < 0.05 && !boss.active) {
-        enemies.push({ x: Math.random() * 760 + 20, y: -20, hp: 2 });
-    }
-}
-
 function loop() {
-    if (!gameActive) return;
-
+    if(!gState.active) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // プレイヤー更新
+    gState.player.x += (mouse.x - gState.player.x) * 0.1;
+    gState.player.y += (mouse.y - gState.player.y) * 0.1;
+    ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.arc(gState.player.x, gState.player.y, 10, 0, Math.PI*2); ctx.fill();
+    // オーラ演出
+    ctx.strokeStyle = gState.boss.color; ctx.lineWidth = 2; ctx.stroke();
+
+    // 自機弾
+    gState.bullets.forEach((b, i) => {
+        b.y += b.v; ctx.fillStyle = "cyan"; ctx.fillRect(b.x-2, b.y, 4, 10);
+        if(b.y < 0) gState.bullets.splice(i,1);
+        // 当たり判定
+        if(Math.hypot(b.x - gState.boss.x, b.y - gState.boss.y) < 50) {
+            gState.boss.hp -= saveData.atk; gState.bullets.splice(i,1);
+        }
+    });
+
+    // ボス
+    let b = gState.boss;
+    if(b.y < 120) b.y += 2;
+    ctx.fillStyle = b.color; ctx.fillRect(b.x-50, b.y-30, 100, 60);
     
-    // 自機移動
-    if (keys['ArrowLeft'] && player.x > 20) player.x -= 5;
-    if (keys['ArrowRight'] && player.x < 780) player.x += 5;
-    if (keys['Space']) {
-        if (Date.now() % 150 < 20) bullets.push({ x: player.x, y: player.y - 20 });
+    // 3フェーズ攻撃
+    b.timer++;
+    const hpR = b.hp / b.maxHp;
+    if(hpR < 0.7) b.phase = 2; if(hpR < 0.3) b.phase = 3;
+
+    if(b.timer % (b.phase === 3 ? 20 : 40) === 0) {
+        gState.enemies.push({ x: b.x, y: b.y, vx: Math.sin(b.timer/10)*3, vy: 4 });
+        if(b.phase >= 2) gState.enemies.push({ x: b.x, y: b.y, vx: -Math.sin(b.timer/10)*3, vy: 4 });
     }
 
-    // 自機描画 (オーラ演出)
-    ctx.shadowBlur = 15;
-    ctx.shadowColor = currentStage.color;
-    ctx.fillStyle = "#fff";
-    ctx.beginPath();
-    ctx.moveTo(player.x, player.y - 15);
-    ctx.lineTo(player.x - 15, player.y + 15);
-    ctx.lineTo(player.x + 15, player.y + 15);
-    ctx.fill();
-    ctx.shadowBlur = 0;
-
-    // 自機ショット
-    bullets.forEach((b, i) => {
-        b.y -= 10;
-        ctx.fillStyle = "cyan";
-        ctx.fillRect(b.x - 2, b.y, 4, 10);
-        if (b.y < 0) bullets.splice(i, 1);
+    // 敵弾更新
+    gState.enemies.forEach((e, i) => {
+        e.x += e.vx; e.y += e.vy;
+        ctx.fillStyle = "red"; ctx.beginPath(); ctx.arc(e.x, e.y, 5, 0, Math.PI*2); ctx.fill();
+        if(Math.hypot(e.x - gState.player.x, e.y - gState.player.y) < 15) {
+            gState.player.hp -= 5; gState.enemies.splice(i,1);
+        }
+        if(e.y > 600) gState.enemies.splice(i,1);
     });
 
-    // ボス登場・攻撃
-    if (boss) {
-        if (boss.y < 100) boss.y += 2;
-        document.getElementById('boss-hp-bar').style.display = 'block';
-        document.getElementById('boss-hp-inner').style.width = (boss.hp / boss.maxHp * 100) + '%';
-        
-        ctx.fillStyle = currentStage.color;
-        ctx.fillRect(boss.x - 50, boss.y - 30, 100, 60);
-        
-        boss.timer++;
-        // フェーズ別弾幕
-        if (boss.timer % 60 === 0) {
-            if (boss.phase >= 1) { // 直線弾
-                enemyBullets.push({ x: boss.x, y: boss.y, vx: 0, vy: 5 });
-            }
-            if (boss.phase >= 2) { // 拡散弾
-                enemyBullets.push({ x: boss.x, y: boss.y, vx: -2, vy: 4 });
-                enemyBullets.push({ x: boss.x, y: boss.y, vx: 2, vy: 4 });
-            }
-        }
-        if (boss.phase === 3 && boss.timer % 100 === 0) { // 全方位弾幕 (真ステージ意識)
-            for(let i=0; i<8; i++) {
-                let ang = (Math.PI * 2 / 8) * i;
-                enemyBullets.push({ x: boss.x, y: boss.y, vx: Math.cos(ang)*3, vy: Math.sin(ang)*3 });
-            }
-        }
+    // UI更新
+    document.getElementById('hp-bar').value = gState.player.hp;
+    document.getElementById('score').innerText = b.hp;
+    document.getElementById('coins').innerText = saveData.coins;
 
-        // 当たり判定 (自機ショット -> ボス)
-        bullets.forEach((b, bi) => {
-            if (b.x > boss.x - 50 && b.x < boss.x + 50 && b.y < boss.y + 30) {
-                boss.hp -= saveData.atkLevel;
-                bullets.splice(bi, 1);
-                if (boss.hp < 350 && boss.phase === 1) boss.phase = 2;
-                if (boss.hp < 150 && boss.phase === 2) boss.phase = 3;
-                if (boss.hp <= 0) win();
-            }
-        });
-    }
-
-    // 敵弾移動・当たり判定
-    enemyBullets.forEach((eb, i) => {
-        eb.x += eb.vx || 0;
-        eb.y += eb.vy;
-        ctx.fillStyle = "red";
-        ctx.beginPath(); ctx.arc(eb.x, eb.y, 5, 0, Math.PI*2); ctx.fill();
-
-        if (Math.hypot(eb.x - player.x, eb.y - player.y) < 15) {
-            player.hp -= 10;
-            enemyBullets.splice(i, 1);
-            updateUI();
-            if (player.hp <= 0) gameOver();
-        }
-    });
+    if(b.hp <= 0) { alert("STAGE CLEAR!"); saveData.coins += 200; saveData.cleared.push(currentStageId()); save(); endGame(); }
+    if(gState.player.hp <= 0) { alert("GAME OVER"); endGame(); }
 
     requestAnimationFrame(loop);
 }
 
-function win() {
-    gameActive = false;
-    alert(currentStage.id + " MISSION COMPLETE!\n100コイン獲得！");
-    saveData.coins += 100;
-    if (!saveData.clearedStages.includes(currentStage.id)) saveData.clearedStages.push(currentStage.id);
-    document.getElementById('boss-hp-bar').style.display = 'none';
-    save();
-    location.reload();
-}
+function endGame() { gState.active = false; changeLayer('layer-home'); }
+function currentStageId() { return STAGES.find(s => s.color === gState.boss.color).id; }
 
-function gameOver() {
-    gameActive = false;
-    alert("撃沈... ショップで装備を整え直そう。");
-    save();
-    location.reload();
-}
-
-updateUI();
+// 初期化
+renderStageSelect(); renderShop();
 </script>
 </body>
 </html>
