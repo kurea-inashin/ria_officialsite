@@ -1,265 +1,350 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <title>Minami Project 2026: Burst Finale</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+JP:wght@700;900&display=swap');
-        
-        body { margin: 0; background: #000; color: #fff; font-family: 'Press Start 2P', cursive; overflow: hidden; user-select: none; }
-        canvas { display: block; }
+    <meta charset="UTF-8">
+    <title>Minami Project 2026: Burst Finale</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+JP:wght@700;900&display=swap');
+        
+        body { margin: 0; background: #000; color: #fff; font-family: 'Press Start 2P', cursive; overflow: hidden; user-select: none; }
+        canvas { display: block; }
 
-        /* HUD */
-        #hud { position: absolute; top: 20px; left: 20px; z-index: 10; pointer-events: none; }
-        #score-val { font-size: 20px; text-shadow: 0 0 10px #00ffff; margin-bottom: 10px; }
-        .bar-label { font-size: 8px; margin-top: 8px; color: #aaa; }
-        .bar-container { width: 200px; height: 12px; background: rgba(255,255,255,0.1); border: 2px solid #fff; border-radius: 6px; overflow: hidden; margin-bottom: 5px; }
-        #hp-fill { height: 100%; background: linear-gradient(90deg, #ff0055, #00ffaa); width: 100%; transition: width 0.3s; }
-        #gold-val { color:#ffd700; font-size:12px; margin-top:5px; }
+        /* HUD: 必殺技ゲージとスコアを強調 */
+        #hud { position: absolute; top: 20px; left: 20px; z-index: 10; pointer-events: none; }
+        #score-val { font-size: 24px; text-shadow: 0 0 10px #00ffff; margin-bottom: 10px; }
+        .bar-label { font-size: 8px; margin-top: 10px; color: #aaa; }
+        .bar-container { width: 250px; height: 14px; background: rgba(255,255,255,0.1); border: 2px solid #fff; border-radius: 7px; overflow: hidden; margin-bottom: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
+        #hp-fill { height: 100%; background: linear-gradient(90deg, #ff0055, #00ffaa); width: 100%; transition: width 0.3s; }
+        #gauge-fill { height: 100%; background: #00ccff; width: 0%; transition: width 0.1s; }
+        #bomb-stock { color: #ffff00; font-size: 14px; text-shadow: 0 0 5px #ffaa00; }
 
-        /* ボスHP */
-        #boss-hud { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); width: 60%; display: none; text-align: center; z-index: 10; }
-        #boss-hp-fill { height: 10px; background: #ff0000; width: 100%; box-shadow: 0 0 15px #ff0000; }
+        /* Menu System */
+        #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,15,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20; backdrop-filter: blur(8px); }
+        .panel { display: none; flex-direction: column; align-items: center; width: 90%; }
+        .active { display: flex; }
+        .nav-btn { padding: 15px 30px; border: 3px solid #fff; background: rgba(255,255,255,0.1); color: #fff; cursor: pointer; font-family: 'Press Start 2P'; font-size: 11px; margin: 10px; transition: 0.2s; }
+        .nav-btn:hover { background: #fff; color: #000; transform: scale(1.1); box-shadow: 0 0 20px #fff; }
 
-        /* メニュー */
-        #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,15,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20; backdrop-filter: blur(8px); }
-        .panel { display: none; flex-direction: column; align-items: center; width: 90%; max-height: 80vh; overflow-y: auto; }
-        .active { display: flex; }
-        
-        .nav-btn { padding: 12px 24px; border: 2px solid #fff; background: rgba(255,255,255,0.1); color: #fff; cursor: pointer; font-family: 'Press Start 2P'; font-size: 10px; margin: 8px; transition: 0.2s; text-align: center; }
-        .nav-btn:hover { background: #fff; color: #000; box-shadow: 0 0 15px #fff; }
-        .nav-btn.equipped { border-color: #0f0; color: #0f0; }
+        /* Stage Grid */
+        .mode-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        .mode-btn { width: 140px; padding: 15px; border: 2px solid #333; background: #000; color: #444; cursor: pointer; text-align: center; font-size: 10px; transition: 0.3s; }
+        .mode-btn.unlocked { border-color: var(--c); color: var(--c); }
+        .mode-btn.unlocked:hover { background: var(--c); color: #000; box-shadow: 0 0 25px var(--c); transform: translateY(-5px); }
+        .mode-btn.cleared::after { content: ' CLEAR'; font-size: 8px; display: block; color: #0f0; }
 
-        .mode-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-        .shop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; max-width: 700px; }
-        .mode-btn { width: 120px; padding: 10px; border: 2px solid #333; background: #000; color: #444; cursor: pointer; text-align: center; font-size: 9px; }
-        .mode-btn.unlocked { border-color: var(--c); color: var(--c); }
-        
-        /* コイン不足時のブルブル表示 */
-        #msg { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; opacity: 0; pointer-events: none; z-index: 100; text-align: center; white-space: nowrap; color: #ff0000; }
-        @keyframes shake {
-            0%, 100% { transform: translate(-50%, -50%) translateX(0); }
-            20%, 60% { transform: translate(-50%, -50%) translateX(-20px); }
-            40%, 80% { transform: translate(-50%, -50%) translateX(20px); }
-        }
-        .shake-active { animation: shake 0.3s ease-in-out; }
-
-        #copyright { position: absolute; bottom: 15px; width: 100%; text-align: center; font-size: 9px; color: #666; pointer-events: none; }
-    </style>
+        .status-msg { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); font-size: 36px; opacity: 0; transition: 0.4s; pointer-events: none; z-index: 50; text-align: center; font-weight: 900; }
+        #ending { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 100; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-family: 'Noto Sans JP'; padding: 40px; }
+    </style>
 </head>
 <body oncontextmenu="return false;">
 
-    <div id="hud" style="display:none;">
-        <div id="score-val">SCORE: 000000</div>
-        <div class="bar-label">ARMOR (HP)</div>
-        <div class="bar-container"><div id="hp-fill"></div></div>
-        <div id="gold-val">GOLD: 0</div>
-    </div>
+    <div id="hud">
+        <div id="score-val">SCORE: 000000</div>
+        <div class="bar-label">ARMOR</div>
+        <div class="bar-container"><div id="hp-fill"></div></div>
+        <div class="bar-label">BURST GAUGE</div>
+        <div class="bar-container"><div id="gauge-fill"></div></div>
+        <div id="bomb-stock">BOMBS: </div>
+        <div id="gold-val" style="color:#ffd700; font-size:12px; margin-top:5px;">GOLD: 0</div>
+    </div>
 
-    <div id="boss-hud">
-        <div style="font-size:10px; color:#ff0000; margin-bottom:5px;">WARNING: BOSS IDENTIFIED</div>
-        <div class="bar-container" style="width:100%; height:10px; border-color:#ff0000;"><div id="boss-hp-fill"></div></div>
-    </div>
+    <div id="overlay">
+        <h1 style="font-size:30px; margin-bottom:40px; text-shadow: 0 0 20px #0088ff;">MINAMI PROJECT 2026</h1>
+        <div id="main-nav">
+            <button class="nav-btn" onclick="openPanel('stage-select')">SELECT MISSION</button>
+            <button class="nav-btn" onclick="openPanel('shop')">TECH SHOP</button>
+        </div>
 
-    <div id="overlay">
-        <h1 style="font-size:24px; margin-bottom:30px; text-shadow: 0 0 20px #0088ff;">MINAMI PROJECT 2026</h1>
-        <div id="main-nav">
-            <button class="nav-btn" onclick="openPanel('stage-select')">SELECT MISSION</button>
-            <button class="nav-btn" onclick="openPanel('shop')">SKINS & SHOP</button>
-            <button class="nav-btn" onclick="openPanel('how-to')">MISSION CONTROL</button>
-        </div>
+        <div id="stage-select" class="panel">
+            <div class="mode-grid" id="grid"></div>
+            <button class="nav-btn" style="margin-top:40px;" onclick="location.reload()">BACK TO TITLE</button>
+        </div>
 
-        <div id="stage-select" class="panel">
-            <h2 style="color:#00ffff; font-size:14px;">SELECT DESTINATION</h2>
-            <div class="mode-grid" id="grid"></div>
-            <button class="nav-btn" style="margin-top:20px;" onclick="backToTitle()">BACK</button>
-        </div>
+        <div id="shop" class="panel">
+            <div id="shop-gold" style="color:#ffd700; font-size:20px; margin-bottom:20px;"></div>
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
+                <button class="nav-btn" onclick="buy('atk', 1000)">ATTACK UP (1000G)</button>
+                <button class="nav-btn" onclick="buy('heal', 500)">FULL REPAIR (500G)</button>
+                <button class="nav-btn" onclick="buy('aura', 3000)">CYAN AURA (3000G)</button>
+            </div>
+            <button class="nav-btn" style="margin-top:30px;" onclick="location.reload()">BACK</button>
+        </div>
+    </div>
 
-        <div id="shop" class="panel">
-            <h2 id="shop-gold" style="color:#ffd700; font-size:16px;"></h2>
-            <div class="shop-grid" id="shop-items"></div>
-            <button class="nav-btn" style="margin-top:20px;" onclick="backToTitle()">BACK</button>
-        </div>
+    <div id="ending">
+        <h2 style="font-size:40px; color:#ff6600;">MISSION ACCOMPLISHED</h2>
+        <p id="end-text" style="font-size:18px; line-height:2.5; max-width:800px; color:#ccc;"></p>
+        <button class="nav-btn" onclick="location.reload()">REBOOT SYSTEM</button>
+    </div>
 
-        <div id="how-to" class="panel">
-            <div style="padding:20px; border:1px solid #333; font-family:'Noto Sans JP'; font-size:12px; line-height:1.8;">
-                <h3 style="color:#0ff; text-align:center;">■ MISSION CONTROL ■</h3>
-                <p>・<b>移動:</b> マウス追従 / <b>攻撃:</b> 左クリック</p>
-                <p>・<b>全路線制覇:</b> 9ステージクリアで中央線(ST=CO)解禁</p>
-            </div>
-            <button class="nav-btn" style="margin-top:20px;" onclick="backToTitle()">BACK</button>
-        </div>
-    </div>
+    <div id="msg" class="status-msg"></div>
+    <canvas id="game"></canvas>
 
-    <div id="msg">NOT ENOUGH GOLD!</div>
-    <div id="copyright">© 2026 MINAMI PROJECT - BURST FINALE EXTENDED</div>
-    <canvas id="game"></canvas>
+    <script>
+        const canvas = document.getElementById('game');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
 
-    <script>
-        const canvas = document.getElementById('game');
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+        let gameActive = false, score = 0, hp = 100, frame = 0, phase = 1, burstGauge = 0;
+        let bullets = [], eBullets = [], enemies = [], particles = [], bombActive = 0;
+        let player = { x: canvas.width/2, y: canvas.height/2 };
+        let currentMode = null;
 
-        let gameActive = false, score = 0, hp = 100, frame = 0, startAnim = 0;
-        let bullets = [], eBullets = [], enemies = [], particles = [];
-        let player = { x: canvas.width/2, y: canvas.height/2, radius: 15 };
-        let isDown = false, currentMode = null, bossMode = false;
+        const NORMAL_STAGES = ['SB', 'KT', 'SK', 'KY', 'PK', 'JB', 'S1', 'S2', 'S3'];
+        let userData = JSON.parse(localStorage.getItem('minami_2026_v4')) || {
+            gold: 0, atk: 2, bombs: 1, unlocked: [...NORMAL_STAGES], cleared: [], aura: 'none'
+        };
 
-        const NORMAL_STAGES = ['SB', 'KT', 'SK', 'KY', 'PK', 'JB', 'S1', 'S2', 'S3'];
-        let userData = JSON.parse(localStorage.getItem('minami_2026_orig')) || {
-            gold: 0, atk: 2, unlocked: [...NORMAL_STAGES], cleared: [], 
-            skin: '#ffffff', shipType: 'STANDARD', weapon: 'NORMAL'
-        };
+        const STAGES = {
+            'SB': { name: 'ST=SB', color: '#ccaa00', diff: 1, bossHp: 500, score1: 5000, score2: 15000, gimmick: 'vibrate' },
+            'KT': { name: 'ST=KT', color: '#0088cc', diff: 1.2, bossHp: 700, score1: 7000, score2: 20000, gimmick: 'water' },
+            'SK': { name: 'ST=SK', color: '#008844', diff: 1.5, bossHp: 900, score1: 8000, score2: 25000, gimmick: 'fog' },
+            'KY': { name: 'ST=KY', color: '#aa0022', diff: 2.0, bossHp: 1200, score1: 10000, score2: 30000, gimmick: 'wind' },
+            'PK': { name: 'ST=PK', color: '#cc5588', diff: 2.2, bossHp: 1400, score1: 12000, score2: 35000, gimmick: 'reverse' },
+            'JB': { name: 'ST=JB', color: '#006666', diff: 2.5, bossHp: 1600, score1: 15000, score2: 40000, gimmick: 'jamming' },
+            'S1': { name: 'ST=S1', color: '#6600cc', diff: 3.0, bossHp: 2000, score1: 18000, score2: 50000, gimmick: 'warp' },
+            'S2': { name: 'ST=S2', color: '#cc00cc', diff: 3.5, bossHp: 2500, score1: 20000, score2: 60000, gimmick: 'poison' },
+            'S3': { name: 'ST=S3', color: '#00cccc', diff: 4.0, bossHp: 3000, score1: 25000, score2: 80000, gimmick: 'gravity' },
+            'HA': { name: 'ST=HA', color: '#CD7F32', diff: 6, bossHp: 6000, score1: 40000, score2: 100000, secret: true },
+            'HB': { name: 'ST=HB', color: '#C0C0C0', diff: 8, bossHp: 8000, score1: 50000, score2: 150000, secret: true },
+            'HC': { name: 'ST=HC', color: '#FFD700', diff: 12, bossHp: 12000, score1: 70000, score2: 200000, secret: true },
+            'UA': { name: 'ST=UA', color: '#444', diff: 20, bossHp: 25000, score1: 100000, score2: 300000, secret: true },
+            'UB': { name: 'ST=UB', color: '#fff', diff: 30, bossHp: 40000, score1: 150000, score2: 500000, secret: true },
+            'CO': { name: 'ST=CO', color: '#ff6600', diff: 60, bossHp: 150000, score1: 300000, score2: 999999, secret: true, ultimate: true }
+        };
 
-        const STAGES = {
-            'SB': { name: 'ST=SB', color: '#ccaa00', diff: 1, bossHp: 500, score1: 5000 },
-            'KT': { name: 'ST=KT', color: '#0088cc', diff: 1.2, bossHp: 700, score1: 7000 },
-            'SK': { name: 'ST=SK', color: '#008844', diff: 1.5, bossHp: 900, score1: 8000 },
-            'KY': { name: 'ST=KY', color: '#aa0022', diff: 2.0, bossHp: 1200, score1: 10000 },
-            'PK': { name: 'ST=PK', color: '#cc5588', diff: 2.2, bossHp: 1400, score1: 12000 },
-            'JB': { name: 'ST=JB', color: '#006666', diff: 2.5, bossHp: 1600, score1: 15000 },
-            'S1': { name: 'ST=S1', color: '#6600cc', diff: 3.0, bossHp: 2000, score1: 18000 },
-            'S2': { name: 'ST=S2', color: '#cc00cc', diff: 3.5, bossHp: 2500, score1: 20000 },
-            'S3': { name: 'ST=S3', color: '#00cccc', diff: 4.0, bossHp: 3000, score1: 25000 },
-            'CO': { name: 'ST=CO', color: '#ff6600', diff: 50, bossHp: 100000, score1: 50000, secret: true }
-        };
+        function save() { localStorage.setItem('minami_2026_v4', JSON.stringify(userData)); }
 
-        function save() { localStorage.setItem('minami_2026_orig', JSON.stringify(userData)); }
+        function openPanel(id) {
+            document.getElementById('main-nav').style.display = 'none';
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+            if(id === 'stage-select') renderStages();
+            if(id === 'shop') document.getElementById('shop-gold').innerText = `TOTAL GOLD: ${userData.gold}`;
+        }
 
-        function showCoinError() {
-            const m = document.getElementById('msg');
-            m.style.opacity = 1;
-            m.classList.add('shake-active');
-            setTimeout(() => { m.style.opacity = 0; m.classList.remove('shake-active'); }, 1000);
-        }
+        function renderStages() {
+            const grid = document.getElementById('grid'); grid.innerHTML = '';
+            // 解禁ロジック
+            if(NORMAL_STAGES.every(id => userData.cleared.includes(id))) 
+                ['HA','HB','HC'].forEach(id => !userData.unlocked.includes(id) && userData.unlocked.push(id));
+            if(['HA','HB','HC'].every(id => userData.cleared.includes(id)))
+                ['UA','UB'].forEach(id => !userData.unlocked.includes(id) && userData.unlocked.push(id));
+            if(['UA','UB'].every(id => userData.cleared.includes(id)))
+                !userData.unlocked.includes('CO') && userData.unlocked.push('CO');
 
-        function openPanel(id) {
-            document.getElementById('main-nav').style.display = 'none';
-            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            if(id === 'shop') updateShopUI();
-            if(id === 'stage-select') renderStages();
-        }
+            Object.keys(STAGES).forEach(id => {
+                if(STAGES[id].secret && !userData.unlocked.includes(id)) return;
+                const btn = document.createElement('div');
+                btn.className = `mode-btn unlocked ${userData.cleared.includes(id) ? 'cleared' : ''}`;
+                btn.style.setProperty('--c', STAGES[id].color);
+                btn.innerHTML = STAGES[id].ultimate ? "<b>CENTRAL ORE</b>" : STAGES[id].name;
+                btn.onclick = () => startGame(id);
+                grid.appendChild(btn);
+            });
+        }
 
-        function updateShopUI() {
-            document.getElementById('shop-gold').innerText = `GOLD: ${userData.gold}`;
-            const shop = document.getElementById('shop-items'); shop.innerHTML = '';
-            const items = [
-                {id:'KY', n:'KY-RED', c:'#ff0000', s:'SPEEDER', p:1500},
-                {id:'KT', n:'KT-BLUE', c:'#0088ff', s:'TWIN', p:1500},
-                {id:'SB', n:'SB-YELLOW', c:'#ffff00', s:'HEAVY', p:1500},
-                {id:'SK', n:'SK-GREEN', c:'#00ff44', s:'SPEEDER', p:1500},
-                {id:'WD', n:'WIDE SHOT', w:'WIDE', p:5000}
-            ];
-            if(userData.cleared.length >= 9) items.push({id:'CO', n:'CENTRAL-ORE', c:'#ff6600', s:'ULTIMATE', p:10000});
+        function buy(type, cost) {
+            if(userData.gold >= cost) {
+                userData.gold -= cost;
+                if(type === 'atk') userData.atk += 1;
+                if(type === 'heal') hp = 100;
+                if(type === 'aura') userData.aura = 'cyan';
+                save(); openPanel('shop');
+            }
+        }
 
-            items.forEach(i => {
-                const btn = document.createElement('button');
-                btn.className = `nav-btn ${ (userData.skin===i.c || userData.weapon===i.w) ? 'equipped' : '' }`;
-                btn.style.color = i.c || '#0ff';
-                btn.innerText = `${i.n} (${i.p}G)`;
-                btn.onclick = () => {
-                    if(userData.gold >= i.p) {
-                        userData.gold -= i.p;
-                        if(i.w) userData.weapon = i.w; else { userData.skin = i.c; userData.shipType = i.s; }
-                        save(); updateShopUI();
-                    } else { showCoinError(); }
-                };
-                shop.appendChild(btn);
-            });
-        }
+        function startGame(id) {
+            currentMode = { ...STAGES[id], id: id };
+            document.getElementById('overlay').style.display = 'none';
+            gameActive = true; score = 0; hp = 100; phase = 1; burstGauge = 0;
+            enemies = []; bullets = []; eBullets = []; particles = [];
+            showMsg("MISSION START", "#fff"); loop();
+        }
 
-        function renderStages() {
-            const grid = document.getElementById('grid'); grid.innerHTML = '';
-            if(NORMAL_STAGES.every(id => userData.cleared.includes(id)) && !userData.unlocked.includes('CO')) userData.unlocked.push('CO');
-            Object.keys(STAGES).forEach(id => {
-                if(STAGES[id].secret && !userData.unlocked.includes(id)) return;
-                const btn = document.createElement('div');
-                btn.className = `mode-btn unlocked ${userData.cleared.includes(id) ? 'cleared' : ''}`;
-                btn.style.setProperty('--c', STAGES[id].color);
-                btn.innerText = STAGES[id].name;
-                btn.onclick = () => startGame(id);
-                grid.appendChild(btn);
-            });
-        }
+        function showMsg(t, color) {
+            const m = document.getElementById('msg');
+            m.innerText = t; m.style.color = color; m.style.opacity = 1;
+            setTimeout(() => m.style.opacity = 0, 2000);
+        }
 
-        function startGame(id) {
-            currentMode = { ...STAGES[id], id: id };
-            document.getElementById('overlay').style.display = 'none';
-            document.getElementById('hud').style.display = 'block';
-            gameActive = true; score = 0; hp = 100; frame = 0; startAnim = 120; bossMode = false;
-            enemies = []; bullets = []; eBullets = [];
-            document.getElementById('boss-hud').style.display = 'none';
-            loop();
-        }
+        function useBomb() {
+            if(userData.bombs > 0 && bombActive <= 0) {
+                userData.bombs--;
+                bombActive = 60;
+                eBullets = [];
+                enemies.forEach(e => {
+                    e.hp -= 1000 * (userData.atk/2);
+                    createExplosion(e.x, e.y, "#fff");
+                });
+                showMsg("MAXIMUM BURST!!", "#00ffff");
+            }
+        }
 
-        function backToTitle() { document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active')); document.getElementById('main-nav').style.display='flex'; }
+        function createExplosion(x, y, color) {
+            for(let i=0; i<10; i++) particles.push({ x: x, y: y, vx: (Math.random()-0.5)*12, vy: (Math.random()-0.5)*12, life: 25, color: color });
+        }
 
-        function update() {
-            if(startAnim > 0) { startAnim--; return; }
-            frame++;
-            if(isDown && frame % 6 === 0) {
-                if(userData.weapon === 'WIDE') { [-3, 0, 3].forEach(vx => bullets.push({x: player.x, y: player.y, vx: vx, vy: -15})); }
-                else bullets.push({x: player.x, y: player.y, vx: 0, vy: -15});
-            }
-            if(!bossMode && frame % 40 === 0) enemies.push({ x: Math.random()*canvas.width, y: -50, hp: 10 * currentMode.diff, size: 30, vy: 3 });
-            if(!bossMode && score >= currentMode.score1) {
-                bossMode = true;
-                enemies.push({ x: canvas.width/2, y: -150, hp: currentMode.bossHp, maxHp: currentMode.bossHp, size: 120, vy: 1, isBoss: true });
-                document.getElementById('boss-hud').style.display = 'block';
-            }
-            bullets.forEach((b, i) => {
-                b.x += b.vx; b.y += b.vy;
-                enemies.forEach((e, ei) => {
-                    if(Math.hypot(b.x-e.x, b.y-e.y) < e.size) {
-                        e.hp -= userData.atk; bullets.splice(i, 1);
-                        if(e.isBoss) document.getElementById('boss-hp-fill').style.width = (e.hp/e.maxHp)*100 + "%";
-                        if(e.hp <= 0) {
-                            userData.gold += e.isBoss ? 5000 : 25;
-                            if(e.isBoss) { if(!userData.cleared.includes(currentMode.id)) userData.cleared.push(currentMode.id); save(); alert("MISSION CLEAR!"); location.reload(); }
-                            enemies.splice(ei, 1); score += 100;
-                        }
-                    }
-                });
-            });
-            enemies.forEach(e => {
-                e.y += e.vy; if(e.isBoss && e.y > 150) e.vy = 0;
-                if(Math.random() < 0.05 * currentMode.diff) eBullets.push({x: e.x, y: e.y, vy: 5});
-            });
-            eBullets.forEach((eb, i) => {
-                eb.y += eb.vy; if(Math.hypot(eb.x-player.x, eb.y-player.y) < 15) { hp -= 10; eBullets.splice(i, 1); if(hp <= 0) { alert("GAME OVER"); location.reload(); } }
-            });
-            document.getElementById('hp-fill').style.width = hp + "%";
-            document.getElementById('gold-val').innerText = `GOLD: ${userData.gold}`;
-            document.getElementById('score-val').innerText = `SCORE: ${score.toString().padStart(6, '0')}`;
-        }
+        function update() {
+            frame++;
+            if(bombActive > 0) bombActive--;
 
-        function draw() {
-            ctx.fillStyle = "rgba(0,0,20,0.3)"; ctx.fillRect(0,0,canvas.width, canvas.height);
-            // 自機描画
-            ctx.save(); ctx.translate(player.x, player.y); ctx.fillStyle = userData.skin; ctx.beginPath();
-            if(userData.shipType==='SPEEDER') { ctx.moveTo(0,-22); ctx.lineTo(12,18); ctx.lineTo(0,10); ctx.lineTo(-12,18); }
-            else if(userData.shipType==='HEAVY') { ctx.moveTo(-18,-10); ctx.lineTo(18,-10); ctx.lineTo(22,18); ctx.lineTo(-22,18); }
-            else { ctx.moveTo(0,-20); ctx.lineTo(15,15); ctx.lineTo(-15,15); }
-            ctx.fill(); ctx.restore();
+            // スコア連動フェーズ
+            if(phase === 1 && score >= currentMode.score1) { phase = 2; showMsg("PHASE 2: INTENSIFY", "#ff0"); }
+            if(phase === 2 && score >= currentMode.score2) { phase = 3; showMsg("BOSS DETECTED", "#f00"); }
 
-            ctx.fillStyle="#0ff"; bullets.forEach(b=>ctx.fillRect(b.x-2, b.y, 4, 10));
-            ctx.fillStyle="#f00"; eBullets.forEach(eb=>{ctx.beginPath(); ctx.arc(eb.x, eb.y, 5, 0, 7); ctx.fill();});
-            enemies.forEach(e => { ctx.strokeStyle = e.isBoss ? "#f00" : currentMode.color; ctx.lineWidth = 3; ctx.strokeRect(e.x-e.size/2, e.y-e.size/2, e.size, e.size); });
+            // ギミック
+            if(currentMode.gimmick === 'wind' && userData.aura !== 'cyan') player.x += Math.sin(frame/20)*15;
+            if(currentMode.gimmick === 'gravity') player.y += 3;
+            if(currentMode.gimmick === 'vibrate') { player.x += (Math.random()-0.5)*12; player.y += (Math.random()-0.5)*12; }
+            if(currentMode.gimmick === 'poison' && frame % 100 === 0) hp -= 1;
 
-            if(bossMode && Math.floor(frame/20)%2===0) {
-                ctx.fillStyle = "rgba(255,0,0,0.1)"; ctx.fillRect(0,0,canvas.width, canvas.height);
-                ctx.fillStyle = "#f00"; ctx.textAlign="center"; ctx.font="20px 'Press Start 2P'"; ctx.fillText("WARNING", canvas.width/2, 100);
-            }
-            if(startAnim > 0) {
-                ctx.fillStyle = currentMode.color; ctx.globalAlpha = 0.5; ctx.fillRect(0, canvas.height/2-40, canvas.width, 80); ctx.globalAlpha = 1;
-                ctx.fillStyle="#fff"; ctx.font="20px 'Press Start 2P'"; ctx.textAlign="center"; ctx.fillText("MISSION START", canvas.width/2, canvas.height/2+10);
-            }
-        }
+            if(isDown && frame % 5 === 0) {
+                bullets.push({ x: player.x, y: player.y - 20, p: userData.atk });
+            }
 
-        function loop() { if(!gameActive) return; update(); draw(); requestAnimationFrame(loop); }
-        window.onmousemove = e => { player.x = e.clientX; player.y = e.clientY; };
-        window.onmousedown = () => isDown = true; window.onmouseup = () => isDown = false;
-    </script>
+            // 敵出現（ボスがいない間）
+            if(!enemies.some(e => e.isBoss) && frame % 35 === 0) {
+                enemies.push({ x: Math.random()*canvas.width, y: -50, hp: 15*currentMode.diff, size: 30, vy: 3 + currentMode.diff/4, type: Math.random() < 0.2 ? 'sin' : 'norm' });
+            }
+            if(phase === 3 && !enemies.some(e => e.isBoss)) {
+                enemies.push({ x: canvas.width/2, y: -100, hp: currentMode.bossHp, maxHp: currentMode.bossHp, size: 130, vy: 1, isBoss: true });
+            }
+
+            // 弾丸ロジック
+            bullets.forEach((b, i) => {
+                b.y -= 20;
+                enemies.forEach((e, ei) => {
+                    if(Math.hypot(b.x-e.x, b.y-e.y) < e.size) {
+                        e.hp -= b.p; score += 20; bullets.splice(i, 1);
+                        if(e.hp <= 0) {
+                            createExplosion(e.x, e.y, currentMode.color);
+                            if(e.isBoss) finish(true);
+                            else {
+                                score += 500;
+                                userData.gold += Math.floor(10 * currentMode.diff);
+                                // ゲージ増加
+                                burstGauge += 10;
+                                if(burstGauge >= 100) { burstGauge = 0; userData.bombs++; showMsg("BOMB READY!", "#ff0"); }
+                                enemies.splice(ei, 1);
+                            }
+                        }
+                    }
+                });
+            });
+
+            enemies.forEach(e => {
+                e.y += e.vy;
+                if(e.type === 'sin') e.x += Math.sin(frame/10)*8;
+                if(e.isBoss && e.y > 150) e.vy = 0;
+                
+                if(e.isBoss && bombActive <= 0) {
+                    if(frame % 4 === 0) eBullets.push({ x: e.x, y: e.y, vx: Math.cos(frame*0.25)*8, vy: Math.sin(frame*0.25)*8, size: 8 });
+                    if(frame % 50 === 0) {
+                        for(let j=0; j<20; j++) {
+                            const a = (Math.PI*2/20)*j;
+                            eBullets.push({ x: e.x, y: e.y, vx: Math.cos(a)*6, vy: Math.sin(a)*6, size: 12, color: "#f00" });
+                        }
+                    }
+                } else if(Math.random() < 0.04 * currentMode.diff && bombActive <= 0) {
+                    eBullets.push({ x: e.x, y: e.y, vx: 0, vy: 6 + currentMode.diff/2, size: 6 });
+                }
+            });
+
+            eBullets.forEach((eb, i) => {
+                eb.x += eb.vx || 0; eb.y += eb.vy;
+                if(Math.hypot(eb.x-player.x, eb.y-player.y) < 18) {
+                    hp -= 15; eBullets.splice(i, 1);
+                    createExplosion(player.x, player.y, "#f00");
+                    if(hp <= 0) finish(false);
+                }
+            });
+
+            particles.forEach((p, i) => { p.x += p.vx; p.y += p.vy; p.life--; if(p.life <= 0) particles.splice(i, 1); });
+
+            // UI更新
+            document.getElementById('hp-fill').style.width = hp + "%";
+            document.getElementById('gauge-fill').style.width = burstGauge + "%";
+            document.getElementById('score-val').innerText = `SCORE: ${score.toString().padStart(6, '0')}`;
+            document.getElementById('bomb-stock').innerText = `BOMBS: ${"★".repeat(userData.bombs)}`;
+            document.getElementById('gold-val').innerText = `GOLD: ${userData.gold}`;
+        }
+
+        function draw() {
+            ctx.fillStyle = "rgba(0, 8, 20, 0.4)"; ctx.fillRect(0,0,canvas.width, canvas.height);
+            
+            if(bombActive > 0) {
+                ctx.fillStyle = `rgba(255, 255, 255, ${bombActive/60})`;
+                ctx.fillRect(0,0,canvas.width, canvas.height);
+            }
+
+            if(currentMode.gimmick === 'fog' && frame % 16 < 8) return;
+
+            // Player Aura
+            if(userData.aura === 'cyan') {
+                ctx.strokeStyle = "cyan"; ctx.lineWidth = 4; ctx.beginPath();
+                ctx.arc(player.x, player.y, 28+Math.sin(frame/5)*5, 0, 7); ctx.stroke();
+            }
+
+            // Player Ship
+            ctx.fillStyle = "#fff";
+            ctx.beginPath();
+            ctx.moveTo(player.x, player.y - 18);
+            ctx.lineTo(player.x + 14, player.y + 12);
+            ctx.lineTo(player.x - 14, player.y + 12);
+            ctx.closePath();
+            ctx.fill();
+
+            // Enemies
+            enemies.forEach(e => {
+                ctx.strokeStyle = e.isBoss ? "#f00" : currentMode.color; ctx.lineWidth = 5;
+                ctx.strokeRect(e.x-e.size/2, e.y-e.size/2, e.size, e.size);
+                if(e.isBoss) {
+                    ctx.fillStyle = "#200"; ctx.fillRect(e.x-70, e.y-95, 140, 12);
+                    ctx.fillStyle = "#f00"; ctx.fillRect(e.x-70, e.y-95, 140*(e.hp/e.maxHp), 12);
+                }
+            });
+
+            // Particles & Bullets
+            ctx.fillStyle = "#0ff"; bullets.forEach(b => ctx.fillRect(b.x-4, b.y, 8, 22));
+            eBullets.forEach(eb => {
+                ctx.fillStyle = eb.color || "#ff00ff";
+                ctx.beginPath(); ctx.arc(eb.x, eb.y, eb.size, 0, 7); ctx.fill();
+            });
+            particles.forEach(p => { ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, 4, 4); });
+        }
+
+        function finish(clear) {
+            gameActive = false;
+            if(clear) {
+                if(!userData.cleared.includes(currentMode.id)) userData.cleared.push(currentMode.id);
+                userData.gold += 5000;
+                save();
+                if(currentMode.id === 'CO') showEnding();
+                else { alert("MISSION SUCCESS!\nGOLD +5000"); location.reload(); }
+            } else { alert("MISSION FAILED..."); location.reload(); }
+        }
+
+        function showEnding() {
+            document.getElementById('ending').style.display = 'flex';
+            const msg = "中央線のオレンジが宇宙を包み込む…。すべての路線を制覇したあなたに、最高の敬意を。2026年、南プロジェクト完結。ご愛読、ご協力ありがとうございました！";
+            let i = 0;
+            const timer = setInterval(() => {
+                document.getElementById('end-text').innerText += msg[i];
+                i++; if(i >= msg.length) clearInterval(timer);
+            }, 50);
+        }
+
+        function loop() { if(!gameActive) return; update(); draw(); requestAnimationFrame(loop); }
+
+        let isDown = false;
+        window.onmousedown = (e) => { if(e.button === 0) isDown = true; if(e.button === 2) useBomb(); };
+        window.onmouseup = () => isDown = false;
+        window.onmousemove = e => { player.x = e.clientX; player.y = e.clientY; };
+        window.onkeydown = e => { if(e.code === 'Space') useBomb(); };
+
+        renderStages();
+    </script>
 </body>
 </html>
+
