@@ -2,136 +2,246 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>ST-PROJECT: RAIL-BLAST Preview</title>
+    <title>ST-PROJECT: RAIL-BLAST Beta</title>
     <style>
-        body { margin: 0; background: #001F3F; color: white; font-family: 'Arial', sans-serif; overflow: hidden; }
-        #game-container { position: relative; width: 400px; height: 600px; margin: 20px auto; border: 2px solid #00aaff; background: #001226; overflow: hidden; }
-        canvas { display: block; background: #001F3F; }
-        #ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
-        .stat { position: absolute; font-size: 14px; font-weight: bold; color: #00d4ff; text-shadow: 0 0 5px #000; }
-        #score { top: 10px; left: 10px; }
-        #hp-bar-container { top: 30px; left: 10px; width: 100px; height: 8px; border: 1px solid #fff; }
-        #hp-bar { width: 100%; height: 100%; background: #E60012; transition: width 0.2s; }
-        #stock-area { position: absolute; bottom: 10px; right: 10px; pointer-events: auto; }
-        .item-slot { width: 50px; height: 50px; border: 2px solid #ff8c00; background: rgba(255, 140, 0, 0.2); display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 5px; }
-        .item-slot:hover { background: rgba(255, 140, 0, 0.4); }
-        #msg { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; opacity: 0; transition: 0.5s; font-size: 24px; color: #ff8c00; font-weight: bold; }
+        :root { --dark-blue: #001F3F; --keiyo-red: #E60012; --chuou-orange: #ff8c00; --saikyo-green: #00ac9a; }
+        body { margin: 0; background: var(--dark-blue); color: white; font-family: 'Segoe UI', sans-serif; overflow: hidden; user-select: none; }
+        #ui-layer { position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; }
+        
+        /* メニュー画面 */
+        #menu-screen { position: absolute; inset: 0; background: rgba(0, 20, 40, 0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; pointer-events: auto; z-index: 100; }
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-top: 20px; }
+        .stage-btn { width: 100px; height: 60px; border: 2px solid #00aaff; background: rgba(0, 170, 255, 0.1); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; font-weight: bold; }
+        .stage-btn:hover { background: rgba(0, 170, 255, 0.4); transform: scale(1.05); }
+        .locked { opacity: 0.3; cursor: not-allowed; border-color: #555; }
+        .ex-btn { border-color: gold; color: gold; display: none; }
+
+        /* ゲーム中UI */
+        .hud { position: absolute; padding: 15px; pointer-events: none; }
+        #stats-left { top: 0; left: 0; }
+        .hp-container { width: 250px; height: 20px; border: 2px solid #fff; background: #333; margin-top: 5px; position: relative; }
+        #hp-bar { width: 100%; height: 100%; background: var(--keiyo-red); transition: width 0.3s; }
+        #hp-text { position: absolute; width: 100%; text-align: center; font-size: 12px; line-height: 20px; font-weight: bold; }
+        
+        #stock-right { bottom: 20px; right: 20px; pointer-events: auto; display: flex; gap: 10px; }
+        .slot { width: 60px; height: 60px; border: 2px solid var(--chuou-orange); background: rgba(255, 140, 0, 0.1); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; border-radius: 8px; font-size: 10px; }
+        
+        #message { position: absolute; top: 40%; width: 100%; text-align: center; font-size: 48px; font-weight: bold; color: var(--chuou-orange); opacity: 0; pointer-events: none; }
+        canvas { display: block; }
     </style>
 </head>
 <body>
 
-<div id="game-container">
-    <canvas id="gameCanvas" width="400" height="600"></canvas>
-    <div id="ui-layer">
-        <div id="score" class="stat">SCORE: 000000</div>
-        <div id="hp-bar-container"><div id="hp-bar"></div></div>
-        <div id="msg">ORANGE BURST!</div>
-        <div id="stock-area">
-            <div class="item-slot" onclick="activateBurst()" title="必殺技アイテム">
-                <span style="font-size: 10px;">必殺技</span>
-            </div>
+<div id="menu-screen">
+    <h1 id="title">ST-PROJECT: RAIL-BLAST</h1>
+    <div id="save-info">COINS: <span id="coin-count">0</span></div>
+    <div class="grid" id="stage-grid">
+        </div>
+    <p style="font-size: 12px; margin-top: 20px;">© 2026 ST-PROJECT. All Rights Reserved.</p>
+</div>
+
+<div id="ui-layer">
+    <div class="hud" id="stats-left">
+        <div id="score-display">SCORE: 000000</div>
+        <div style="font-size: 18px; font-weight: bold; margin-top: 10px;">HP STATUS</div>
+        <div class="hp-container">
+            <div id="hp-bar"></div>
+            <div id="hp-text">100 / 100</div>
+        </div>
+    </div>
+    
+    <div id="message">ORANGE BURST!</div>
+
+    <div class="hud" id="stock-right">
+        <div class="slot" onclick="useBurst()">
+            <span>必殺技</span>
+            <span id="burst-count">x 1</span>
+        </div>
+        <div class="slot" onclick="useRepair()">
+            <span>HP回復</span>
+            <span id="repair-count">x 0</span>
         </div>
     </div>
 </div>
 
+<canvas id="gameCanvas"></canvas>
+
 <script>
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
-    const scoreEl = document.getElementById('score');
-    const msgEl = document.getElementById('msg');
+    const hpBar = document.getElementById('hp-bar');
+    const hpText = document.getElementById('hp-text');
+    const scoreEl = document.getElementById('score-display');
+    const menu = document.getElementById('menu-screen');
+    const stageGrid = document.getElementById('stage-grid');
+    const msgEl = document.getElementById('message');
 
-    let player = { x: 200, y: 500, size: 20, speed: 5 };
-    let bullets = [];
-    let enemies = [];
+    // ゲーム状態
+    let gameState = 'MENU';
     let score = 0;
-    let burstActive = false;
+    let hp = 100;
+    let coins = parseInt(localStorage.getItem('ST_COINS')) || 0;
+    let cleared = JSON.parse(localStorage.getItem('ST_CLEARED')) || [];
+    let player = { x: 0, y: 0, w: 30, h: 30, vx: 0, vy: 0 };
+    let bullets = [], enemies = [], items = [];
+    let currentStage = null;
+    let burstAvailable = 1, repairAvailable = 0;
 
-    // 操作系 (マウス/指)
-    canvas.addEventListener('mousemove', (e) => {
-        const rect = canvas.getBoundingClientRect();
-        player.x = e.clientX - rect.left;
-        player.y = e.clientY - rect.top;
+    const STAGES = [
+        { id: 'ST-KY-01', color: '#E60012', g: 'none' },
+        { id: 'ST-KY-02', color: '#E60012', g: 'homing' },
+        { id: 'ST-SS-01', color: '#FCD500', g: 'speed' },
+        { id: 'ST-SK-01', color: '#00ac9a', g: 'turret' },
+        { id: 'ST-EX-01', color: '#cd7f32', g: 'return', type: 'EX' },
+        { id: 'ST-????-Ⅰ', color: '#ffffff', g: 'all', type: 'HIDDEN' }
+    ];
+
+    // 初期化
+    function initMenu() {
+        stageGrid.innerHTML = '';
+        document.getElementById('coin-count').innerText = coins;
+        STAGES.forEach(st => {
+            const btn = document.createElement('div');
+            btn.className = 'stage-btn';
+            btn.innerText = st.id;
+            
+            // ロック処理
+            if (st.type === 'EX' && cleared.length < 4) btn.classList.add('locked');
+            else if (st.type === 'HIDDEN' && !cleared.includes('ST-EX-01')) btn.classList.add('locked');
+            else {
+                btn.onclick = () => startStage(st);
+            }
+            stageGrid.appendChild(btn);
+        });
+    }
+
+    function startStage(st) {
+        currentStage = st;
+        hp = 100;
+        score = 0;
+        enemies = [];
+        bullets = [];
+        gameState = 'PLAY';
+        menu.style.display = 'none';
+        updateUI();
+    }
+
+    function updateUI() {
+        hpBar.style.width = hp + '%';
+        hpText.innerText = `${hp} / 100`;
+        scoreEl.innerText = `SCORE: ${score.toString().padStart(6, '0')}`;
+    }
+
+    // 必殺技
+    function useBurst() {
+        if (burstAvailable > 0 && gameState === 'PLAY') {
+            burstAvailable--;
+            msgEl.style.opacity = 1;
+            enemies = []; // 画面一掃
+            setTimeout(() => msgEl.style.opacity = 0, 1000);
+            document.getElementById('burst-count').innerText = `x ${burstAvailable}`;
+        }
+    }
+
+    function useRepair() {
+        if (repairAvailable > 0) {
+            hp = Math.min(100, hp + 30);
+            repairAvailable--;
+            updateUI();
+        }
+    }
+
+    // 操作
+    window.addEventListener('mousemove', e => {
+        player.x = e.clientX;
+        player.y = e.clientY;
     });
 
-    // 必殺技: 中央線オレンジバースト
-    function activateBurst() {
-        if (burstActive) return;
-        burstActive = true;
-        msgEl.style.opacity = "1";
-        
-        // 全弾・全敵消去エフェクト
-        setTimeout(() => {
-            enemies = [];
-            msgEl.style.opacity = "0";
-            burstActive = false;
-        }, 1000);
+    function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
     }
+    window.addEventListener('resize', resize);
+    resize();
 
-    // メインループ
-    function update() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // ループ
+    function loop() {
+        if (gameState === 'PLAY') {
+            ctx.fillStyle = '#001F3F';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // 背景描画
-        ctx.fillStyle = '#001F3F';
-        ctx.fillRect(0,0, canvas.width, canvas.height);
-
-        // 自機描画
-        ctx.fillStyle = '#00d4ff';
-        ctx.beginPath();
-        ctx.moveTo(player.x, player.y - 15);
-        ctx.lineTo(player.x - 15, player.y + 15);
-        ctx.lineTo(player.x + 15, player.y + 15);
-        ctx.fill();
-
-        // バースト演出 (オレンジの衝撃波)
-        if (burstActive) {
-            ctx.strokeStyle = '#ff8c00';
-            ctx.lineWidth = 10;
+            // 自機
+            ctx.fillStyle = '#00d4ff';
             ctx.beginPath();
-            ctx.arc(player.x, player.y, 100 + (Math.random() * 200), 0, Math.PI * 2);
-            ctx.stroke();
-        }
+            ctx.moveTo(player.x, player.y - 20);
+            ctx.lineTo(player.x - 20, player.y + 20);
+            ctx.lineTo(player.x + 20, player.y + 20);
+            ctx.fill();
 
-        // 自動射撃
-        if (Date.now() % 10 === 0) {
-            bullets.push({x: player.x, y: player.y - 20});
-        }
-
-        // 弾の移動・描画
-        ctx.fillStyle = '#fff';
-        bullets.forEach((b, i) => {
-            b.y -= 10;
-            ctx.fillRect(b.x - 2, b.y, 4, 10);
-            if (b.y < 0) bullets.splice(i, 1);
-        });
-
-        // 敵の生成（テスト用）
-        if (Math.random() < 0.05) {
-            enemies.push({x: Math.random() * canvas.width, y: -20, color: '#E60012'}); // ST-KYカラー
-        }
-
-        // 敵の描画
-        enemies.forEach((en, i) => {
-            en.y += 2;
-            ctx.fillStyle = en.color;
-            ctx.fillRect(en.x - 10, en.y, 20, 20);
-            if (en.y > canvas.height) enemies.splice(i, 1);
-            
-            // 当たり判定
-            bullets.forEach((b, bi) => {
-                if (Math.abs(b.x - en.x) < 15 && Math.abs(b.y - en.y) < 15) {
-                    enemies.splice(i, 1);
-                    bullets.splice(bi, 1);
-                    score += 100;
-                    scoreEl.innerText = `SCORE: ${score.toString().padStart(6, '0')}`;
-                }
+            // 弾
+            if (Date.now() % 5 === 0) bullets.push({ x: player.x, y: player.y - 30 });
+            ctx.fillStyle = 'white';
+            bullets.forEach((b, i) => {
+                b.y -= 15;
+                ctx.fillRect(b.x - 2, b.y, 4, 12);
+                if (b.y < 0) bullets.splice(i, 1);
             });
-        });
 
-        requestAnimationFrame(update);
+            // 敵
+            if (Math.random() < 0.05) enemies.push({ x: Math.random() * canvas.width, y: -50, hp: 3 });
+            enemies.forEach((en, i) => {
+                en.y += 3;
+                ctx.fillStyle = currentStage.color;
+                ctx.fillRect(en.x - 20, en.y, 40, 40);
+
+                // 当たり判定
+                bullets.forEach((b, bi) => {
+                    if (Math.abs(b.x - en.x) < 25 && Math.abs(b.y - en.y) < 25) {
+                        en.hp--;
+                        bullets.splice(bi, 1);
+                        if (en.hp <= 0) {
+                            enemies.splice(i, 1);
+                            score += 100;
+                            updateUI();
+                        }
+                    }
+                });
+
+                // 被弾判定
+                if (Math.abs(player.x - en.x) < 30 && Math.abs(player.y - en.y) < 30) {
+                    hp -= 1;
+                    updateUI();
+                    if (hp <= 0) gameOver();
+                }
+
+                if (en.y > canvas.height) enemies.splice(i, 1);
+            });
+            
+            if (score >= 2000) stageClear();
+        }
+        requestAnimationFrame(loop);
     }
 
-    update();
+    function stageClear() {
+        if (!cleared.includes(currentStage.id)) {
+            cleared.push(currentStage.id);
+            localStorage.setItem('ST_CLEARED', JSON.stringify(cleared));
+        }
+        alert('STAGE CLEAR! データを保存しました。');
+        gameState = 'MENU';
+        menu.style.display = 'flex';
+        initMenu();
+    }
+
+    function gameOver() {
+        alert('GAME OVER...');
+        gameState = 'MENU';
+        menu.style.display = 'flex';
+        initMenu();
+    }
+
+    initMenu();
+    loop();
 </script>
 </body>
 </html>
