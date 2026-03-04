@@ -2,148 +2,234 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>ST-PROJECT: RAIL-BLAST FULL-SPEC</title>
+    <title>ST-PROJECT: RAIL-BLAST COMPLETE</title>
     <style>
-        :root { --db: #001F3F; --orange: #ff8c00; --red: #E60012; }
-        body { margin: 0; background: var(--db); color: white; font-family: sans-serif; overflow: hidden; }
-        #menu { position: absolute; inset: 0; background: rgba(0,10,30,0.9); display: flex; flex-direction: column; align-items: center; padding: 20px; overflow-y: auto; z-index: 100; pointer-events: auto; }
-        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 30px; }
-        .btn { width: 90px; height: 50px; border: 1px solid #0af; background: rgba(0,150,255,0.1); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 11px; text-align: center; }
-        .btn.locked { opacity: 0.1; cursor: not-allowed; }
-        .btn.ex { border-color: #cd7f32; color: #cd7f32; }
-        .btn.hidden { border-color: #fff; background: #333; display: none; }
+        :root { --db: #001F3F; --red: #E60012; --orange: #ff8c00; --yellow: #FCD500; --green: #00ac9a; --blue: #00b2e5; }
+        body { margin: 0; background: var(--db); color: white; font-family: 'Segoe UI', sans-serif; overflow: hidden; user-select: none; }
+        canvas { display: block; }
         
-        /* UI */
-        #ui { position: absolute; inset: 0; pointer-events: none; padding: 20px; }
-        .hp-box { width: 300px; height: 25px; border: 2px solid #fff; background: #111; position: relative; }
-        #hp-fill { width: 100%; height: 100%; background: var(--red); transition: 0.2s; }
-        #hp-label { position: absolute; inset: 0; text-align: center; line-height: 25px; font-weight: bold; }
+        /* UI Screens */
+        .screen { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,15,40,0.95); z-index: 100; }
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 20px 0; }
+        
+        /* Buttons */
+        .btn { width: 100px; height: 50px; border: 2px solid #0af; background: rgba(0,150,255,0.1); display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 11px; font-weight: bold; text-align: center; }
+        .btn:hover:not(.locked) { background: rgba(0,150,255,0.4); transform: scale(1.05); }
+        .btn.locked { opacity: 0.1; cursor: not-allowed; border-color: #555; }
+        .btn.cleared { border-color: #0f0; box-shadow: 0 0 5px #0f0; }
+        .btn.nomiss { background: rgba(0, 255, 0, 0.2); border-color: #0f0; }
+        .btn.ex { border-color: #cd7f32; color: #cd7f32; }
+        .btn.hidden { border-color: white; color: white; display: none; }
+
+        /* HUD */
+        #hud { position: absolute; inset: 0; pointer-events: none; padding: 20px; }
+        .hp-group { width: 300px; margin-top: 10px; }
+        .hp-bar-bg { width: 100%; height: 24px; border: 2px solid #fff; background: #222; position: relative; }
+        #hp-fill { width: 100%; height: 100%; background: var(--red); transition: width 0.2s; }
+        #hp-label { position: absolute; inset: 0; text-align: center; line-height: 24px; font-weight: bold; font-size: 14px; }
+        
+        #shop-btn { position: absolute; top: 20px; right: 20px; pointer-events: auto; padding: 10px 20px; background: var(--orange); border: none; color: white; font-weight: bold; cursor: pointer; }
         #slots { position: absolute; bottom: 20px; right: 20px; display: flex; gap: 10px; pointer-events: auto; }
-        .slot { width: 70px; height: 70px; border: 2px solid var(--orange); background: rgba(255,140,0,0.1); border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 12px; }
+        .slot { width: 70px; height: 70px; border: 2px solid var(--orange); background: rgba(255,140,0,0.1); border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 12px; cursor: pointer; }
+        
+        #msg { position: absolute; top: 40%; width: 100%; text-align: center; font-size: 60px; font-weight: bold; color: var(--orange); pointer-events: none; opacity: 0; transition: 0.3s; }
     </style>
 </head>
 <body>
 
-<div id="menu">
-    <h1>ST-PROJECT: STAGE SELECT</h1>
-    <div id="info">Coins: <span id="coins">0</span> | Clear: <span id="clear-count">0</span>/17</div>
-    
-    <h3>MAIN STAGES (Independent)</h3>
+<div id="menu" class="screen">
+    <h1 id="main-title">ST-PROJECT: RAIL-BLAST</h1>
+    <div id="stats">COINS: <span id="coin-val">0</span> | CLEARED: <span id="clear-val">0</span> / 17</div>
     <div class="grid" id="main-grid"></div>
-
-    <h3 id="ex-title" style="display:none; color:#cd7f32;">EX STAGES (Unlocked)</h3>
     <div class="grid" id="ex-grid"></div>
-
-    <h3 id="secret-title" style="display:none; color:white;">???? STAGES</h3>
     <div class="grid" id="secret-grid"></div>
+    <button id="shop-btn" onclick="toggleShop(true)">SHOP</button>
 </div>
 
-<div id="ui">
-    <div>SCORE: <span id="score">000000</span></div>
-    <div style="margin-top:10px;">HP STATUS</div>
-    <div class="hp-box"><div id="hp-fill"></div><div id="hp-label">HP: 100 / 100</div></div>
-    
+<div id="shop" class="screen" style="display:none;">
+    <h2>ITEM SHOP</h2>
+    <div style="margin-bottom:20px;">Your Coins: <span id="shop-coin">0</span></div>
+    <div class="grid">
+        <div class="btn" onclick="buy('burst')">ORANGE BURST<br>(500C)</div>
+        <div class="btn" onclick="buy('repair')">REPAIR KIT<br>(200C)</div>
+    </div>
+    <button class="btn" onclick="toggleShop(false)">BACK</button>
+</div>
+
+<div id="hud">
+    <div id="score-label">SCORE: 000000</div>
+    <div class="hp-group">
+        <div style="font-weight:bold; margin-bottom:2px;">HP STATUS</div>
+        <div class="hp-bar-bg">
+            <div id="hp-fill"></div>
+            <div id="hp-label">HP: 100 / 100</div>
+        </div>
+    </div>
     <div id="slots">
-        <div class="slot" onclick="burst()">必殺技<br><span id="b-num">x1</span></div>
-        <div class="slot" onclick="heal()">回復<br><span id="h-num">x0</span></div>
+        <div class="slot" onclick="useBurst()">BURST<br><span id="b-num">x1</span></div>
+        <div class="slot" onclick="useRepair()">REPAIR<br><span id="r-num">x0</span></div>
     </div>
 </div>
 
-<canvas id="cvs"></canvas>
+<div id="msg">ORANGE BURST!</div>
+<canvas id="c"></canvas>
 
 <script>
-// --- データ定義 ---
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
 const STAGES = {
     main: [
-        {id:'ST-KY-01', color:'#E60012'}, {id:'ST-KY-02', color:'#E60012'}, {id:'ST-KY-03', color:'#E60012'}, {id:'ST-KY-04', color:'#E60012'},
-        {id:'ST-SS-01', color:'#FCD500'}, {id:'ST-SS-02', color:'#FCD500'},
-        {id:'ST-UT-01', color:'#ff8c00'}, {id:'ST-SK-01', color:'#00ac9a'}, {id:'ST-JB-01', color:'#00b2e5'}
+        {id:'ST-KY-01', c:'--red'}, {id:'ST-KY-02', c:'--red'}, {id:'ST-KY-03', c:'--red'}, {id:'ST-KY-04', c:'--red'},
+        {id:'ST-SS-01', c:'--yellow'}, {id:'ST-SS-02', c:'--yellow'},
+        {id:'ST-UT-01', c:'--orange'}, {id:'ST-SK-01', c:'--green'}, {id:'ST-JB-01', c:'--blue'}
     ],
     ex: [
-        {id:'ST-EX-01', color:'#cd7f32'}, {id:'ST-EX-02', color:'#C0C0C0'}, {id:'ST-EX-03', color:'#D4AF37'}
+        {id:'ST-EX-01', c:'#cd7f32', type:'ex'}, {id:'ST-EX-02', c:'#C0C0C0', type:'ex'}, {id:'ST-EX-03', c:'#D4AF37', type:'ex'}
     ],
     secret: [
-        {id:'ST-????-Ⅰ', color:'#555'}, {id:'ST-????-Ⅱ', color:'rainbow'}
+        {id:'ST-????-Ⅰ', c:'#fff', type:'secret'}, {id:'ST-????-Ⅱ', c:'rainbow', type:'secret'}
     ]
 };
 
-// セーブデータ初期化
-let save = JSON.parse(localStorage.getItem('ST_SAVE_V2')) || {
-    cleared: [], 
-    nomiss: [],
-    coins: 0,
-    items: { burst: 1, heal: 0 }
-};
+let save = JSON.parse(localStorage.getItem('ST_RAIL_SAVE')) || { coins: 0, cleared: [], nomiss: [], stock: { burst: 1, repair: 0 } };
+let game = { active: false, hp: 100, score: 0, player: {x:0, y:0}, enemies: [], bullets: [], stage: null, bossSpawned: false };
 
-const cvs = document.getElementById('cvs');
-const ctx = cvs.getContext('2d');
-let game = { state: 'MENU', hp: 100, score: 0, player: {x:0, y:0}, enemies: [], bullets: [] };
+function init() {
+    renderGrid(STAGES.main, 'main-grid');
+    if (save.cleared.length >= 9) renderGrid(STAGES.ex, 'ex-grid');
+    if (save.cleared.includes('ST-EX-03')) renderGrid(STAGES.secret, 'secret-grid');
+    document.getElementById('coin-val').innerText = save.coins;
+    document.getElementById('clear-val').innerText = save.cleared.length;
+    updateStockUI();
+}
 
-function initMenu() {
-    const render = (data, target, type) => {
-        target.innerHTML = '';
-        data.forEach(st => {
-            const b = document.createElement('div');
-            b.className = 'btn ' + type;
-            b.innerText = st.id;
-            
-            // 解禁ロジック
-            let locked = false;
-            if (type === 'ex' && save.cleared.length < 9) locked = true;
-            if (st.id === 'ST-????-Ⅰ' && !save.cleared.includes('ST-EX-03')) locked = true;
-            if (st.id === 'ST-????-Ⅱ' && save.nomiss.length < 16) locked = true;
+function renderGrid(data, targetId) {
+    const container = document.getElementById(targetId);
+    container.innerHTML = '';
+    data.forEach(st => {
+        const d = document.createElement('div');
+        d.className = 'btn ' + (st.type || '');
+        d.innerText = st.id;
+        if (save.nomiss.includes(st.id)) d.classList.add('nomiss');
+        else if (save.cleared.includes(st.id)) d.classList.add('cleared');
+        
+        let isLocked = false;
+        if (st.type === 'ex' && save.cleared.length < 9) isLocked = true;
+        if (st.id === 'ST-????-Ⅰ' && !save.cleared.includes('ST-EX-03')) isLocked = true;
+        if (st.id === 'ST-????-Ⅱ' && save.nomiss.length < 16) isLocked = true;
 
-            if (locked) b.classList.add('locked');
-            else b.onclick = () => start(st);
-            target.appendChild(b);
-        });
-    };
-
-    render(STAGES.main, document.getElementById('main-grid'), 'main');
-    if (save.cleared.length >= 9) {
-        document.getElementById('ex-title').style.display = 'block';
-        render(STAGES.ex, document.getElementById('ex-grid'), 'ex');
-    }
-    if (save.cleared.includes('ST-EX-03')) {
-        document.getElementById('secret-title').style.display = 'block';
-        render(STAGES.secret, document.getElementById('secret-grid'), 'hidden');
-    }
-    
-    document.getElementById('coins').innerText = save.coins;
-    document.getElementById('clear-count').innerText = save.cleared.length;
+        if (isLocked) d.classList.add('locked');
+        else d.onclick = () => start(st);
+        container.appendChild(d);
+    });
 }
 
 function start(st) {
-    game.current = st;
-    game.hp = 100;
-    game.score = 0;
-    game.state = 'PLAY';
+    game.stage = st; game.hp = 100; game.score = 0; game.active = true;
+    game.enemies = []; game.bullets = []; game.bossSpawned = false;
     document.getElementById('menu').style.display = 'none';
-    updateUI();
+    updateHUD();
 }
 
-function updateUI() {
+function updateHUD() {
     document.getElementById('hp-fill').style.width = game.hp + '%';
     document.getElementById('hp-label').innerText = `HP: ${Math.ceil(game.hp)} / 100`;
-    document.getElementById('score').innerText = game.score.toString().padStart(6, '0');
+    document.getElementById('score-label').innerText = `SCORE: ${game.score.toString().padStart(6, '0')}`;
 }
 
-// ...（以下、戦闘ループや当たり判定、セーブ処理は前回同様ですが、条件分岐が適用されています）...
-
-function clearStage() {
-    if (!save.cleared.includes(game.current.id)) {
-        save.cleared.push(game.current.id);
-        // ノーミスクリアなら nomiss 配列にも追加
-        if (game.hp >= 100) save.nomiss.push(game.current.id);
-        localStorage.setItem('ST_SAVE_V2', JSON.stringify(save));
+function buy(type) {
+    const price = type === 'burst' ? 500 : 200;
+    if (save.coins >= price) {
+        save.coins -= price;
+        save.stock[type]++;
+        saveGame();
+        document.getElementById('shop-coin').innerText = save.coins;
+        updateStockUI();
     }
-    alert("クリア！");
-    location.reload(); // メニュー再構築
 }
 
+function useBurst() {
+    if (save.stock.burst > 0 && game.active) {
+        save.stock.burst--;
+        document.getElementById('msg').opacity = 1;
+        game.enemies = []; // Clear
+        setTimeout(() => document.getElementById('msg').opacity = 0, 800);
+        updateStockUI();
+        saveGame();
+    }
+}
+
+function useRepair() {
+    if (save.stock.repair > 0 && game.active) {
+        game.hp = Math.min(100, game.hp + 40);
+        save.stock.repair--;
+        updateHUD();
+        updateStockUI();
+        saveGame();
+    }
+}
+
+function updateStockUI() {
+    document.getElementById('b-num').innerText = 'x' + save.stock.burst;
+    document.getElementById('r-num').innerText = 'x' + save.stock.repair;
+}
+
+function saveGame() { localStorage.setItem('ST_RAIL_SAVE', JSON.stringify(save)); }
+
+function toggleShop(show) {
+    document.getElementById('shop').style.display = show ? 'flex' : 'none';
+    document.getElementById('shop-coin').innerText = save.coins;
+}
+
+// Game Engine
 window.addEventListener('mousemove', e => { game.player.x = e.clientX; game.player.y = e.clientY; });
-cvs.width = window.innerWidth; cvs.height = window.innerHeight;
-initMenu();
+function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+window.addEventListener('resize', resize); resize();
+
+function loop() {
+    if (game.active) {
+        ctx.fillStyle = '#001F3F'; ctx.fillRect(0,0,canvas.width,canvas.height);
+        
+        // Player
+        ctx.fillStyle = '#00d4ff'; ctx.beginPath();
+        ctx.moveTo(game.player.x, game.player.y-20); ctx.lineTo(game.player.x-20, game.player.y+20); ctx.lineTo(game.player.x+20, game.player.y+20); ctx.fill();
+
+        // Bullets
+        if (Date.now() % 6 === 0) game.bullets.push({x: game.player.x, y: game.player.y-30});
+        ctx.fillStyle = 'white';
+        game.bullets.forEach((b, i) => {
+            b.y -= 12; ctx.fillRect(b.x-2, b.y, 4, 10);
+            if (b.y < 0) game.bullets.splice(i,1);
+        });
+
+        // Enemies
+        if (Math.random() < 0.06) game.enemies.push({x: Math.random()*canvas.width, y: -50, hp: 3});
+        game.enemies.forEach((en, i) => {
+            en.y += 3;
+            ctx.fillStyle = game.stage.c.startsWith('--') ? getComputedStyle(document.documentElement).getPropertyValue(game.stage.c) : game.stage.c;
+            ctx.fillRect(en.x-20, en.y, 40, 40);
+
+            // Collision
+            game.bullets.forEach((b, bi) => {
+                if (Math.abs(b.x-en.x)<25 && Math.abs(b.y-en.y)<25) {
+                    en.hp--; game.bullets.splice(bi, 1);
+                    if (en.hp<=0) { game.enemies.splice(i,1); game.score += 100; save.coins += 5; updateHUD(); }
+                }
+            });
+            if (Math.abs(game.player.x-en.x)<30 && Math.abs(game.player.y-en.y)<30) {
+                game.hp -= 0.5; updateHUD();
+                if (game.hp <= 0) { game.active = false; alert('GAME OVER'); location.reload(); }
+            }
+        });
+        if (game.score >= 5000) {
+            if (!save.cleared.includes(game.stage.id)) save.cleared.push(game.stage.id);
+            if (game.hp >= 100 && !save.nomiss.includes(game.stage.id)) save.nomiss.push(game.stage.id);
+            saveGame(); alert('STAGE CLEAR!'); location.reload();
+        }
+    }
+    requestAnimationFrame(loop);
+}
+init(); loop();
 </script>
 </body>
 </html>
