@@ -10,84 +10,103 @@
         canvas { display: block; }
 
         /* HUD */
-        #hud { position: absolute; top: 30px; left: 30px; z-index: 10; pointer-events: none; }
+        #hud { position: absolute; top: 30px; left: 30px; z-index: 10; pointer-events: none; display: none; }
         #score-val { font-size: 26px; color: #fff; margin-bottom: 10px; text-shadow: 0 0 8px rgba(255,255,255,0.5); }
-        #hp-bar { width: 240px; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; }
+        #hp-bar { width: 240px; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; margin-bottom: 10px; }
         #hp-fill { height: 100%; background: #fff; width: 100%; transition: width 0.3s ease; }
+        #boss-hud { width: 400px; position: absolute; top: 30px; left: 50%; transform: translateX(-50%); text-align: center; display: none; }
+        #boss-hp-bar { width: 100%; height: 4px; background: rgba(255,255,255,0.1); margin-top: 10px; }
+        #boss-hp-fill { height: 100%; background: #ff4d4d; width: 100%; transition: width 0.1s linear; }
 
-        /* メニュー */
-        #menu { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20; }
+        /* UI Layers */
+        .layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20; }
+        .hidden { display: none !important; }
         h1 { font-size: 20px; margin-bottom: 40px; letter-spacing: 6px; color: #fff; }
 
-        .mode-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 40px; }
+        /* Grid Layout */
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 30px; max-height: 60vh; overflow-y: auto; padding: 10px; }
         
-        /* ボタン基本スタイル */
-        .mode-btn { 
+        /* Buttons */
+        .mode-btn, .item-card { 
             width: 160px; height: 70px; background: rgba(0,0,0,0.5); 
             cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; border-radius: 4px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; border-radius: 4px; border: 2px solid #444;
         }
-        .m-id { font-size: 11px; margin-bottom: 8px; font-weight: bold; }
+        .m-id { font-size: 10px; margin-bottom: 8px; font-weight: bold; }
         .m-stars { font-size: 7px; opacity: 0.8; }
+        .mode-btn:hover { transform: scale(1.08); background: rgba(255,255,255,0.1); }
 
-        /* ステージ別カラー（あなたの指定色） */
-        .SB { border: 2px solid #ccaa00; color: #ccaa00; } /* 黄 */
-        .KT { border: 2px solid #0088cc; color: #0088cc; } /* 青 */
-        .SK { border: 2px solid #008844; color: #008844; } /* 緑 */
-        .KY { border: 2px solid #aa0022; color: #aa0022; } /* 赤 */
-        .PK { border: 2px solid #cc5588; color: #cc5588; }
-        .JB { border: 2px solid #006666; color: #006666; }
-        .HA, .HB, .HC { border: 2px solid #666; color: #999; display: none; }
-        .CO { border: 3px solid #cc6600; color: #cc6600; display: none; grid-column: span 3; width: 100%; } /* オレンジ */
+        /* 彩度共鳴カラー */
+        .SB { border-color: #ccaa00; color: #ccaa00; } 
+        .KT { border-color: #0088cc; color: #0088cc; }
+        .SK { border-color: #008844; color: #008844; }
+        .KY { border-color: #aa0022; color: #aa0022; }
+        .PK { border-color: #cc5588; color: #cc5588; }
+        .JB { border-color: #006666; color: #006666; }
+        .HM { border-color: #9370db; color: #9370db; }
+        .KS { border-color: #ffffff; color: #ffffff; }
+        .TY { border-color: #00bfff; color: #00bfff; }
+        /* 隠しステージ */
+        .EX { border-color: #e50012; color: #e50012; }
+        .CO { border-color: #cc6600; color: #cc6600; grid-column: span 3; width: 100%; }
 
-        /* ホバー演出 */
-        .mode-btn:hover { transform: scale(1.08) translateY(-5px); background: rgba(255,255,255,0.1); }
-        .SB:hover { box-shadow: 0 0 20px #ccaa00; }
-        .KT:hover { box-shadow: 0 0 20px #0088cc; }
-        .SK:hover { box-shadow: 0 0 20px #008844; }
-        .KY:hover { box-shadow: 0 0 20px #aa0022; }
-        .CO:hover { box-shadow: 0 0 30px #cc6600; }
-
-        /* クリア済みスタンプ */
         .cleared::after { content: "COMPLETE"; position: absolute; bottom: -12px; font-size: 7px; color: #fff; background: #40a0ff; padding: 2px 5px; }
+
+        /* Shop Specific */
+        #coin-display { font-size: 14px; color: #f1ca00; margin-bottom: 20px; }
+        .item-card { height: 90px; font-size: 8px; text-align: center; padding: 5px; }
+        .equipped { border-color: #00ff00; box-shadow: 0 0 10px rgba(0,255,0,0.5); }
 
         #guide { max-width: 600px; padding: 20px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.03); font-family: 'Noto Sans JP'; font-size: 12px; line-height: 1.8; color: #88a0b0; }
         .guide-h { font-family: 'Press Start 2P'; font-size: 9px; color: #fff; margin-bottom: 10px; text-align: center; }
-        .copy-right { margin-top: 30px; font-size: 8px; color: #222; }
     </style>
 </head>
 <body>
     <div id="hud">
         <div id="score-val">000000</div>
         <div id="hp-bar"><div id="hp-fill"></div></div>
+        <div id="coin-info" style="font-size: 10px; color: #f1ca00;">COINS: <span id="game-coin">0</span></div>
     </div>
 
-    <div id="menu">
-        <h1>MINAMI PROJECT 2026</h1>
-        
-        <div class="mode-grid" id="grid">
-            <div id="btn-SB" class="mode-btn SB" onmouseover="bg('#1a1800')" onmouseout="bg('#000810')" onclick="start('SB')"><span class="m-id">STーSB</span><span class="m-stars">★☆☆☆☆</span></div>
-            <div id="btn-KT" class="mode-btn KT" onmouseover="bg('#00101a')" onmouseout="bg('#000810')" onclick="start('KT')"><span class="m-id">STーKT</span><span class="m-stars">★☆☆☆☆</span></div>
-            <div id="btn-SK" class="mode-btn SK" onmouseover="bg('#00150a')" onmouseout="bg('#000810')" onclick="start('SK')"><span class="m-id">STーSK</span><span class="m-stars">★★☆☆☆</span></div>
-            <div id="btn-KY" class="mode-btn KY" onmouseover="bg('#1a0005')" onmouseout="bg('#000810')" onclick="start('KY')"><span class="m-id">STーKY</span><span class="m-stars">★★★☆☆</span></div>
-            <div id="btn-PK" class="mode-btn PK" onmouseover="bg('#1a001a')" onmouseout="bg('#000810')" onclick="start('PK')"><span class="m-id">STーPK</span><span class="m-stars">★★★☆☆</span></div>
-            <div id="btn-JB" class="mode-btn JB" onmouseover="bg('#001515')" onmouseout="bg('#000810')" onclick="start('JB')"><span class="m-id">STーJB</span><span class="m-stars">★★★★☆</span></div>
-            
-            <div id="btn-HA" class="mode-btn HA" onclick="start('HA')"><span class="m-id">STーHA</span><span class="m-stars">★★★★★</span></div>
-            <div id="btn-HB" class="mode-btn HB" onclick="start('HB')"><span class="m-id">STーHB</span><span class="m-stars">★★★★★★</span></div>
-            <div id="btn-HC" class="mode-btn HC" onclick="start('HC')"><span class="m-id">STーHC</span><span class="m-stars">★★★★★★★</span></div>
-            
-            <div id="btn-CO" class="mode-btn CO" onmouseover="bg('#221100')" onmouseout="bg('#000810')" onclick="start('CO')"><span class="m-id">STーCO: ULTIMATE</span><span class="m-stars">★★★★★★★★★★</span></div>
-        </div>
+    <div id="boss-hud">
+        <div id="boss-name" style="font-size: 10px; color: #fff;">RESONANCE CORE</div>
+        <div id="boss-hp-bar"><div id="boss-hp-fill"></div></div>
+    </div>
 
+    <div id="layer-home" class="layer">
+        <h1>MINAMI PROJECT 2026</h1>
+        <div class="mode-grid">
+            <div class="mode-btn" onclick="showLayer('layer-stage')" style="border-color:#fff;">STAGE SELECT</div>
+            <div class="mode-btn" onclick="showLayer('layer-shop')" style="border-color:#f1ca00;">SHOP</div>
+            <div class="mode-btn" onclick="showLayer('layer-guide')" style="border-color:#0088cc;">HOW TO PLAY</div>
+        </div>
+        <div style="font-size: 8px; color: #444;">Chromatic Resonance System</div>
+    </div>
+
+    <div id="layer-stage" class="layer hidden">
+        <h1>SELECT RESONANCE</h1>
+        <div id="coin-display">TOTAL COINS: <span id="total-coins">0</span></div>
+        <div class="grid" id="stage-grid"></div>
+        <div class="mode-btn" onclick="showLayer('layer-home')" style="height:40px; font-size:8px;">BACK</div>
+    </div>
+
+    <div id="layer-shop" class="layer hidden">
+        <h1>FRAGMENT SHOP</h1>
+        <div id="coin-display-shop">TOTAL COINS: <span id="total-coins-shop">0</span></div>
+        <div class="grid" id="shop-grid"></div>
+        <div class="mode-btn" onclick="showLayer('layer-home')" style="height:40px; font-size:8px;">BACK</div>
+    </div>
+
+    <div id="layer-guide" class="layer hidden">
         <div id="guide">
             <div class="guide-h">RESONANCE GUIDE</div>
             マウスで「雫」を導き、左クリックで「想い」を放ちなさい。<br>
-            色が持つ固有の「揺らぎ」が、あなたの共鳴を妨げるでしょう。<br>
-            全記録を塗り替えた時、橙色の「STーCO」への道が開かれます。
+            [SPACE]キー：共鳴奥義（必殺技）を発動。<br><br>
+            通常９ステージを塗り替えた時、隠しステージ（表・裏）への道が開き、<br>
+            全ての共鳴を終えた時、橙色の「ULTIMATE」が姿を現します。
         </div>
-
-        <div class="copy-right">MINAMI PROJECT 2026 / Chromatic Resonance</div>
+        <br>
+        <div class="mode-btn" onclick="showLayer('layer-home')" style="height:40px; font-size:8px;">BACK</div>
     </div>
 
     <canvas id="game"></canvas>
@@ -97,129 +116,244 @@
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth; canvas.height = window.innerHeight;
 
-        let gameActive = false, score = 0, hp = 100, frame = 0;
-        let bullets = [], eBullets = [], enemies = [], ripples = [];
-        let player = { x: canvas.width/2, y: canvas.height/2 };
-        let currentMode = null;
-
-        const config = {
-            SB: { color: '#ccaa00', spawn: 0.05, hp: 2, target: 3000, g: 'warp' },
-            KT: { color: '#0088cc', spawn: 0.1, hp: 2, target: 5000, g: 'dash' },
-            SK: { color: '#008844', spawn: 0.08, hp: 5, target: 7000, g: 'shield' },
-            KY: { color: '#aa0022', spawn: 0.12, hp: 3, target: 8000, g: 'wind' },
-            PK: { color: '#cc5588', spawn: 0.12, hp: 3, target: 8000, g: 'none' },
-            JB: { color: '#006666', spawn: 0.15, hp: 5, target: 10000, g: 'none' },
-            HA: { color: '#ffffff', spawn: 0.2, hp: 12, target: 20000, g: 'mix' },
-            HB: { color: '#ffffff', spawn: 0.25, hp: 15, target: 25000, g: 'mix' },
-            HC: { color: '#ffffff', spawn: 0.3, hp: 20, target: 30000, g: 'mix' },
-            CO: { color: '#cc6600', spawn: 1.0, hp: 80, target: 373000, g: 'rush' }
+        // --- 1. Data Management ---
+        let saveData = JSON.parse(localStorage.getItem('minami_resonance_2026')) || {
+            coins: 0,
+            cleared: [],
+            ownedItems: ['雫(Default)'],
+            equippedSkin: '雫(Default)',
+            atkLevel: 1,
+            hasSpecial: false
         };
 
-        function bg(c) { document.body.style.background = c; }
+        function save() {
+            localStorage.setItem('minami_resonance_2026', JSON.stringify(saveData));
+            updateMenuUI();
+        }
 
-        function init() {
-            const cl = JSON.parse(localStorage.getItem('minami_cleared') || '[]');
-            cl.forEach(id => {
-                const b = document.getElementById(`btn-${id}`);
-                if(b) {
-                    b.classList.add('cleared');
-                    b.style.background = b.style.borderColor.replace(')', ', 0.15)').replace('rgb', 'rgba');
+        const STAGES = [
+            { id: "ST=SB", color: "#ccaa00", class: "SB", star: "★☆☆☆☆", diff: 1 },
+            { id: "ST=KT", color: "#0088cc", class: "KT", star: "★☆☆☆☆", diff: 1 },
+            { id: "ST=SK", color: "#008844", class: "SK", star: "★★☆☆☆", diff: 2 },
+            { id: "ST=KY", color: "#aa0022", class: "KY", star: "★★★☆☆", diff: 3 },
+            { id: "ST=PK", color: "#cc5588", class: "PK", star: "★★★☆☆", diff: 3 },
+            { id: "ST=JB", color: "#006666", class: "JB", star: "★★★★☆", diff: 4 },
+            { id: "ST=HM", color: "#9370db", class: "HM", star: "★★★★☆", diff: 4 },
+            { id: "ST=KS", color: "#ffffff", class: "KS", star: "★★★★★", diff: 5 },
+            { id: "ST=TY", color: "#00bfff", class: "TY", star: "★★★★★", diff: 5 },
+            // 隠し（表）
+            { id: "EX-A", color: "#e50012", class: "EX", star: "★★★★★★", diff: 6, hidden: "normal" },
+            { id: "EX-B", color: "#e50012", class: "EX", star: "★★★★★★", diff: 6, hidden: "normal" },
+            { id: "EX-C", color: "#e50012", class: "EX", star: "★★★★★★★", diff: 7, hidden: "normal" },
+            // 隠し（裏）
+            { id: "BK-X", color: "#444", class: "KS", star: "★★★★★★★★", diff: 8, hidden: "normal" },
+            { id: "BK-Y", color: "#444", class: "KS", star: "★★★★★★★★★", diff: 9, hidden: "normal" },
+            // 隠し（真）
+            { id: "ST=CO", color: "#cc6600", class: "CO", star: "★★★★★★★★★★", diff: 10, hidden: "all" }
+        ];
+
+        const SHOP_ITEMS = [
+            { name: "ATK強化", price: 100, type: "atk" },
+            { name: "回復リペア", price: 50, type: "heal" },
+            { name: "必殺技回路", price: 500, type: "special" },
+            { name: "星(KiraKira)", price: 800, type: "skin" },
+            { name: "電車(Express)", price: 2000, type: "skin" },
+            { name: "深淵のオーラ", price: 1500, type: "aura" }
+        ];
+
+        // --- 2. UI Logic ---
+        function showLayer(id) {
+            document.querySelectorAll('.layer').forEach(l => l.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+            if(id === 'layer-stage' || id === 'layer-shop') updateMenuUI();
+        }
+
+        function updateMenuUI() {
+            document.getElementById('total-coins').innerText = saveData.coins;
+            document.getElementById('total-coins-shop').innerText = saveData.coins;
+            
+            // Stage Grid
+            const grid = document.getElementById('stage-grid');
+            grid.innerHTML = '';
+            const normalClearedCount = STAGES.filter(s => !s.hidden && saveData.cleared.includes(s.id)).length;
+            const isNormalAllCleared = normalClearedCount === 9;
+            const isExAllCleared = STAGES.filter(s => s.hidden === "normal" && saveData.cleared.includes(s.id)).length === 5;
+
+            STAGES.forEach(s => {
+                let locked = false;
+                if(s.hidden === "normal" && !isNormalAllCleared) locked = true;
+                if(s.hidden === "all" && !isExAllCleared) locked = true;
+
+                if(!locked) {
+                    const btn = document.createElement('div');
+                    btn.className = `mode-btn ${s.class} ${saveData.cleared.includes(s.id) ? 'cleared' : ''}`;
+                    btn.innerHTML = `<span class="m-id">${s.id}</span><span class="m-stars">${s.star}</span>`;
+                    btn.onclick = () => startGame(s);
+                    grid.appendChild(btn);
                 }
             });
-            if(['SB','KT','SK','KY','PK','JB'].every(s => cl.includes(s))) {
-                ['btn-HA','btn-HB','btn-HC'].forEach(id => document.getElementById(id).style.display = 'flex');
-            }
-            if(['SB','KT','SK','KY','PK','JB','HA','HB','HC'].every(s => cl.includes(s))) {
-                document.getElementById('btn-CO').style.display = 'flex';
-            }
+
+            // Shop Grid
+            const sGrid = document.getElementById('shop-grid');
+            sGrid.innerHTML = '';
+            SHOP_ITEMS.forEach(item => {
+                const owned = saveData.ownedItems.includes(item.name);
+                const card = document.createElement('div');
+                card.className = `item-card ${saveData.equippedSkin === item.name ? 'equipped' : ''}`;
+                card.innerHTML = `<strong>${item.name}</strong><br>${owned ? 'OWNED' : item.price + ' C'}`;
+                card.onclick = () => {
+                    if(!owned && saveData.coins >= item.price) {
+                        saveData.coins -= item.price;
+                        saveData.ownedItems.push(item.name);
+                        if(item.type === 'atk') saveData.atkLevel++;
+                        if(item.type === 'special') saveData.hasSpecial = true;
+                        save();
+                    } else if(owned && item.type === 'skin') {
+                        saveData.equippedSkin = item.name;
+                        save();
+                    }
+                };
+                sGrid.appendChild(card);
+            });
         }
 
-        function start(id) {
-            currentMode = { ...config[id], id: id };
-            score = 0; hp = 100; frame = 0; enemies = []; bullets = []; eBullets = []; ripples = [];
-            document.getElementById('menu').style.display = 'none';
-            gameActive = true; loop();
+        // --- 3. Game Engine ---
+        let gActive = false, score = 0, hp = 100, frame = 0, coinsInStage = 0;
+        let bullets = [], eBullets = [], enemies = [], ripples = [];
+        let player = { x: canvas.width/2, y: canvas.height/2 };
+        let boss = { active: false, hp: 0, max: 0, phase: 1, x: 0, y: 0 };
+        let currentStage = null;
+
+        function startGame(stage) {
+            currentStage = stage;
+            gActive = true;
+            score = 0; hp = 100; frame = 0; coinsInStage = 0;
+            enemies = []; bullets = []; eBullets = []; ripples = [];
+            boss = { active: true, hp: 500 * stage.diff, max: 500 * stage.diff, phase: 1, x: canvas.width/2, y: -100 };
+            
+            showLayer('none');
+            document.getElementById('hud').style.display = 'block';
+            document.getElementById('boss-hud').style.display = 'block';
+            loop();
         }
 
-        window.addEventListener('mousemove', e => { 
-            player.x = e.clientX; player.y = e.clientY; 
-            if(currentMode && currentMode.g === 'wind') player.x += Math.sin(frame/15)*20;
-        });
+        window.addEventListener('mousemove', e => { player.x = e.clientX; player.y = e.clientY; });
         let isDown = false; window.addEventListener('mousedown', () => isDown = true); window.addEventListener('mouseup', () => isDown = false);
+        window.addEventListener('keydown', e => { if(e.code === 'Space' && saveData.hasSpecial) triggerSpecial(); });
+
+        function triggerSpecial() {
+            for(let i=0; i<36; i++) {
+                bullets.push({x: player.x, y: player.y, vx: Math.cos(i)*15, vy: Math.sin(i)*15, size: 8});
+            }
+        }
 
         function update() {
             frame++;
-            if(isDown && frame % 4 === 0) bullets.push({x: player.x, y: player.y-10, vy: -18, size: hp < 30 ? 15 : 4});
-            bullets.forEach((b, i) => { b.y += b.vy; if(b.y < -30) bullets.splice(i, 1); });
-
-            if(Math.random() < currentMode.spawn) {
-                enemies.push({ 
-                    x: Math.random()*canvas.width, y: -50, hp: currentMode.hp, 
-                    vx: (Math.random()-0.5)*4, vy: 3, 
-                    type: currentMode.g === 'mix' ? ['warp','dash','shield'][Math.floor(Math.random()*3)] : currentMode.g
-                });
+            // Player Shoot
+            if(isDown && frame % 5 === 0) {
+                bullets.push({x: player.x, y: player.y-10, vx: 0, vy: -15, size: 4 + saveData.atkLevel});
             }
 
-            enemies.forEach((e, i) => {
-                if(e.type === 'warp') { if(frame % 80 < 30) { e.y += 0.5; e.inv = true; } else { e.y += 6; e.inv = false; } }
-                else if(e.type === 'dash') { e.y += (e.y < 150) ? 1 : 15; }
-                else if(e.type === 'rush') { e.y += 6; e.x += Math.cos(frame/10)*8; }
-                else { e.y += 4; }
+            // Boss Movement & Phases
+            if(boss.active) {
+                if(boss.y < 150) boss.y += 2;
+                boss.x = canvas.width/2 + Math.sin(frame/30) * 200;
+                
+                let hpRate = boss.hp / boss.max;
+                if(hpRate < 0.7) boss.phase = 2;
+                if(hpRate < 0.3) boss.phase = 3;
 
-                bullets.forEach((b, bi) => {
-                    if(Math.hypot(e.x-b.x, e.y-b.y) < 25 && !e.inv) {
-                        e.hp--; bullets.splice(bi, 1);
-                        if(e.hp <= 0) { score += 100; enemies.splice(i, 1); if(score >= currentMode.target) finish(true); }
+                // Boss Attacks
+                if(frame % (boss.phase === 3 ? 20 : 50) === 0) {
+                    for(let i=0; i<boss.phase; i++) {
+                        eBullets.push({x: boss.x, y: boss.y, vx: (Math.random()-0.5)*10, vy: 5 + boss.phase*2});
                     }
-                });
-                if(Math.random() < 0.03) eBullets.push({x: e.x, y: e.y, vy: 8, vx: (e.type === 'rush' ? Math.sin(frame)*5 : 0)});
-                if(e.y > canvas.height + 50) enemies.splice(i, 1);
+                }
+            }
+
+            // Bullet Collision
+            bullets.forEach((b, bi) => {
+                b.x += (b.vx || 0); b.y += b.vy;
+                if(boss.active && Math.hypot(b.x-boss.x, b.y-boss.y) < 50) {
+                    boss.hp -= (5 + saveData.atkLevel);
+                    bullets.splice(bi, 1);
+                    if(boss.hp <= 0) finish(true);
+                }
+                if(b.y < -50) bullets.splice(bi, 1);
             });
 
+            // Enemy Bullets
             eBullets.forEach((eb, i) => {
-                eb.y += eb.vy; eb.x += eb.vx;
+                eb.x += eb.vx; eb.y += eb.vy;
                 if(Math.hypot(eb.x-player.x, eb.y-player.y) < 15) {
-                    hp -= 10; eBullets.splice(i,1); ripples.push({x: player.x, y: player.y, r: 5, a: 1});
+                    hp -= 10; eBullets.splice(i,1);
+                    ripples.push({x: player.x, y: player.y, r: 5, a: 1});
                     if(hp <= 0) finish(false);
                 }
-                if(eb.y > canvas.height) eBullets.splice(i, 1);
             });
 
-            ripples.forEach((r, i) => { r.r += 4; r.a -= 0.04; if(r.a <= 0) ripples.splice(i, 1); });
+            // Coins & Score
+            if(frame % 100 === 0) coinsInStage++;
+
             document.getElementById('hp-fill').style.width = hp + "%";
+            document.getElementById('boss-hp-fill').style.width = (boss.hp / boss.max * 100) + "%";
             document.getElementById('score-val').innerText = score.toString().padStart(6, '0');
+            document.getElementById('game-coin').innerText = coinsInStage;
         }
 
         function draw() {
-            ctx.fillStyle = "rgba(0, 8, 16, 0.4)"; ctx.fillRect(0,0,canvas.width, canvas.height);
-            ctx.fillStyle = "#fff"; ctx.beginPath(); ctx.moveTo(player.x, player.y-15);
-            ctx.bezierCurveTo(player.x+10, player.y+5, player.x+10, player.y+15, player.x, player.y+15);
-            ctx.bezierCurveTo(player.x-10, player.y+15, player.x-10, player.y+5, player.x, player.y-15); ctx.fill();
-            ripples.forEach(r => { ctx.strokeStyle = `rgba(0,223,255,${r.a})`; ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, Math.PI*2); ctx.stroke(); });
-            ctx.fillStyle = "#fff"; bullets.forEach(b => ctx.fillRect(b.x-b.size/2, b.y, b.size, b.size*2));
-            ctx.fillStyle = "#ff00ff"; eBullets.forEach(eb => { ctx.beginPath(); ctx.arc(eb.x, eb.y, 4, 0, Math.PI*2); ctx.fill(); });
-            ctx.strokeStyle = currentMode.color; ctx.lineWidth = 2;
-            enemies.forEach(e => {
-                if(e.inv) ctx.setLineDash([2, 4]); else ctx.setLineDash([]);
-                ctx.strokeRect(e.x-15, e.y-15, 30, 30);
-                if(e.type === 'shield') { ctx.beginPath(); ctx.arc(e.x, e.y, 25, 0, Math.PI*2); ctx.stroke(); }
+            ctx.fillStyle = "rgba(0, 8, 16, 0.3)"; ctx.fillRect(0,0,canvas.width, canvas.height);
+            
+            // Player (Skin)
+            ctx.fillStyle = "#fff";
+            if(saveData.equippedSkin === '電車(Express)') {
+                ctx.fillRect(player.x-10, player.y-20, 20, 40);
+            } else {
+                ctx.beginPath(); ctx.moveTo(player.x, player.y-15);
+                ctx.bezierCurveTo(player.x+10, player.y+5, player.x+10, player.y+15, player.x, player.y+15);
+                ctx.bezierCurveTo(player.x-10, player.y+15, player.x-10, player.y+5, player.x, player.y-15); ctx.fill();
+            }
+
+            // Aura (Shop Item)
+            if(saveData.ownedItems.includes('深淵のオーラ')) {
+                ctx.strokeStyle = "rgba(255,255,255,0.2)";
+                ctx.beginPath(); ctx.arc(player.x, player.y, 25 + Math.sin(frame/10)*5, 0, Math.PI*2); ctx.stroke();
+            }
+
+            // Boss
+            if(boss.active) {
+                ctx.strokeStyle = currentStage.color; ctx.lineWidth = 3;
+                ctx.strokeRect(boss.x-40, boss.y-40, 80, 80);
+                ctx.lineWidth = 1;
+                ctx.strokeRect(boss.x-50, boss.y-50, 100, 100);
+            }
+
+            // Projectiles
+            ctx.fillStyle = "#fff"; bullets.forEach(b => ctx.fillRect(b.x-2, b.y, b.size, b.size*2));
+            ctx.fillStyle = "#ff4d4d"; eBullets.forEach(eb => { ctx.beginPath(); ctx.arc(eb.x, eb.y, 4, 0, Math.PI*2); ctx.fill(); });
+            ripples.forEach((r, i) => { 
+                ctx.strokeStyle = `rgba(255,255,255,${r.a})`; ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, Math.PI*2); ctx.stroke(); 
+                r.r += 2; r.a -= 0.02; if(r.a <= 0) ripples.splice(i, 1);
             });
-            ctx.setLineDash([]);
         }
 
         function finish(isClear) {
-            gameActive = false;
+            gActive = false;
             if(isClear) {
-                let cl = JSON.parse(localStorage.getItem('minami_cleared') || '[]');
-                cl.push(currentMode.id);
-                localStorage.setItem('minami_cleared', JSON.stringify([...new Set(cl)]));
-                alert("RESONANCE SUCCESS");
+                saveData.coins += (coinsInStage + 100);
+                if(!saveData.cleared.includes(currentStage.id)) saveData.cleared.push(currentStage.id);
+                alert("RESONANCE SUCCESSFUL");
             } else { alert("RESONANCE FAILED"); }
-            location.reload();
+            save();
+            document.getElementById('hud').style.display = 'none';
+            document.getElementById('boss-hud').style.display = 'none';
+            showLayer('layer-home');
         }
 
-        function loop() { if(!gameActive) return; update(); draw(); requestAnimationFrame(loop); }
-        init();
+        function loop() { if(!gActive) return; update(); draw(); requestAnimationFrame(loop); }
+        
+        // Initial setup
+        updateMenuUI();
     </script>
 </body>
 </html>
