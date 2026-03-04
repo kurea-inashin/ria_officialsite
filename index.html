@@ -2,14 +2,14 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Minami Project 2026: Burst Finale - Full Tactical Edition</title>
+    <title>Minami Project 2026: Burst Finale - License Edition</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+JP:wght@700;900&display=swap');
         
         body { margin: 0; background: #000; color: #fff; font-family: 'Press Start 2P', cursive; overflow: hidden; user-select: none; }
         canvas { display: block; }
 
-        /* HUD (HP/スコア/ボムの表示) */
+        /* HUD */
         #hud { position: absolute; top: 20px; left: 20px; z-index: 10; pointer-events: none; }
         #score-val { font-size: 24px; text-shadow: 0 0 10px #00ffff; margin-bottom: 10px; }
         .bar-label { font-size: 8px; margin-top: 10px; color: #aaa; }
@@ -18,14 +18,15 @@
         #gauge-fill { height: 100%; background: #00ccff; width: 0%; transition: width 0.1s; }
         #bomb-stock { color: #ffff00; font-size: 14px; text-shadow: 0 0 5px #ffaa00; }
 
-        /* メニューシステム */
+        /* Menu System */
         #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,15,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20; backdrop-filter: blur(8px); }
         .panel { display: none; flex-direction: column; align-items: center; width: 90%; max-height: 85vh; overflow-y: auto; }
         .active { display: flex; }
         .nav-btn { padding: 15px 30px; border: 3px solid #fff; background: rgba(255,255,255,0.1); color: #fff; cursor: pointer; font-family: 'Press Start 2P'; font-size: 11px; margin: 10px; transition: 0.2s; }
         .nav-btn:hover { background: #fff; color: #000; transform: scale(1.1); box-shadow: 0 0 20px #fff; }
+        .nav-btn:disabled { border-color: #444; color: #444; cursor: not-allowed; transform: none; box-shadow: none; }
 
-        /* ステージ選択グリッド */
+        /* Stage Grid */
         .mode-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
         .mode-btn { width: 220px; padding: 15px; border: 2px solid #333; background: #000; color: #444; cursor: pointer; text-align: center; font-size: 9px; transition: 0.3s; position: relative; }
         .mode-btn.unlocked { border-color: var(--c); color: var(--c); }
@@ -74,9 +75,9 @@
             <h2>HOW TO PLAY</h2>
             <div class="info-text">
                 ・<b>移動</b>: マウスカーソルに追従します。<br>
-                ・<b>攻撃</b>: 左クリック長押し。自機の色（路線）で弾質が変化！<br>
+                ・<b>攻撃</b>: 左クリック長押し。自機の色で弾質が変化！<br>
                 ・<b>ボム</b>: 右クリック または スペース。敵弾消去＋大ダメージ。<br>
-                ・<b>攻略のコツ</b>: 各ステージのヒントを読み、色を変えて挑みましょう。
+                ・<b>武器入手</b>: SHOPで各路線のライセンスを購入するとガレージで使用可能になります。
             </div>
             <button class="nav-btn" onclick="backToMain()">BACK</button>
         </div>
@@ -85,19 +86,18 @@
             <h2>GARAGE</h2>
             <div style="text-align:center;">
                 <p style="font-size:10px; color:#aaa; margin-bottom:20px;">CHOOSE YOUR RAIL-LINE COLOR</p>
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                    <button class="nav-btn" style="border-color:#fff" onclick="setSkin('#fff')">WHITE (STANDARD)</button>
-                    <button class="nav-btn" style="border-color:#0f0" onclick="setSkin('#0f0')">GREEN (RAPID FIRE)</button>
-                    <button class="nav-btn" style="border-color:#0ff" onclick="setSkin('#0ff')">CYAN (3-WAY WIDE)</button>
-                    <button class="nav-btn" style="border-color:#ff0" onclick="setSkin('#ff0')">YELLOW (SNAKE SHOT)</button>
-                    <button class="nav-btn" style="border-color:#aa0022" onclick="setSkin('#aa0022')">RED (POWER BURST)</button>
-                </div>
+                <div id="garage-list" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                    </div>
             </div>
             <button class="nav-btn" style="margin-top:40px;" onclick="openPanel('stage-select')">TO MISSION</button>
         </div>
 
         <div id="shop" class="panel">
             <div id="shop-gold" style="color:#ffd700; font-size:20px; margin-bottom:20px;"></div>
+            <h3 style="font-size:10px; color:#0ff;">WEAPON LICENSES</h3>
+            <div id="weapon-shop" style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:20px;">
+                </div>
+            <h3 style="font-size:10px; color:#f0f;">BATTLE UPGRADES</h3>
             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
                 <button class="nav-btn" onclick="buy('atk', 1000)">ATTACK UP (1000G)</button>
                 <button class="nav-btn" onclick="buy('heal', 500)">REPAIR (500G)</button>
@@ -105,8 +105,7 @@
                 <button class="nav-btn" onclick="buy('anti_vibrate', 2000)">STABILIZER (2000G)</button>
                 <button class="nav-btn" onclick="buy('anti_fog', 2000)">HEATER (2000G)</button>
             </div>
-            <p style="font-size:8px; color:#aaa; margin-top:20px;">*アイテムはリロードすると消失します</p>
-            <button class="nav-btn" style="margin-top:10px;" onclick="backToMain()">BACK</button>
+            <button class="nav-btn" style="margin-top:20px;" onclick="backToMain()">BACK</button>
         </div>
 
         <div id="copyright">© 2026 Minami Rail-Shooting Project. All Rights Reserved.</div>
@@ -131,13 +130,14 @@
         let player = { x: canvas.width/2, y: canvas.height/2 };
         let currentMode = null;
 
-        // セッション強化
         let sessionData = { atk: 2, items: [], hasBit: false };
 
-        // 永続セーブデータ
         const NORMAL_STAGES = ['SB', 'KT', 'SK', 'KY', 'PK', 'JB', 'S1', 'S2', 'S3'];
-        let userData = JSON.parse(localStorage.getItem('minami_2026_v7')) || {
-            gold: 0, bombs: 1, unlocked: [...NORMAL_STAGES], cleared: [], skin: '#fff'
+        
+        // --- データ構造アップデート ---
+        let userData = JSON.parse(localStorage.getItem('minami_2026_v8')) || {
+            gold: 0, bombs: 1, unlocked: [...NORMAL_STAGES], cleared: [], skin: '#fff',
+            licenses: ['#fff'] // 初期装備
         };
 
         const STAGES = {
@@ -158,11 +158,18 @@
             'CO': { name: 'ST=CO', color: '#ff6600', stars: 30, diff: 60, bossHp: 150000, secret: true, ultimate: true, hint: '中央特快: 全ての力を解放せよ' }
         };
 
-        function save() { localStorage.setItem('minami_2026_v7', JSON.stringify(userData)); }
+        const WEAPONS = [
+            { id: '#fff', name: 'WHITE (STD)', cost: 0 },
+            { id: '#0f0', name: 'GREEN (RAPID)', cost: 2000 },
+            { id: '#0ff', name: 'CYAN (WIDE)', cost: 3000 },
+            { id: '#ff0', name: 'YELLOW (SNAKE)', cost: 4000 },
+            { id: '#aa0022', name: 'RED (BURST)', cost: 6000 }
+        ];
+
+        function save() { localStorage.setItem('minami_2026_v8', JSON.stringify(userData)); }
 
         function renderStages() {
             const grid = document.getElementById('grid'); grid.innerHTML = '';
-            // 解禁ロジック
             if(NORMAL_STAGES.every(id => userData.cleared.includes(id))) 
                 ['HA','HB','HC'].forEach(id => !userData.unlocked.includes(id) && userData.unlocked.push(id));
             if(['HA','HB','HC'].every(id => userData.cleared.includes(id)))
@@ -175,17 +182,44 @@
                 const btn = document.createElement('div');
                 btn.className = `mode-btn unlocked ${userData.cleared.includes(id) ? 'cleared' : ''}`;
                 btn.style.setProperty('--c', STAGES[id].color);
-                
                 let stars = "★".repeat(STAGES[id].stars);
-                btn.innerHTML = `
-                    <b style="font-size:11px;">${STAGES[id].ultimate ? "CENTRAL ORE" : STAGES[id].name}</b><br>
-                    <span class="diff-stars">${stars}</span><br>
-                    <div style="color:#aaa; font-size:7px; margin-top:8px; line-height:1.4; border-top:1px solid #333; padding-top:5px; font-family:'Noto Sans JP';">
-                        ${STAGES[id].hint}
-                    </div>
-                `;
+                btn.innerHTML = `<b style="font-size:11px;">${STAGES[id].ultimate ? "CENTRAL ORE" : STAGES[id].name}</b><br><span class="diff-stars">${stars}</span><br><div style="color:#aaa; font-size:7px; margin-top:8px; line-height:1.4; border-top:1px solid #333; padding-top:5px; font-family:'Noto Sans JP';">${STAGES[id].hint}</div>`;
                 btn.onclick = () => startGame(id);
                 grid.appendChild(btn);
+            });
+        }
+
+        function renderGarage() {
+            const list = document.getElementById('garage-list'); list.innerHTML = '';
+            WEAPONS.forEach(w => {
+                const btn = document.createElement('button');
+                const isOwned = userData.licenses.includes(w.id);
+                btn.className = 'nav-btn';
+                btn.style.borderColor = w.id;
+                btn.innerHTML = isOwned ? w.name : 'LOCKED';
+                btn.disabled = !isOwned;
+                btn.onclick = () => { userData.skin = w.id; save(); showMsg("EQUIPPED: " + w.name, w.id); };
+                list.appendChild(btn);
+            });
+        }
+
+        function renderShop() {
+            document.getElementById('shop-gold').innerText = `GOLD: ${userData.gold}`;
+            const shopList = document.getElementById('weapon-shop'); shopList.innerHTML = '';
+            WEAPONS.forEach(w => {
+                if(w.cost === 0) return;
+                const btn = document.createElement('button');
+                const isOwned = userData.licenses.includes(w.id);
+                btn.className = 'nav-btn';
+                btn.style.borderColor = isOwned ? '#444' : w.id;
+                btn.innerHTML = isOwned ? `${w.name}<br>(SOLD OUT)` : `${w.name}<br>${w.cost}G`;
+                btn.disabled = isOwned || userData.gold < w.cost;
+                btn.onclick = () => {
+                    userData.gold -= w.cost;
+                    userData.licenses.push(w.id);
+                    save(); renderShop(); showMsg("LICENSE PURCHASED!", w.id);
+                };
+                shopList.appendChild(btn);
             });
         }
 
@@ -194,15 +228,14 @@
             document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             if(id === 'stage-select') renderStages();
-            if(id === 'shop') document.getElementById('shop-gold').innerText = `GOLD: ${userData.gold}`;
+            if(id === 'garage') renderGarage();
+            if(id === 'shop') renderShop();
         }
 
         function backToMain() {
             document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
             document.getElementById('main-nav').style.display = 'block';
         }
-
-        function setSkin(c) { userData.skin = c; save(); showMsg("COLOR UPDATED", c); }
 
         function buy(type, cost) {
             if(userData.gold >= cost) {
@@ -211,7 +244,7 @@
                 if(type === 'heal') hp = 100;
                 if(type === 'bit') sessionData.hasBit = true;
                 if(type.startsWith('anti_')) sessionData.items.push(type);
-                save(); openPanel('shop');
+                save(); renderShop();
             }
         }
 
@@ -253,38 +286,34 @@
             if(phase === 1 && score >= s1) { phase = 2; showMsg("PHASE 2", "#ff0"); }
             if(phase === 2 && score >= s2) { phase = 3; showMsg("BOSS", "#f00"); }
 
-            // ギミック判定
             if(currentMode.gimmick === 'vibrate' && !sessionData.items.includes('anti_vibrate')) { 
                 player.x += (Math.random()-0.5)*10; player.y += (Math.random()-0.5)*10; 
             }
             if(currentMode.gimmick === 'fog' && !sessionData.items.includes('anti_fog') && frame % 100 === 0) hp -= 1;
 
-            // 攻撃
             if(isDown && frame % 5 === 0) {
                 const s = userData.skin, a = sessionData.atk;
-                if(s === '#0f0') { // 埼京線カラー: 連射
+                if(s === '#0f0') { // GREEN
                     if(frame % 3 === 0) bullets.push({ x: player.x, y: player.y - 20, p: a*0.7, vy: -30, vx: 0, w: 6 });
-                } else if(s === '#0ff') { // 京浜東北カラー: 3WAY
+                } else if(s === '#0ff') { // CYAN
                     bullets.push({ x: player.x, y: player.y - 20, p: a, vy: -20, vx: -4, w: 8 });
                     bullets.push({ x: player.x, y: player.y - 20, p: a, vy: -20, vx: 0, w: 8 });
                     bullets.push({ x: player.x, y: player.y - 20, p: a, vy: -20, vx: 4, w: 8 });
-                } else if(s === '#ff0') { // 総武線カラー: 蛇行弾
+                } else if(s === '#ff0') { // YELLOW
                     bullets.push({ x: player.x, y: player.y - 20, p: a*1.2, vy: -15, vx: Math.sin(frame*0.2)*8, w: 8 });
-                } else if(s === '#aa0022') { // 京葉線カラー: 爆破
+                } else if(s === '#aa0022') { // RED
                     bullets.push({ x: player.x, y: player.y - 25, p: a*2.5, vy: -12, vx: 0, w: 20 });
-                } else { // 白: 標準
+                } else { // WHITE
                     bullets.push({ x: player.x, y: player.y - 20, p: a, vy: -20, vx: 0, w: 8 });
                 }
             }
 
-            // ビット攻撃
             if(sessionData.hasBit && frame % 15 === 0) {
                 let bx = player.x + Math.cos(frame*0.1)*60;
                 let by = player.y + Math.sin(frame*0.1)*60;
                 bullets.push({ x: bx, y: by, p: 1.5, vy: -25, vx: 0, w: 4, isBit: true });
             }
 
-            // 敵生成
             if(!enemies.some(e => e.isBoss) && frame % 35 === 0) {
                 enemies.push({ x: Math.random()*canvas.width, y: -50, hp: 15*currentMode.diff, size: 30, vy: 3 + currentMode.diff/4 });
             }
@@ -292,7 +321,6 @@
                 enemies.push({ x: canvas.width/2, y: -100, hp: currentMode.bossHp, maxHp: currentMode.bossHp, size: 130, vy: 1, isBoss: true });
             }
 
-            // 弾丸・衝突
             bullets.forEach((b, i) => {
                 b.y += b.vy; b.x += b.vx;
                 if(b.y < -50 || b.x < 0 || b.x > canvas.width) bullets.splice(i, 1);
@@ -334,7 +362,6 @@
 
             particles.forEach((p, i) => { p.x += p.vx; p.y += p.vy; p.life--; if(p.life <= 0) particles.splice(i, 1); });
 
-            // UI更新
             document.getElementById('hp-fill').style.width = hp + "%";
             document.getElementById('gauge-fill').style.width = burstGauge + "%";
             document.getElementById('score-val').innerText = `SCORE: ${score.toString().padStart(6, '0')}`;
@@ -353,12 +380,10 @@
                 ctx.fillRect(bx-4, by-4, 8, 8);
             }
 
-            // 自機
             ctx.fillStyle = userData.skin; ctx.beginPath();
             ctx.moveTo(player.x, player.y - 18); ctx.lineTo(player.x + 14, player.y + 12); ctx.lineTo(player.x - 14, player.y + 12);
             ctx.closePath(); ctx.fill();
 
-            // 敵
             enemies.forEach(e => {
                 ctx.strokeStyle = e.isBoss ? "#f00" : currentMode.color; ctx.lineWidth = 5;
                 ctx.strokeRect(e.x-e.size/2, e.y-e.size/2, e.size, e.size);
@@ -368,7 +393,6 @@
                 }
             });
 
-            // 弾
             bullets.forEach(b => {
                 ctx.fillStyle = b.isBit ? "#fff" : (userData.skin === '#fff' ? "#0ff" : userData.skin);
                 ctx.fillRect(b.x - b.w/2, b.y, b.w, 22);
