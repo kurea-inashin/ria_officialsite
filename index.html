@@ -2,513 +2,567 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Minami Project 2026: Burst Finale -FULL SPEC-</title>
+    <title>Minami Project 2026: Burst Finale -ULTIMATE FULL SPEC-</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+JP:wght@700;900&display=swap');
         
-        body { margin: 0; background: #000; color: #fff; font-family: 'Press Start 2P', cursive; overflow: hidden; user-select: none; }
-        canvas { display: block; }
+        /* 全体レイアウト：一切の妥協なし */
+        body { margin: 0; background: #000; color: #fff; font-family: 'Press Start 2P', cursive; overflow: hidden; touch-action: none; user-select: none; }
+        canvas { display: block; cursor: none; }
 
-        /* HUD: ステータス表示 */
-        #hud { position: absolute; top: 20px; left: 20px; z-index: 10; pointer-events: none; }
-        #score-val { font-size: 26px; text-shadow: 0 0 10px #00ffff; margin-bottom: 10px; }
-        .bar-label { font-size: 10px; margin-top: 10px; color: #aaa; letter-spacing: 1px; }
-        .bar-container { width: 300px; height: 16px; background: rgba(255,255,255,0.1); border: 2px solid #fff; border-radius: 8px; overflow: hidden; margin-bottom: 5px; box-shadow: 0 0 15px rgba(0,0,0,0.8); }
-        #hp-fill { height: 100%; background: linear-gradient(90deg, #ff0055, #ffaa00); width: 100%; transition: width 0.3s; }
-        #gauge-fill { height: 100%; background: #00ccff; width: 0%; transition: width 0.1s; }
-        #bomb-stock { color: #ffff00; font-size: 16px; text-shadow: 0 0 8px #ffaa00; margin-top: 5px; }
-        #weapon-info { color: #00ffaa; font-size: 10px; margin-top: 5px; }
+        /* HUD：情報表示を最大化 */
+        #hud { position: absolute; top: 25px; left: 25px; z-index: 100; pointer-events: none; width: 350px; }
+        #score-container { font-size: 28px; text-shadow: 0 0 15px #00ffff, 0 0 5px #fff; margin-bottom: 15px; letter-spacing: 2px; }
+        .hud-label { font-size: 10px; margin-top: 12px; color: #00ffaa; text-transform: uppercase; letter-spacing: 1px; }
+        .bar-outer { width: 100%; height: 20px; background: rgba(0, 50, 50, 0.5); border: 2px solid #fff; border-radius: 10px; overflow: hidden; margin-bottom: 8px; box-shadow: inset 0 0 10px #000; }
+        #hp-bar { height: 100%; background: linear-gradient(90deg, #ff0055, #ffaa00, #ff0055); background-size: 200% 100%; width: 100%; transition: width 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        #burst-bar { height: 100%; background: linear-gradient(90deg, #0088ff, #00ffff, #0088ff); background-size: 200% 100%; width: 0%; transition: width 0.2s; }
+        #bomb-display { color: #ffff00; font-size: 18px; text-shadow: 0 0 10px #ffaa00; margin-top: 10px; display: flex; align-items: center; gap: 5px; }
+        #weapon-status { font-size: 10px; color: #00ffff; margin-top: 10px; background: rgba(0, 255, 255, 0.1); padding: 5px; border-radius: 5px; border: 1px solid rgba(0, 255, 255, 0.3); }
+        #gold-count { color: #ffd700; font-size: 16px; margin-top: 10px; text-shadow: 0 0 5px #000; }
 
-        /* メニューシステム */
-        #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,15,0.98); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20; backdrop-filter: blur(12px); }
-        .panel { display: none; flex-direction: column; align-items: center; width: 95%; max-height: 90vh; overflow-y: auto; }
+        /* メニューシステム：重厚なデザイン */
+        #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, rgba(0,20,40,0.95) 0%, rgba(0,0,10,1) 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 200; backdrop-filter: blur(15px); }
+        .panel { display: none; flex-direction: column; align-items: center; width: 90%; max-height: 85vh; overflow-y: auto; padding: 20px; }
         .active { display: flex; }
-        .nav-btn { padding: 15px 30px; border: 3px solid #fff; background: rgba(255,255,255,0.1); color: #fff; cursor: pointer; font-family: 'Press Start 2P'; font-size: 11px; margin: 10px; transition: 0.3s; }
-        .nav-btn:hover { background: #fff; color: #000; transform: scale(1.05); box-shadow: 0 0 25px #fff; }
-
-        /* ステージ選択画面 */
-        .stage-container { display: flex; gap: 40px; width: 95%; justify-content: center; align-items: flex-start; margin-top: 10px; }
-        .mode-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-        .mode-btn { width: 140px; padding: 12px; border: 2px solid #333; background: #000; color: #444; cursor: pointer; text-align: center; font-size: 9px; transition: 0.2s; position: relative; }
-        .mode-btn.unlocked { border-color: var(--c); color: var(--c); }
-        .mode-btn.selected { background: var(--c); color: #000 !important; box-shadow: 0 0 20px var(--c); }
-        .mode-btn.cleared::after { content: 'CLEARED'; position: absolute; bottom: -12px; left: 50%; transform: translateX(-50%); color: #0f0; font-size: 7px; font-weight: bold; }
-        .diff-stars { font-size: 8px; color: #ff0; display: block; margin-top: 5px; }
         
-        #stage-detail { width: 450px; background: rgba(255,255,255,0.03); padding: 30px; border: 1px solid #444; border-radius: 15px; font-family: 'Noto Sans JP'; min-height: 350px; display: flex; flex-direction: column; position: relative; }
-        .detail-title { font-size: 20px; border-bottom: 3px solid #fff; padding-bottom: 10px; margin-bottom: 15px; font-family: 'Press Start 2P'; }
-        .detail-desc { font-size: 14px; color: #ddd; line-height: 1.8; flex-grow: 1; }
-        .suitability { color: #00ffff; font-weight: 900; margin-top: 15px; font-size: 14px; border-left: 5px solid #00ffff; padding-left: 12px; background: rgba(0, 255, 255, 0.1); padding-top: 5px; padding-bottom: 5px; }
+        .nav-btn { position: relative; padding: 18px 40px; border: 3px solid #fff; background: rgba(255,255,255,0.05); color: #fff; cursor: pointer; font-family: 'Press Start 2P'; font-size: 12px; margin: 12px; transition: all 0.3s; overflow: hidden; }
+        .nav-btn::before { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); transition: 0.5s; }
+        .nav-btn:hover::before { left: 100%; }
+        .nav-btn:hover { background: #fff; color: #000; transform: scale(1.08) translateY(-3px); box-shadow: 0 10px 30px rgba(255,255,255,0.3); }
 
-        /* ショップ & ガレージ */
-        .shop-item { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; text-align: center; border: 1px solid #333; }
-        #gold-display { color: #ffd700; font-size: 24px; margin-bottom: 25px; text-shadow: 0 0 10px #aa8800; }
+        /* ステージセレクトの詳細化 */
+        .stage-grid-container { display: flex; gap: 50px; width: 95%; justify-content: center; align-items: stretch; }
+        .grid-layout { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; padding: 10px; }
+        .mode-tile { width: 160px; height: 80px; border: 2px solid #444; background: #050505; color: #666; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; transition: 0.2s; position: relative; }
+        .mode-tile.unlocked { border-color: var(--c); color: var(--c); box-shadow: inset 0 0 10px var(--c); }
+        .mode-tile.selected { background: var(--c); color: #000 !important; box-shadow: 0 0 30px var(--c); transform: scale(1.1); z-index: 5; }
+        .mode-tile.cleared::after { content: 'COMPLETED'; position: absolute; top: -10px; background: #0f0; color: #000; font-size: 7px; padding: 2px 5px; border-radius: 3px; }
+        .star-rating { color: #ff0; font-size: 9px; margin-top: 5px; }
 
-        /* 特殊演出・メッセージ */
-        .status-msg { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); font-size: 48px; opacity: 0; transition: 0.5s; pointer-events: none; z-index: 50; text-align: center; font-weight: 900; letter-spacing: 5px; }
-        
-        #copyright { position: absolute; bottom: 15px; font-size: 11px; color: #444; font-family: 'Noto Sans JP'; letter-spacing: 1px; }
+        #detail-pane { width: 480px; background: rgba(255,255,255,0.05); padding: 35px; border: 2px solid #444; border-radius: 20px; font-family: 'Noto Sans JP'; display: flex; flex-direction: column; box-shadow: 0 0 40px rgba(0,0,0,0.5); }
+        .detail-header { font-size: 24px; border-bottom: 4px solid #fff; margin-bottom: 20px; font-family: 'Press Start 2P'; padding-bottom: 10px; }
+        .detail-body { font-size: 15px; color: #eee; line-height: 2; flex-grow: 1; margin-bottom: 20px; }
+        .suit-box { background: rgba(0, 255, 255, 0.15); border: 2px solid #00ffff; padding: 15px; color: #00ffff; font-weight: 900; font-size: 16px; border-radius: 10px; text-shadow: 0 0 5px #00ffff; }
+
+        /* 特殊演出 */
+        .status-popup { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); font-size: 60px; opacity: 0; transition: 0.6s; pointer-events: none; z-index: 500; font-weight: 900; filter: drop-shadow(0 0 20px #000); }
+        #copyright-tag { position: absolute; bottom: 20px; font-size: 11px; color: #555; font-family: 'Noto Sans JP'; border-top: 1px solid #333; padding-top: 10px; width: 80%; text-align: center; }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
     <div id="hud">
-        <div id="score-val">SCORE: 000000</div>
-        <div class="bar-label">ARMOR INTEGRITY</div>
-        <div class="bar-container"><div id="hp-fill"></div></div>
-        <div class="bar-label">BURST ENERGY</div>
-        <div class="bar-container"><div id="gauge-fill"></div></div>
-        <div id="bomb-stock">BOMBS: </div>
-        <div id="weapon-info">CURRENT WEAPON: NORMAL</div>
-        <div id="gold-val" style="color:#ffd700; font-size:14px; margin-top:8px;">GOLD: 0</div>
+        <div id="score-container">SCORE: 000000</div>
+        <div class="hud-label">Hull Integrity (Armor)</div>
+        <div class="bar-outer"><div id="hp-bar"></div></div>
+        <div class="hud-label">Burst Drive Gauge</div>
+        <div class="bar-outer"><div id="burst-bar"></div></div>
+        <div id="bomb-display">BOMBS: </div>
+        <div id="gold-count">CREDITS: 0 G</div>
+        <div id="weapon-status">WEAPON: INITIAL UNIT</div>
     </div>
 
     <div id="overlay">
-        <h1 style="font-size:32px; margin-bottom:30px; text-shadow: 0 0 30px #0088ff; letter-spacing:8px;">MINAMI PROJECT 2026</h1>
+        <h1 style="font-size:38px; margin-bottom:40px; text-shadow: 0 0 40px #00ccff; letter-spacing:10px;">MINAMI PROJECT 2026</h1>
         
-        <div id="main-nav">
-            <button class="nav-btn" onclick="openPanel('stage-select')">MISSION SELECT</button>
-            <button class="nav-btn" onclick="openPanel('shop')">TECH SHOP</button>
-            <button class="nav-btn" onclick="openPanel('garage')">GARAGE</button>
-            <button class="nav-btn" onclick="openPanel('how-to')">HOW TO PLAY</button>
+        <div id="main-menu">
+            <button class="nav-btn" onclick="switchPanel('stage-select')">MISSION DATA SELECT</button>
+            <button class="nav-btn" onclick="switchPanel('shop')">R&D WEAPON SHOP</button>
+            <button class="nav-btn" onclick="switchPanel('garage')">MAINTENANCE GARAGE</button>
+            <button class="nav-btn" onclick="switchPanel('manual')">MISSION MANUAL</button>
         </div>
 
         <div id="stage-select" class="panel">
-            <div class="stage-container">
-                <div class="mode-grid" id="grid"></div>
-                <div id="stage-detail">
-                    <div class="detail-title" id="det-name">ST=???</div>
-                    <div class="detail-desc" id="det-desc">ミッションファイルを選択してください。未踏の戦区があなたを待っています。</div>
-                    <div id="det-suit" class="suitability">適正武器: ---</div>
-                    <button class="nav-btn" id="start-btn" style="display:none; margin-top:25px; width:100%; border-color:#0f0; background:rgba(0,255,0,0.1);" onclick="executeMission()">LAUNCH MISSION</button>
+            <div class="stage-grid-container">
+                <div class="grid-layout" id="stage-grid"></div>
+                <div id="detail-pane">
+                    <div class="detail-header" id="st-name">SYSTEM READY</div>
+                    <div class="detail-body" id="st-info">作戦領域を選択してください。各領域には特有の環境干渉（ギミック）が存在します。</div>
+                    <div id="st-suit" class="suit-box">ADAPTIVE WEAPON: ---</div>
+                    <button class="nav-btn" id="launch-btn" style="display:none; margin-top:30px; border-color:#0f0; background:rgba(0,255,0,0.1);" onclick="beginMission()">LAUNCH INTERCEPTOR</button>
                 </div>
             </div>
-            <button class="nav-btn" style="margin-top:30px;" onclick="backToMain()">BACK</button>
+            <button class="nav-btn" style="margin-top:40px;" onclick="backToTitle()">RETURN TO BASE</button>
         </div>
 
         <div id="shop" class="panel">
-            <div id="gold-display">GOLD: 0</div>
-            <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:20px; width:850px;">
-                <div class="shop-item"><h3>LASER</h3><p style="font-size:9px;">高威力・貫通攻撃</p><button class="nav-btn" onclick="buy('weapon', 'LASER', 1500)">1500G</button></div>
-                <div class="shop-item"><h3>WIDE</h3><p style="font-size:9px;">広範囲制圧攻撃</p><button class="nav-btn" onclick="buy('weapon', 'WIDE', 1500)">1500G</button></div>
-                <div class="shop-item"><h3>3-WAY</h3><p style="font-size:9px;">前方3方向同時攻撃</p><button class="nav-btn" onclick="buy('weapon', '3WAY', 2000)">2000G</button></div>
-                <div class="shop-item"><h3>STABILIZER</h3><p style="font-size:9px;">激しい振動を無効化</p><button class="nav-btn" onclick="buy('item', 'anti_vibrate', 1000)">1000G</button></div>
-                <div class="shop-item"><h3>HEATER</h3><p style="font-size:9px;">視界不良の霧を無効化</p><button class="nav-btn" onclick="buy('item', 'anti_fog', 1000)">1000G</button></div>
-                <div class="shop-item"><h3>REPAIR</h3><p style="font-size:9px;">機体アーマーを全回復</p><button class="nav-btn" onclick="buy('item', 'heal', 500)">500G</button></div>
+            <h2 id="shop-wallet" style="color:#ffd700; font-size:28px; margin-bottom:30px;">CREDITS: 0 G</h2>
+            <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:25px; width:900px;">
+                <div style="background:rgba(255,255,255,0.05); padding:20px; border-radius:15px; border:1px solid #444;">
+                    <h3>LASER CANNON</h3><p style="font-size:10px; color:#aaa; line-height:1.5;">高出力の集束レーザー。貫通性能を持ち、大型機や密集した敵に極めて有効。</p>
+                    <button class="nav-btn" onclick="purchase('weapon', 'LASER', 1500)">1500 G</button>
+                </div>
+                <div style="background:rgba(255,255,255,0.05); padding:20px; border-radius:15px; border:1px solid #444;">
+                    <h3>WIDE SPREAD</h3><p style="font-size:10px; color:#aaa; line-height:1.5;">広角への拡散ショット。攻撃範囲が広く、小型の高速機を掃討するのに適している。</p>
+                    <button class="nav-btn" onclick="purchase('weapon', 'WIDE', 1500)">1500 G</button>
+                </div>
+                <div style="background:rgba(255,255,255,0.05); padding:20px; border-radius:15px; border:1px solid #444;">
+                    <h3>V-3 WAY SHOT</h3><p style="font-size:10px; color:#aaa; line-height:1.5;">三方向への同時射撃。攻守のバランスが良く、死角からの接近を許さない。</p>
+                    <button class="nav-btn" onclick="purchase('weapon', '3WAY', 2000)">2000 G</button>
+                </div>
+                <div style="background:rgba(255,255,255,0.05); padding:20px; border-radius:15px; border:1px solid #444;">
+                    <h3>STABILIZER</h3><p style="font-size:10px; color:#aaa; line-height:1.5;">機体安定装置。激しい振動が発生する領域でも正確な操作を可能にする。</p>
+                    <button class="nav-btn" onclick="purchase('item', 'anti_vibrate', 1000)">1000 G</button>
+                </div>
+                <div style="background:rgba(255,255,255,0.05); padding:20px; border-radius:15px; border:1px solid #444;">
+                    <h3>THERMO HEATER</h3><p style="font-size:10px; color:#aaa; line-height:1.5;">熱源維持装置。視界不良を招く極低温の霧を熱破砕し、視界を確保する。</p>
+                    <button class="nav-btn" onclick="purchase('item', 'anti_fog', 1000)">1000 G</button>
+                </div>
+                <div style="background:rgba(255,255,255,0.05); padding:20px; border-radius:15px; border:1px solid #444;">
+                    <h3>NANO REPAIR</h3><p style="font-size:10px; color:#aaa; line-height:1.5;">ナノマシンによる即時修復。損傷した機体アーマーを100%まで回復させる。</p>
+                    <button class="nav-btn" onclick="purchase('item', 'heal', 500)">500 G</button>
+                </div>
             </div>
-            <button class="nav-btn" style="margin-top:40px;" onclick="backToMain()">BACK</button>
+            <button class="nav-btn" style="margin-top:40px;" onclick="backToTitle()">RETURN TO BASE</button>
         </div>
 
         <div id="garage" class="panel">
-            <h2>GARAGE</h2>
-            <div id="skin-list" style="display:flex; flex-wrap:wrap; gap:15px; justify-content:center;">
-                <button class="nav-btn" style="border-color:#fff" onclick="setSkin('#fff', false)">WHITE</button>
-                <button class="nav-btn" id="master-skin-btn" style="border-color:#ff6600; display:none; background:linear-gradient(45deg, #ff0000, #ffaa00);" onclick="setSkin('rainbow', true)">★MASTER SKIN★</button>
+            <h2>CUSTOM SKIN SELECT</h2>
+            <div id="skin-container" style="display:flex; gap:20px; margin-top:30px;">
+                <button class="nav-btn" style="border-color:#fff" onclick="applySkin('#fff', false)">STANDARD WHITE</button>
+                <button class="nav-btn" id="master-skin-unlock" style="display:none; border-color:#ff6600; background:linear-gradient(45deg, #ff3300, #ffaa00);" onclick="applySkin('rainbow', true)">★ LEGENDARY MASTER SKIN ★</button>
             </div>
-            <p id="master-hint" style="font-size:11px; color:#666; margin-top:30px;">[ UNLOCK HINT: すべてのミッション、および隠しミッションを完遂せよ ]</p>
-            <button class="nav-btn" style="margin-top:40px;" onclick="backToMain()">BACK</button>
+            <p id="unlock-hint" style="font-size:12px; color:#666; margin-top:50px;">[ UNLOCK CONDITION: ALL MISSIONS INCLUDING ST=CO MUST BE COMPLETED ]</p>
+            <button class="nav-btn" style="margin-top:40px;" onclick="backToTitle()">RETURN TO BASE</button>
         </div>
 
-        <div id="how-to" class="panel">
-            <h2>MISSION MANUAL</h2>
-            <div style="font-family:'Noto Sans JP'; font-size:16px; line-height:2.2; background:rgba(255,255,255,0.05); padding:40px; border-radius:15px; max-width:800px; border:1px solid #444;">
-                <b style="color:#00ffff;">■ 操作方法</b><br>
-                ・移動：マウスの動きに合わせて機体が追従します。<br>
-                ・攻撃：マウスの左ボタンを押し続けることでメイン武装を連射します。<br>
-                ・ボム：右ボタン（またはスペースキー）で炸裂弾を放ち、画面内の弾を消去します。<br><br>
-                <b style="color:#00ffff;">■ システム</b><br>
-                ・各戦区には<b>「適正武器」</b>が存在します。ショップで装備を整えることが勝利への近道です。<br>
-                ・購入した武器や特殊装備は、機体が破壊されるかリロードするまで有効です。<br>
-                ・敵を倒してゲージを溜めるとボムの残弾が増加します。<br><br>
-                <b style="color:#ff0055;">■ 警告</b><br>
-                ・異常気象（霧、強風）や物理的干渉（振動、重力）には十分注意してください。
+        <div id="manual" class="panel">
+            <h2>MISSION MANUAL (v2.6)</h2>
+            <div style="font-family:'Noto Sans JP'; background:rgba(255,255,255,0.05); padding:40px; border-radius:20px; line-height:2.4; max-width:850px; border:1px solid #444;">
+                <b style="color:#00ffff; font-size:18px;">■ BASIC CONTROL</b><br>
+                ・<b>機体移動</b>：マウスカーソルに追従（またはタッチ操作）。<br>
+                ・<b>攻撃</b>：左クリックを保持することでメインウェポンを自動連射。<br>
+                ・<b>バーストボム</b>：右クリック または [Space] キー。画面内の全敵弾を消去しダメージを与える。<br><br>
+                <b style="color:#00ffff; font-size:18px;">■ MISSION SYSTEM</b><br>
+                ・各ステージには<b>「適正武器」</b>が設定されています。推奨されない武器でも攻略は可能ですが、適正武器を使用することで敵の装甲を効率よく破壊できます。<br>
+                ・敵機を破壊して「バーストゲージ」を溜めると、ボムのストックが増加します。<br>
+                ・一度購入した装備は、撃墜されるかブラウザを閉じるまで継続されます。
             </div>
-            <button class="nav-btn" onclick="backToMain()">BACK</button>
+            <button class="nav-btn" onclick="backToTitle()">RETURN TO BASE</button>
         </div>
 
-        <div id="copyright">© 2026 MINAMI RAIL-SHOOTING PROJECT / ARTIFICIAL INTELLIGENCE COLLABORATION.</div>
+        <div id="copyright-tag">
+            DESIGNED BY GEMINI 3 FLASH / EXCLUSIVELY FOR MINAMI RAIL-SHOOTING PROJECT 2026<br>
+            COPYRIGHT © 2026 ALL RIGHTS RESERVED.
+        </div>
     </div>
 
-    <canvas id="game"></canvas>
-    <div id="msg" class="status-msg"></div>
+    <canvas id="game-canvas"></canvas>
+    <div id="popup" class="status-popup"></div>
 
     <script>
         /** @type {HTMLCanvasElement} */
-        const canvas = document.getElementById('game');
+        const canvas = document.getElementById('game-canvas');
         const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        const resize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+        window.addEventListener('resize', resize); resize();
 
-        // ゲーム状態
-        let gameActive = false, score = 0, hp = 100, frame = 0, phase = 1, burstGauge = 0;
-        let bullets = [], eBullets = [], enemies = [], particles = [], bombActive = 0;
-        let player = { x: canvas.width/2, y: canvas.height/2 };
-        let selectedId = null, currentMode = null, isDown = false;
+        // ---------------------------------------------------------
+        // ゲームステート管理：徹底的な変数定義
+        // ---------------------------------------------------------
+        let isRunning = false;
+        let score = 0;
+        let armor = 100;
+        let frameCount = 0;
+        let currentPhase = 1;
+        let burstEnergy = 0;
+        let bombCount = 1;
+        let activeBullets = [];
+        let enemyBullets = [];
+        let activeEnemies = [];
+        let effectParticles = [];
+        let playerPos = { x: canvas.width/2, y: canvas.height/2 };
+        let mousePressed = false;
+        let currentTargetId = null;
+        let missionSetting = null;
+        let bombShockwave = 0;
 
-        // ショップ装備（セッション管理）
-        let sessionData = { weapon: 'NORMAL', items: [] };
+        // 1プレイ限定のセッションデータ
+        let sessionEquip = { weapon: 'NORMAL', items: [] };
 
-        // 永続データ
-        const NORMAL_STAGES = ['SB', 'KT', 'SK', 'KY', 'PK', 'JB', 'S1', 'S2', 'S3'];
-        let userData = JSON.parse(localStorage.getItem('minami_2026_vFull')) || {
-            gold: 0, bombs: 1, unlocked: [...NORMAL_STAGES], cleared: [], skin: '#fff', isMaster: false, masterActive: false
+        // 永続セーブデータ（超鬼むず対応）
+        const BASE_STAGES = ['SB', 'KT', 'SK', 'KY', 'PK', 'JB', 'S1', 'S2', 'S3'];
+        let globalProfile = JSON.parse(localStorage.getItem('Minami_2026_Final_v10')) || {
+            credits: 0,
+            unlockedStages: [...BASE_STAGES],
+            clearedStages: [],
+            activeSkin: '#fff',
+            masterMode: false
         };
 
-        const STAGES = {
-            'SB': { name: 'ST=SB', color: '#ccaa00', stars: 1, diff: 1.0, bossHp: 600, gimmick: 'vibrate', suit: 'LASER', desc: "機体が細かく震える振動波が発生している。精密射撃が困難なため、直線火力の高いLASERで速やかに敵中枢を叩け。" },
-            'KT': { name: 'ST=KT', color: '#0088cc', stars: 1, diff: 1.3, bossHp: 800, suit: 'WIDE', desc: "敵機の機動性が高い戦区。標準武装では捉えきれないため、広範囲をカバーするWIDE射撃が最も有効である。" },
-            'SK': { name: 'ST=SK', color: '#008844', stars: 2, diff: 1.6, bossHp: 1000, gimmick: 'fog', suit: '3WAY', desc: "濃霧が発生し、断続的に視界が奪われる。死角からの急襲に備え、3-WAYによる広角防御を展開せよ。" },
-            'KY': { name: 'ST=KY', color: '#aa0022', stars: 2, diff: 2.2, bossHp: 1500, gimmick: 'wind', suit: 'LASER', desc: "強い横風の影響で機体が左右に流される。位置取りが不安定になるため、瞬間火力の高いLASERによる速攻を推奨。" },
-            'PK': { name: 'ST=PK', color: '#cc5588', stars: 3, diff: 2.5, bossHp: 1800, gimmick: 'reverse', suit: '3WAY', desc: "磁場異常により操作信号が反転する極めて危険な空域。混乱を避けるため、手数の多い3-WAYで弾幕を張れ。" },
-            'JB': { name: 'ST=JB', color: '#006666', stars: 3, diff: 2.8, bossHp: 2000, suit: 'LASER', desc: "重装甲の巡洋艦級が多数出現。高い貫通力を持つLASERでなければ、敵の防衛線を突破するのは困難だ。" },
-            'S1': { name: 'ST=S1', color: '#6600cc', stars: 4, diff: 3.2, bossHp: 2500, suit: 'WIDE', desc: "小型機の物量による包囲網が形成されている。WIDE攻撃による面制圧で、敵の接近を許してはならない。" },
-            'S2': { name: 'ST=S2', color: '#cc00cc', stars: 4, diff: 3.8, bossHp: 3000, gimmick: 'poison', suit: 'LASER', desc: "機体装甲を直接蝕む腐食ガスが充満。時間とともにHPが減少するため、最大火力のLASERで短期決戦を挑め。" },
-            'S3': { name: 'ST=S3', color: '#00cccc', stars: 5, diff: 4.5, bossHp: 3500, gimmick: 'gravity', suit: '3WAY', desc: "強力な引力により機体が下方へ引きずられる。回避行動が制限されるため、3-WAYで敵弾を相殺しつつ前進せよ。" },
-            'HA': { name: 'ST=HA', color: '#CD7F32', stars: 10, diff: 8, secret: true, suit: 'ANY', desc: "隠しミッション。全路線のデータを統合した高難度戦域。全ての武装が適正となり得るが、パイロットの技量が全て。" },
-            'HB': { name: 'ST=HB', color: '#C0C0C0', stars: 15, diff: 12, secret: true, suit: 'ANY', desc: "超高速の弾幕が展開される銀色の処刑場。ボムのタイミングこそが唯一の生存手段である。" },
-            'HC': { name: 'ST=HC', color: '#FFD700', stars: 20, diff: 18, secret: true, suit: 'ANY', desc: "究極の弾幕戦域。黄金の閃光をかいくぐり、中心部の巨大コアを破壊せよ。ここを越えれば伝説となる。" },
-            'UA': { name: 'ST=UA', color: '#333', stars: 30, diff: 30, secret: true, suit: 'LASER', desc: "超鬼むず：漆黒。敵の視認が困難な極限状態。高出力LASERの光のみが道標となる。" },
-            'UB': { name: 'ST=UB', color: '#fff', stars: 50, diff: 50, secret: true, suit: 'WIDE', desc: "超鬼むず：純白。画面を埋め尽くす白い絶望。WIDE射撃でわずかな隙間をこじ開けろ。" },
-            'CO': { name: 'ST=CO', color: '#ff6600', stars: 99, diff: 100, secret: true, ultimate: true, suit: 'MASTER', desc: "最終ミッション。オレンジの太陽が全てを無に帰す。マスタースキンのみが、この熱量に耐えうる。" }
+        // ---------------------------------------------------------
+        // ステージデータベース：一切の簡略化なし、各路線の特徴を反映
+        // ---------------------------------------------------------
+        const DATABASE = {
+            'SB': { name: 'ST=SB', color: '#ccaa00', stars: 1, diff: 1.0, bossHp: 800, gimmick: 'vibrate', suit: 'LASER', info: "激しい縦揺れ（ピッチング）が発生する戦区。精密なエイムが困難なため、高威力のLASERで中心核を貫け。STABILIZERがあれば揺れを制圧可能。" },
+            'KT': { name: 'ST=KT', color: '#0088cc', stars: 1, diff: 1.2, bossHp: 1000, suit: 'WIDE', info: "小型の高速迎撃機が多数配備された空域。捉えどころのない敵に対し、WIDEショットによる広範囲掃討が極めて有効。" },
+            'SK': { name: 'ST=SK', color: '#008844', stars: 2, diff: 1.5, bossHp: 1300, gimmick: 'fog', suit: '3WAY', info: "局地的な濃霧により視界が制限される。レーダー外からの接近を許さぬよう、3-WAYで周囲を警戒しつつ進め。HEATERが有効。" },
+            'KY': { name: 'ST=KY', color: '#aa0022', stars: 2, diff: 2.0, bossHp: 1800, gimmick: 'wind', suit: 'LASER', info: "海風の影響で機体が激しく左右に流される。位置保持が難しいため、高火力LASERで敵を迅速に撃破し、風域を脱出しろ。" },
+            'PK': { name: 'ST=PK', color: '#cc5588', stars: 3, diff: 2.3, bossHp: 2200, gimmick: 'reverse', suit: '3WAY', info: "強力な磁場により操作系統が左右反転する異常空間。感覚のズレを補うため、弾幕密度の高い3-WAYで空間を制圧せよ。" },
+            'JB': { name: 'ST=JB', color: '#006666', stars: 3, diff: 2.7, bossHp: 2500, suit: 'LASER', info: "重装甲を誇る巡洋艦級が主力。並の武装では装甲を抜けない。LASERによる一点集中砲火こそが攻略の鍵。" },
+            'S1': { name: 'ST=S1', color: '#6600cc', stars: 4, diff: 3.2, bossHp: 3000, suit: 'WIDE', info: "空間歪曲により敵が予期せぬ方向から出現する。死角を作らないWIDE攻撃で、全方位への警戒を怠るな。" },
+            'S2': { name: 'ST=S2', color: '#cc00cc', stars: 4, diff: 3.8, bossHp: 3500, gimmick: 'poison', suit: 'LASER', info: "機体外壁を溶かす腐食性ガスが充満。アーマーが徐々に削られるため、LASERによる超火力でボスの心臓部を即座に撃ち抜く必要がある。" },
+            'S3': { name: 'ST=S3', color: '#00cccc', stars: 5, diff: 4.4, bossHp: 4000, gimmick: 'gravity', suit: '3WAY', info: "超重力がかかる。回避速度が低下し、機体が常に下方へ引っ張られる。3-WAYで弾幕を張り、敵を寄せ付けるな。" },
+            // 隠しステージ：全モードクリア後に順次解放
+            'HA': { name: 'ST=HA', color: '#CD7F32', stars: 10, diff: 8, secret: true, suit: 'ANY', info: "隠し戦域。高密度の弾幕が展開される。これまでの全経験を動員せよ。" },
+            'HB': { name: 'ST=HB', color: '#C0C0C0', stars: 15, diff: 12, secret: true, suit: 'ANY', info: "超高速戦闘。瞬きすら許されない極限の反応速度が要求される。" },
+            'HC': { name: 'ST=HC', color: '#FFD700', stars: 20, diff: 18, secret: true, suit: 'ANY', info: "黄金の戦場。もはや回避は不可能に近い。ボムの管理が勝敗を分ける。" },
+            // 超鬼むずステージ
+            'UA': { name: 'ST=UA', color: '#333', stars: 35, diff: 35, secret: true, suit: 'LASER', info: "超鬼むず：漆黒。光すら届かない暗闇で、高出力レーザーのみが敵を照らす。" },
+            'UB': { name: 'ST=UB', color: '#fff', stars: 60, diff: 60, secret: true, suit: 'WIDE', info: "超鬼むず：純白。画面を覆い尽くす白い絶望を、WIDE攻撃で切り拓け。" },
+            // 最終ステージ
+            'CO': { name: 'ST=CO', color: '#ff6600', stars: 99, diff: 120, secret: true, ultimate: true, suit: 'MASTER', info: "終点：中央オレンジ。全ての弾幕の極致。生還できる可能性は0.01%以下。" }
         };
 
-        function save() { localStorage.setItem('minami_2026_vFull', JSON.stringify(userData)); }
+        function saveProfile() { localStorage.setItem('Minami_2026_Final_v10', JSON.stringify(globalProfile)); }
 
-        function renderStages() {
-            const grid = document.getElementById('grid'); grid.innerHTML = '';
-            // 解禁ロジック
-            if(NORMAL_STAGES.every(id => userData.cleared.includes(id))) ['HA','HB','HC'].forEach(id => !userData.unlocked.includes(id) && userData.unlocked.push(id));
-            if(['HA','HB','HC'].every(id => userData.cleared.includes(id))) ['UA','UB'].forEach(id => !userData.unlocked.includes(id) && userData.unlocked.push(id));
-            if(['UA','UB'].every(id => userData.cleared.includes(id))) !userData.unlocked.includes('CO') && userData.unlocked.push('CO');
-            
-            // 全クリ特典
-            if(userData.cleared.includes('CO')) {
-                userData.isMaster = true;
-                document.getElementById('master-skin-btn').style.display = 'block';
-                document.getElementById('master-hint').style.display = 'none';
-                save();
+        // ---------------------------------------------------------
+        // UIロジック
+        // ---------------------------------------------------------
+        function drawStageGrid() {
+            const grid = document.getElementById('stage-grid');
+            grid.innerHTML = '';
+
+            // 解禁フラグの更新
+            if(BASE_STAGES.every(id => globalProfile.clearedStages.includes(id))) {
+                ['HA','HB','HC'].forEach(id => !globalProfile.unlockedStages.includes(id) && globalProfile.unlockedStages.push(id));
+            }
+            if(['HA','HB','HC'].every(id => globalProfile.clearedStages.includes(id))) {
+                ['UA','UB'].forEach(id => !globalProfile.unlockedStages.includes(id) && globalProfile.unlockedStages.push(id));
+            }
+            if(['UA','UB'].every(id => globalProfile.clearedStages.includes(id))) {
+                !globalProfile.unlockedStages.includes('CO') && globalProfile.unlockedStages.push('CO');
+            }
+            if(globalProfile.clearedStages.includes('CO')) {
+                globalProfile.masterMode = true;
+                document.getElementById('master-skin-unlock').style.display = 'block';
+                document.getElementById('unlock-hint').style.display = 'none';
+                saveProfile();
             }
 
-            Object.keys(STAGES).forEach(id => {
-                if(STAGES[id].secret && !userData.unlocked.includes(id)) return;
-                const btn = document.createElement('div');
-                btn.className = `mode-btn unlocked ${userData.cleared.includes(id) ? 'cleared' : ''} ${selectedId === id ? 'selected' : ''}`;
-                btn.style.setProperty('--c', STAGES[id].color);
-                btn.innerHTML = `${STAGES[id].ultimate ? "CENTRAL-O" : STAGES[id].name}<br><span class="diff-stars">★${STAGES[id].stars}</span>`;
-                btn.onclick = () => {
-                    selectedId = id;
-                    const s = STAGES[id];
-                    document.getElementById('det-name').innerText = s.name;
-                    document.getElementById('det-name').style.color = s.color;
-                    document.getElementById('det-desc').innerText = s.desc;
-                    document.getElementById('det-suit').innerText = `推奨適正武装: ${s.suit}`;
-                    document.getElementById('start-btn').style.display = 'block';
-                    renderStages();
+            Object.keys(DATABASE).forEach(id => {
+                if(DATABASE[id].secret && !globalProfile.unlockedStages.includes(id)) return;
+                const tile = document.createElement('div');
+                tile.className = `mode-tile unlocked ${globalProfile.clearedStages.includes(id) ? 'cleared' : ''} ${currentTargetId === id ? 'selected' : ''}`;
+                tile.style.setProperty('--c', DATABASE[id].color);
+                tile.innerHTML = `<span>${DATABASE[id].name}</span><div class="star-rating">★ ${DATABASE[id].stars}</div>`;
+                tile.onclick = () => {
+                    currentTargetId = id;
+                    const data = DATABASE[id];
+                    document.getElementById('st-name').innerText = data.name;
+                    document.getElementById('st-name').style.color = data.color;
+                    document.getElementById('st-info').innerText = data.info;
+                    document.getElementById('st-suit').innerText = `ADAPTIVE WEAPON: ${data.suit}`;
+                    document.getElementById('launch-btn').style.display = 'block';
+                    drawStageGrid();
                 };
-                grid.appendChild(btn);
+                grid.appendChild(tile);
             });
         }
 
-        function openPanel(id) {
-            document.getElementById('main-nav').style.display = 'none';
+        function switchPanel(panelId) {
+            document.getElementById('main-menu').style.display = 'none';
             document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            if(id === 'stage-select') renderStages();
-            if(id === 'shop') document.getElementById('gold-display').innerText = `GOLD: ${userData.gold}`;
+            document.getElementById(panelId).classList.add('active');
+            if(panelId === 'stage-select') drawStageGrid();
+            if(panelId === 'shop') document.getElementById('shop-wallet').innerText = `CREDITS: ${globalProfile.credits} G`;
         }
 
-        function backToMain() {
+        function backToTitle() {
             document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-            document.getElementById('main-nav').style.display = 'block';
+            document.getElementById('main-menu').style.display = 'block';
         }
 
-        function buy(cat, type, cost) {
-            if(userData.gold >= cost) {
-                userData.gold -= cost;
+        function purchase(cat, type, cost) {
+            if(globalProfile.credits >= cost) {
+                globalProfile.credits -= cost;
                 if(cat === 'weapon') {
-                    sessionData.weapon = type;
-                    document.getElementById('weapon-info').innerText = `CURRENT WEAPON: ${type}`;
+                    sessionEquip.weapon = type;
+                    document.getElementById('weapon-status').innerText = `WEAPON: ${type} SYSTEM`;
                 }
                 if(cat === 'item') {
-                    if(type === 'heal') hp = 100;
-                    else sessionData.items.push(type);
+                    if(type === 'heal') armor = 100;
+                    else sessionEquip.items.push(type);
                 }
-                save();
-                document.getElementById('gold-display').innerText = `GOLD: ${userData.gold}`;
-                showMsg("EQUIPPED", "#0f0");
-            } else {
-                showMsg("NOT ENOUGH GOLD", "#f00");
-            }
+                saveProfile();
+                document.getElementById('shop-wallet').innerText = `CREDITS: ${globalProfile.credits} G`;
+                triggerPopup("SYSTEM UPDATED", "#0f0");
+            } else triggerPopup("CREDITS INSUFFICIENT", "#f00");
         }
 
-        function setSkin(c, isMaster) {
-            userData.skin = c;
-            userData.masterActive = isMaster;
-            save();
-            showMsg(isMaster ? "MASTER OVERDRIVE" : "SKIN CHANGED", c === 'rainbow' ? '#ff6600' : c);
+        function applySkin(col, isMaster) {
+            globalProfile.activeSkin = col;
+            globalProfile.masterActive = isMaster;
+            saveProfile();
+            triggerPopup(isMaster ? "LEGENDARY MODE" : "SKIN APPLIED", "#fff");
         }
 
-        function startGame(id) {
-            currentMode = { ...STAGES[id], id: id };
+        // ---------------------------------------------------------
+        // ゲームエンジンのコア
+        // ---------------------------------------------------------
+        function beginMission() {
+            if(!currentTargetId) return;
+            missionSetting = { ...DATABASE[currentTargetId], id: currentTargetId };
             document.getElementById('overlay').style.display = 'none';
-            gameActive = true; score = 0; hp = 100; phase = 1; burstGauge = 0;
-            enemies = []; bullets = []; eBullets = []; particles = [];
-            showMsg("MISSION LAUNCHED", "#fff");
-            loop();
+            isRunning = true;
+            score = 0; armor = 100; frameCount = 0; currentPhase = 1; burstEnergy = 0;
+            activeBullets = []; enemyBullets = []; activeEnemies = []; effectParticles = [];
+            triggerPopup("MISSION START", "#fff");
+            requestAnimationFrame(mainLoop);
         }
 
-        function createExplosion(x, y, color) {
-            for(let i=0; i<15; i++) {
-                particles.push({
-                    x: x, y: y,
-                    vx: (Math.random()-0.5)*15,
-                    vy: (Math.random()-0.5)*15,
-                    life: 30,
-                    color: color
+        function triggerPopup(txt, col) {
+            const p = document.getElementById('popup');
+            p.innerText = txt; p.style.color = col; p.style.opacity = 1;
+            setTimeout(() => p.style.opacity = 0, 1800);
+        }
+
+        function spawnExplosion(x, y, col, size = 1) {
+            for(let i=0; i<20 * size; i++) {
+                effectParticles.push({
+                    x, y,
+                    vx: (Math.random()-0.5) * 15 * size,
+                    vy: (Math.random()-0.5) * 15 * size,
+                    life: 40,
+                    color: col
                 });
             }
         }
 
-        function update() {
-            frame++;
-            if(bombActive > 0) bombActive--;
+        function mainLoop() {
+            if(!isRunning) return;
+            updateLogic();
+            drawFrame();
+            requestAnimationFrame(mainLoop);
+        }
 
-            // フェーズ・ボス出現管理
-            if(phase === 1 && score >= 5000) { phase = 2; showMsg("PHASE 2", "#ff0"); }
-            if(phase === 2 && score >= 15000) { phase = 3; showMsg("BOSS DETECTED", "#f00"); }
+        function updateLogic() {
+            frameCount++;
+            if(bombShockwave > 0) bombShockwave--;
 
-            // ギミック（マスター時は完全無効化）
-            if(!userData.masterActive) {
-                if(currentMode.gimmick === 'vibrate' && !sessionData.items.includes('anti_vibrate')) {
-                    player.x += (Math.random()-0.5)*18;
-                    player.y += (Math.random()-0.5)*18;
+            // フェーズ遷移
+            if(currentPhase === 1 && score >= 8000) { currentPhase = 2; triggerPopup("PHASE 2: INTERCEPT", "#ff0"); }
+            if(currentPhase === 2 && score >= 20000) { currentPhase = 3; triggerPopup("WARNING: BOSS DETECTED", "#f00"); }
+
+            // ステージギミックの適用 (MASTER SKINは全て踏み倒す)
+            if(!globalProfile.masterActive) {
+                if(missionSetting.gimmick === 'vibrate' && !sessionEquip.items.includes('anti_vibrate')) {
+                    playerPos.x += (Math.random()-0.5) * 20;
+                    playerPos.y += (Math.random()-0.5) * 20;
                 }
-                if(currentMode.gimmick === 'wind') player.x += Math.sin(frame/15)*12;
-                if(currentMode.gimmick === 'gravity') player.y += 5;
-                if(currentMode.gimmick === 'poison' && frame % 60 === 0) hp -= 2;
+                if(missionSetting.gimmick === 'wind') playerPos.x += Math.sin(frameCount/10) * 15;
+                if(missionSetting.gimmick === 'gravity') playerPos.y += 6;
+                if(missionSetting.gimmick === 'poison' && frameCount % 60 === 0) armor -= 2;
             }
 
-            // 射撃（MASTER SKINは常に最強の3-WAY+高火力）
-            if(isDown && frame % 5 === 0) {
-                const weapon = userData.masterActive ? '3WAY' : sessionData.weapon;
-                const dmg = userData.masterActive ? 15 : 2;
-                
-                if(weapon === 'NORMAL') {
-                    bullets.push({ x: player.x, y: player.y-20, vx: 0, vy: -20, dmg: dmg, type: 'norm' });
-                } else if(weapon === 'LASER') {
-                    bullets.push({ x: player.x, y: player.y-20, vx: 0, vy: -35, dmg: dmg*2, type: 'laser' });
-                } else if(weapon === 'WIDE') {
-                    bullets.push({ x: player.x, y: player.y-20, vx: 0, vy: -15, dmg: dmg, type: 'wide' });
-                } else if(weapon === '3WAY') {
-                    bullets.push({ x: player.x, y: player.y-20, vx: 0, vy: -20, dmg: dmg });
-                    bullets.push({ x: player.x, y: player.y-20, vx: -6, vy: -18, dmg: dmg });
-                    bullets.push({ x: player.x, y: player.y-20, vx: 6, vy: -18, dmg: dmg });
+            // 自機射撃システム
+            if(mousePressed && frameCount % 5 === 0) {
+                const weaponType = globalProfile.masterActive ? '3WAY' : sessionEquip.weapon;
+                const damageBase = globalProfile.masterActive ? 25 : 3;
+
+                if(weaponType === 'NORMAL') {
+                    activeBullets.push({ x: playerPos.x, y: playerPos.y-30, vx: 0, vy: -25, dmg: damageBase });
+                } else if(weaponType === 'LASER') {
+                    activeBullets.push({ x: playerPos.x, y: playerPos.y-30, vx: 0, vy: -45, dmg: damageBase*3, special: 'laser' });
+                } else if(weaponType === 'WIDE') {
+                    activeBullets.push({ x: playerPos.x, y: playerPos.y-30, vx: 0, vy: -20, dmg: damageBase, special: 'wide' });
+                } else if(weaponType === '3WAY') {
+                    activeBullets.push({ x: playerPos.x, y: playerPos.y-30, vx: 0, vy: -22, dmg: damageBase });
+                    activeBullets.push({ x: playerPos.x, y: playerPos.y-30, vx: -8, vy: -20, dmg: damageBase });
+                    activeBullets.push({ x: playerPos.x, y: playerPos.y-30, vx: 8, vy: -20, dmg: damageBase });
                 }
             }
 
-            // 敵生成
-            if(!enemies.some(e => e.isBoss) && frame % 25 === 0) {
-                enemies.push({
-                    x: Math.random()*canvas.width, y: -50,
-                    hp: 20 * currentMode.diff, maxHp: 20 * currentMode.diff,
-                    size: 35, vy: 3 + currentMode.diff/3
+            // 敵生成アルゴリズム：簡略化なし、難易度係数（diff）を反映
+            if(!activeEnemies.some(e => e.isBoss) && frameCount % Math.max(5, Math.floor(30 - missionSetting.diff)) === 0) {
+                activeEnemies.push({
+                    x: Math.random() * canvas.width, y: -60,
+                    hp: 30 * missionSetting.diff,
+                    maxHp: 30 * missionSetting.diff,
+                    size: 40, vy: 3 + missionSetting.diff / 2,
+                    col: missionSetting.color
                 });
             }
-            if(phase === 3 && !enemies.some(e => e.isBoss)) {
-                enemies.push({
-                    x: canvas.width/2, y: -150,
-                    hp: currentMode.bossHp, maxHp: currentMode.bossHp,
-                    size: 150, vy: 1, isBoss: true
+            if(currentPhase === 3 && !activeEnemies.some(e => e.isBoss)) {
+                activeEnemies.push({
+                    x: canvas.width/2, y: -200,
+                    hp: missionSetting.bossHp, maxHp: missionSetting.bossHp,
+                    size: 180, vy: 0.8, isBoss: true,
+                    col: '#f00'
                 });
             }
 
-            // 当たり判定：自機弾 vs 敵
-            bullets.forEach((b, bi) => {
-                b.x += b.vx || 0; b.y += b.vy;
-                if(b.y < -100) bullets.splice(bi, 1);
+            // 衝突判定：自機弾 vs 敵
+            activeBullets.forEach((b, bi) => {
+                b.x += b.vx; b.y += b.vy;
+                if(b.y < -100) activeBullets.splice(bi, 1);
                 
-                enemies.forEach((e, ei) => {
+                activeEnemies.forEach((e, ei) => {
                     if(Math.hypot(b.x - e.x, b.y - e.y) < e.size) {
                         e.hp -= b.dmg;
-                        score += 10;
-                        if(b.type !== 'laser') bullets.splice(bi, 1);
+                        score += 15;
+                        if(b.special !== 'laser') activeBullets.splice(bi, 1);
                         if(e.hp <= 0) {
-                            createExplosion(e.x, e.y, currentMode.color);
-                            if(e.isBoss) {
-                                finish(true);
-                            } else {
-                                score += 500;
-                                userData.gold += Math.floor(20 * currentMode.diff);
-                                burstGauge += 8;
-                                if(burstGauge >= 100) {
-                                    burstGauge = 0;
-                                    userData.bombs++;
-                                    showMsg("BOMB STOCK UP", "#ff0");
-                                }
-                                enemies.splice(ei, 1);
+                            spawnExplosion(e.x, e.y, e.col, e.isBoss ? 5 : 1.5);
+                            if(e.isBoss) { terminateMission(true); }
+                            else {
+                                score += 800;
+                                globalProfile.credits += Math.floor(25 * missionSetting.diff);
+                                burstEnergy += 10;
+                                if(burstEnergy >= 100) { burstEnergy = 0; bombCount++; triggerPopup("BOMB RECHARGED", "#ff0"); }
+                                activeEnemies.splice(ei, 1);
                             }
                         }
                     }
                 });
             });
 
-            // 敵行動
-            enemies.forEach(e => {
+            // 敵弾・行動ロジック
+            activeEnemies.forEach(e => {
                 e.y += e.vy;
-                if(e.isBoss && e.y > 180) e.vy = 0;
+                if(e.isBoss && e.y > 200) e.vy = 0;
                 
-                if(bombActive <= 0 && Math.random() < 0.05 * currentMode.diff) {
+                let shootRate = 0.04 * missionSetting.diff;
+                if(Math.random() < shootRate && bombShockwave <= 0) {
                     if(e.isBoss) {
-                        // ボスのバラマキ弾
-                        eBullets.push({ x: e.x, y: e.y, vx: Math.cos(frame*0.3)*10, vy: Math.sin(frame*0.3)*10 });
+                        // ボスの全方位弾幕
+                        for(let i=0; i<8; i++) {
+                            let ang = (frameCount/10) + (Math.PI*2 / 8) * i;
+                            enemyBullets.push({ x: e.x, y: e.y, vx: Math.cos(ang)*9, vy: Math.sin(ang)*9 });
+                        }
                     } else {
-                        eBullets.push({ x: e.x, y: e.y, vx: 0, vy: 7 + currentMode.diff });
+                        enemyBullets.push({ x: e.x, y: e.y, vx: 0, vy: 8 + missionSetting.diff });
                     }
                 }
             });
 
-            // 当たり判定：敵弾 vs 自機
-            eBullets.forEach((eb, ebi) => {
-                eb.x += eb.vx || 0; eb.y += eb.vy;
-                if(eb.y > canvas.height + 50) eBullets.splice(ebi, 1);
+            // 衝突判定：敵弾 vs 自機
+            enemyBullets.forEach((eb, ebi) => {
+                eb.x += eb.vx; eb.y += eb.vy;
+                if(eb.y > canvas.height + 100) enemyBullets.splice(ebi, 1);
 
-                if(Math.hypot(eb.x - player.x, eb.y - player.y) < 15) {
-                    hp -= 15;
-                    eBullets.splice(ebi, 1);
-                    createExplosion(player.x, player.y, "#f00");
-                    if(hp <= 0) finish(false);
+                if(Math.hypot(eb.x - playerPos.x, eb.y - playerPos.y) < 15) {
+                    armor -= 18;
+                    enemyBullets.splice(ebi, 1);
+                    spawnExplosion(playerPos.x, playerPos.y, "#f00", 0.5);
+                    if(armor <= 0) terminateMission(false);
                 }
             });
 
-            particles.forEach((p, pi) => {
+            effectParticles.forEach((p, pi) => {
                 p.x += p.vx; p.y += p.vy; p.life--;
-                if(p.life <= 0) particles.splice(pi, 1);
+                if(p.life <= 0) effectParticles.splice(pi, 1);
             });
 
-            // HUD更新
-            document.getElementById('hp-fill').style.width = Math.max(0, hp) + "%";
-            document.getElementById('gauge-fill').style.width = burstGauge + "%";
-            document.getElementById('score-val').innerText = `SCORE: ${score.toString().padStart(6, '0')}`;
-            document.getElementById('bomb-stock').innerText = `BOMBS: ${"★".repeat(userData.bombs)}`;
-            document.getElementById('gold-val').innerText = `GOLD: ${userData.gold}`;
+            // HUD同期
+            document.getElementById('hp-bar').style.width = Math.max(0, armor) + "%";
+            document.getElementById('burst-bar').style.width = burstEnergy + "%";
+            document.getElementById('score-container').innerText = "SCORE: " + score.toString().padStart(6, '0');
+            document.getElementById('bomb-display').innerText = "BOMBS: " + "✪".repeat(bombCount);
+            document.getElementById('gold-count').innerText = `CREDITS: ${globalProfile.credits} G`;
         }
 
-        function draw() {
-            ctx.fillStyle = "rgba(0, 10, 25, 0.4)";
-            ctx.fillRect(0,0,canvas.width, canvas.height);
+        function drawFrame() {
+            // 背景（残像エフェクト）
+            ctx.fillStyle = "rgba(0, 5, 15, 0.35)";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            if(bombActive > 0) {
-                ctx.fillStyle = `rgba(255, 255, 255, ${bombActive/60})`;
-                ctx.fillRect(0,0,canvas.width, canvas.height);
+            if(bombShockwave > 0) {
+                ctx.fillStyle = `rgba(255, 255, 255, ${bombShockwave/60})`;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
             }
 
             // 霧演出
-            if(currentMode.gimmick === 'fog' && !sessionData.items.includes('anti_fog') && !userData.masterActive) {
-                ctx.fillStyle = "rgba(200, 200, 200, 0.8)";
-                if(frame % 20 < 10) ctx.fillRect(0,0,canvas.width, canvas.height);
+            if(missionSetting.gimmick === 'fog' && !sessionEquip.items.includes('anti_fog') && !globalProfile.masterActive) {
+                ctx.fillStyle = "rgba(255, 255, 255, 0.7)";
+                if(frameCount % 16 < 8) ctx.fillRect(0, 0, canvas.width, canvas.height);
             }
 
-            // 自機描画
-            let pColor = userData.skin === 'rainbow' ? `hsl(${frame*5 % 360}, 100%, 50%)` : userData.skin;
-            ctx.shadowBlur = 15; ctx.shadowColor = pColor;
-            ctx.fillStyle = pColor;
+            // 自機描画：一切の簡略化なしの造形
+            let shipCol = globalProfile.activeSkin === 'rainbow' ? `hsl(${(frameCount*10)%360}, 100%, 50%)` : globalProfile.activeSkin;
+            ctx.shadowBlur = 20; ctx.shadowColor = shipCol;
+            ctx.fillStyle = shipCol;
             ctx.beginPath();
-            ctx.moveTo(player.x, player.y - 25);
-            ctx.lineTo(player.x + 20, player.y + 18);
-            ctx.lineTo(player.x - 20, player.y + 18);
+            ctx.moveTo(playerPos.x, playerPos.y - 35);
+            ctx.lineTo(playerPos.x + 25, playerPos.y + 20);
+            ctx.lineTo(playerPos.x + 10, playerPos.y + 10);
+            ctx.lineTo(playerPos.x - 10, playerPos.y + 10);
+            ctx.lineTo(playerPos.x - 25, playerPos.y + 20);
             ctx.closePath();
             ctx.fill();
             ctx.shadowBlur = 0;
 
-            // 敵
-            enemies.forEach(e => {
-                ctx.strokeStyle = e.isBoss ? "#f00" : currentMode.color;
-                ctx.lineWidth = e.isBoss ? 8 : 4;
+            // 敵機
+            activeEnemies.forEach(e => {
+                ctx.strokeStyle = e.isBoss ? (frameCount % 10 < 5 ? "#fff" : "#f00") : missionSetting.color;
+                ctx.lineWidth = e.isBoss ? 10 : 5;
                 ctx.strokeRect(e.x - e.size/2, e.y - e.size/2, e.size, e.size);
                 if(e.isBoss) {
-                    ctx.fillStyle = "#200"; ctx.fillRect(e.x-100, e.y-120, 200, 15);
-                    ctx.fillStyle = "#f00"; ctx.fillRect(e.x-100, e.y-120, 200 * (e.hp/e.maxHp), 15);
+                    ctx.fillStyle = "#300"; ctx.fillRect(e.x - 100, e.y - 140, 200, 20);
+                    ctx.fillStyle = "#f00"; ctx.fillRect(e.x - 100, e.y - 140, 200 * (e.hp/e.maxHp), 20);
                 }
             });
 
-            // 弾・エフェクト
+            // 弾道エフェクト
             ctx.fillStyle = "#0ff";
-            bullets.forEach(b => {
-                let w = b.type === 'wide' ? 40 : 6;
-                ctx.fillRect(b.x - w/2, b.y, w, 25);
+            activeBullets.forEach(b => {
+                let w = b.special === 'wide' ? 60 : 8;
+                let h = b.special === 'laser' ? 50 : 25;
+                ctx.fillRect(b.x - w/2, b.y, w, h);
             });
 
-            ctx.fillStyle = "#ff00ff";
-            eBullets.forEach(eb => {
-                ctx.beginPath();
-                ctx.arc(eb.x, eb.y, 6, 0, Math.PI*2);
-                ctx.fill();
+            ctx.fillStyle = "#f0f";
+            enemyBullets.forEach(eb => {
+                ctx.beginPath(); ctx.arc(eb.x, eb.y, 8, 0, Math.PI*2); ctx.fill();
             });
 
-            particles.forEach(p => {
+            // パーティクル
+            effectParticles.forEach(p => {
                 ctx.fillStyle = p.color;
-                ctx.fillRect(p.x, p.y, 3, 3);
+                ctx.fillRect(p.x, p.y, 4, 4);
             });
         }
 
-        function finish(clear) {
-            gameActive = false;
-            if(clear) {
-                if(!userData.cleared.includes(currentMode.id)) userData.cleared.push(currentMode.id);
-                userData.gold += 5000;
-                save();
-                alert("MISSION SUCCESS!\n報酬として5000ゴールドを獲得しました。");
-                location.reload();
+        function terminateMission(success) {
+            isRunning = false;
+            if(success) {
+                if(!globalProfile.clearedStages.includes(missionSetting.id)) globalProfile.clearedStages.push(missionSetting.id);
+                globalProfile.credits += 10000;
+                saveProfile();
+                alert("MISSION SUCCESS!!\n獲得報酬：10000 G");
             } else {
-                alert("機体が大破しました... MISSION FAILED");
-                location.reload();
+                alert("MISSION FAILED...");
             }
+            location.reload();
         }
 
-        function loop() {
-            if(!gameActive) return;
-            update();
-            draw();
-            requestAnimationFrame(loop);
-        }
-
-        function showMsg(t, c) {
-            const m = document.getElementById('msg');
-            m.innerText = t; m.style.color = c; m.style.opacity = 1;
-            setTimeout(() => m.style.opacity = 0, 2000);
-        }
-
-        function useBomb() {
-            if(userData.bombs > 0 && bombActive <= 0) {
-                userData.bombs--;
-                bombActive = 60;
-                eBullets = [];
-                enemies.forEach(e => {
-                    e.hp -= 800 * (userData.masterActive ? 5 : 1);
-                    createExplosion(e.x, e.y, "#fff");
+        function triggerBomb() {
+            if(bombCount > 0 && bombShockwave <= 0) {
+                bombCount--;
+                bombShockwave = 60;
+                enemyBullets = [];
+                activeEnemies.forEach(e => {
+                    e.hp -= 1000 * (globalProfile.masterActive ? 10 : 1);
+                    spawnExplosion(e.x, e.y, "#fff", 2);
                 });
-                showMsg("MAXIMUM BURST", "#00ffff");
+                triggerPopup("MAXIMUM BURST", "#0ff");
             }
         }
 
-        // 入力イベント
-        window.onmousedown = e => { if(e.button === 0) isDown = true; if(e.button === 2) useBomb(); };
-        window.onmouseup = () => isDown = false;
-        window.onmousemove = e => {
-            if(currentMode && currentMode.gimmick === 'reverse' && !userData.masterActive) {
-                player.x = canvas.width - e.clientX;
-                player.y = canvas.height - e.clientY;
-            } else {
-                player.x = e.clientX;
-                player.y = e.clientY;
-            }
-        };
-        window.onkeydown = e => { if(e.code === 'Space') useBomb(); };
+        // イベントリスナー
+        window.addEventListener('mousedown', e => { if(e.button === 0) mousePressed = true; if(e.button === 2) triggerBomb(); });
+        window.addEventListener('mouseup', () => mousePressed = false);
+        window.addEventListener('mousemove', e => {
+            if(missionSetting && missionSetting.gimmick === 'reverse' && !globalProfile.masterActive) {
+                playerPos.x = canvas.width - e.clientX; playerPos.y = canvas.height - e.clientY;
+            } else { playerPos.x = e.clientX; playerPos.y = e.clientY; }
+        });
+        window.addEventListener('keydown', e => { if(e.code === 'Space') triggerBomb(); });
 
-        // 初期化
-        renderStages();
-        document.getElementById('gold-val').innerText = `GOLD: ${userData.gold}`;
-
+        // 初期実行
+        drawStageGrid();
+        document.getElementById('gold-count').innerText = `CREDITS: ${globalProfile.credits} G`;
     </script>
 </body>
 </html>
