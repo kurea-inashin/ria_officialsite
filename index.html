@@ -2,103 +2,149 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Minami Project 2026: The 15 Stages</title>
+    <title>Minami Project 2026: Grand Stage Edition</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+JP:wght@700;900&display=swap');
         
         body { margin: 0; background: #000; color: #fff; font-family: 'Press Start 2P', cursive; overflow: hidden; user-select: none; }
-        canvas { display: block; }
+        canvas { display: block; filter: drop-shadow(0 0 5px rgba(0,255,255,0.3)); }
 
-        /* HUD */
-        #hud { position: absolute; top: 20px; left: 20px; z-index: 10; display: none; pointer-events: none; }
-        #score-val { font-size: 20px; text-shadow: 0 0 10px #00ffff; margin-bottom: 10px; }
-        .bar-label { font-size: 8px; margin-top: 8px; color: #aaa; }
-        .bar-container { width: 200px; height: 12px; background: rgba(255,255,255,0.1); border: 2px solid #fff; border-radius: 6px; overflow: hidden; }
-        #hp-fill { height: 100%; background: #ff0055; width: 100%; transition: width 0.3s; }
-        #gauge-fill { height: 100%; background: #00ccff; width: 0%; }
-        #bomb-stock { color: #ffff00; font-size: 12px; margin-top: 5px; }
-        #gold-val { color:#ffd700; font-size:12px; margin-top:5px; }
-
-        /* Overlay System */
-        #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20; }
+        /* --- UI LAYER --- */
+        .ui-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
         
-        #main-nav { display: flex; gap: 20px; margin-top: 40px; }
-        .menu-card { width: 180px; height: 180px; border: 3px solid #fff; background: rgba(255,255,255,0.05); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; }
-        .menu-card:hover { background: #fff; color: #000; transform: translateY(-5px); }
-        .menu-card span { font-size: 10px; text-align: center; margin-top: 10px; }
+        /* HUD */
+        #hud { padding: 25px; display: none; }
+        #score-display { font-size: 24px; color: #0ff; text-shadow: 0 0 10px #0ff; margin-bottom: 15px; }
+        .bar-wrap { width: 220px; height: 14px; background: rgba(255,255,255,0.1); border: 2px solid #fff; margin: 8px 0; border-radius: 4px; overflow: hidden; }
+        #hp-bar { height: 100%; background: linear-gradient(90deg, #ff0055, #ff5588); width: 100%; transition: 0.2s; }
+        #bomb-bar { height: 100%; background: linear-gradient(90deg, #00ccff, #88ffff); width: 0%; }
+        .hud-info { font-size: 10px; color: #ffd700; margin-top: 5px; }
 
-        .panel { display: none; flex-direction: column; align-items: center; width: 90%; max-height: 85vh; background: #000; border: 2px solid #fff; padding: 20px; overflow-y: auto; }
+        /* OVERLAY SYSTEM */
+        #overlay { position: absolute; inset: 0; background: radial-gradient(circle, #001 0%, #000 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; pointer-events: auto; }
+        
+        /* MENU CARDS (横並び) */
+        #main-nav { display: flex; gap: 25px; margin-top: 50px; }
+        .menu-card { 
+            width: 200px; height: 260px; border: 4px solid #fff; background: rgba(255,255,255,0.05);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            cursor: pointer; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .menu-card:hover { background: #fff; color: #000; transform: translateY(-15px) scale(1.05); box-shadow: 0 0 50px #fff; }
+        .menu-card .icon { font-size: 50px; margin-bottom: 30px; }
+        .menu-card span { font-size: 12px; text-align: center; line-height: 1.5; }
+
+        /* PANELS */
+        .panel { display: none; flex-direction: column; align-items: center; width: 85%; height: 80vh; background: rgba(0,0,0,0.95); border: 3px solid #fff; padding: 30px; overflow-y: auto; }
         .active { display: flex; }
         
-        .nav-btn { padding: 12px 24px; border: 2px solid #fff; background: none; color: #fff; cursor: pointer; font-family: 'Press Start 2P'; font-size: 10px; margin: 10px; }
-        .nav-btn:hover { background: #fff; color: #000; }
+        /* STAGE GRID (15 Stages) */
+        .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; width: 100%; margin: 20px 0; }
+        .stage-item { 
+            border: 2px solid #444; padding: 20px 10px; text-align: center; font-size: 9px; cursor: pointer; 
+            position: relative; transition: 0.2s; 
+        }
+        .stage-item:hover { border-color: #fff; background: rgba(255,255,255,0.1); }
+        .stage-item.locked { opacity: 0.3; cursor: not-allowed; border-style: dashed; }
+        .stage-item.cleared::after { content: 'COMPLETED'; position: absolute; bottom: 2px; left: 0; width: 100%; font-size: 7px; color: #0f0; }
 
-        /* Grid System */
-        .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; width: 100%; margin-top: 20px; }
-        .item-box { border: 2px solid #444; padding: 15px; text-align: center; font-size: 8px; cursor: pointer; position: relative; }
-        .item-box:hover { border-color: #fff; background: rgba(255,255,255,0.1); }
-        .item-box.cleared::after { content: 'OK'; position: absolute; top: 2px; right: 2px; color: #0f0; font-size: 7px; }
+        /* BRIEFING MODAL */
+        #briefing { 
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 500px; background: #000; border: 4px solid #fff; padding: 30px;
+            display: none; flex-direction: column; z-index: 200; pointer-events: auto;
+        }
 
-        #status-msg { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 32px; opacity: 0; pointer-events: none; z-index: 100; transition: 0.3s; text-align: center; }
-        #copyright { position: absolute; bottom: 20px; font-size: 9px; color: #444; }
+        /* TEXT STYLES */
+        .glitch-text { text-shadow: 2px 0 #ff0055, -2px 0 #00ccff; animation: glitch 2s infinite; }
+        @keyframes glitch { 0% { opacity: 1; } 50% { opacity: 0.8; } 100% { opacity: 1; } }
+
+        /* WARNING MESSAGES */
+        #msg-layer { position: absolute; top: 40%; width: 100%; text-align: center; pointer-events: none; z-index: 15; }
+        .warning-text { font-size: 40px; color: #ff0000; text-shadow: 0 0 20px #f00; display: none; }
+
+        button { 
+            padding: 15px 30px; border: 2px solid #fff; background: none; color: #fff; 
+            font-family: 'Press Start 2P'; font-size: 10px; cursor: pointer; margin: 10px;
+        }
+        button:hover { background: #fff; color: #000; }
     </style>
 </head>
 <body>
 
-    <div id="status-msg">MISSION START</div>
-    <div id="hud">
-        <div id="score-val">SCORE: 000000</div>
-        <div class="bar-label">SYSTEM HP</div>
-        <div class="bar-container"><div id="hp-fill"></div></div>
-        <div class="bar-label">BOMB CHARGE</div>
-        <div class="bar-container"><div id="gauge-fill"></div></div>
-        <div id="bomb-stock">BOMBS: </div>
-        <div id="gold-val">GOLD: 0</div>
+    <div class="ui-layer">
+        <div id="hud">
+            <div id="score-display">SCORE: 000000</div>
+            <div style="font-size:8px;">ARMOR INTEGRITY</div>
+            <div class="bar-wrap"><div id="hp-bar"></div></div>
+            <div style="font-size:8px;">BOMB CHARGE</div>
+            <div class="bar-wrap"><div id="bomb-bar"></div></div>
+            <div id="bomb-count" class="hud-info">BOMBS: </div>
+            <div id="gold-count" class="hud-info" style="color:#ffd700;">GOLD: 0</div>
+        </div>
+    </div>
+
+    <div id="msg-layer">
+        <div id="msg-main" class="warning-text">WARNING: BOSS</div>
     </div>
 
     <div id="overlay">
-        <h1 style="font-size:24px; letter-spacing:4px;">MINAMI PROJECT 2026</h1>
+        <h1 class="glitch-text" style="font-size:36px; letter-spacing:10px;">MINAMI PROJECT</h1>
         
         <div id="main-nav">
             <div class="menu-card" onclick="openPanel('stage-select')">
-                <span>SELECT<br>MISSION</span>
+                <div class="icon">🛰️</div>
+                <span>SORTIE<br>MISSION</span>
             </div>
             <div class="menu-card" onclick="openPanel('shop')">
-                <span>TECH<br>SHOP</span>
+                <div class="icon">🔧</div>
+                <span>UPGRADE<br>SHOP</span>
             </div>
-            <div class="menu-card" onclick="openPanel('howtoplay')">
-                <span>HOW TO<br>PLAY</span>
+            <div class="menu-card" onclick="openPanel('manual')">
+                <div class="icon">📖</div>
+                <span>FIELD<br>MANUAL</span>
             </div>
         </div>
 
         <div id="stage-select" class="panel">
-            <h2 style="font-size:14px;">STRATEGIC MAP</h2>
+            <h2>STRATEGIC SECTOR MAP</h2>
             <div class="grid" id="stage-grid"></div>
-            <button class="nav-btn" onclick="backToMain()">BACK</button>
+            <button onclick="closePanels()">RETURN TO BRIDGE</button>
         </div>
 
         <div id="shop" class="panel">
-            <h2 id="shop-gold-display" style="color:#ffd700; font-size:14px;">GOLD: 0</h2>
-            <div style="display:flex; gap:10px; margin-bottom:20px;">
-                <button class="nav-btn" onclick="switchShop('skins')">WEAPONS</button>
-                <button class="nav-btn" onclick="switchShop('items')">REPAIRS</button>
+            <h2 id="shop-gold">GOLD: 0</h2>
+            <div style="margin: 20px 0;">
+                <button onclick="renderShop('skins')">WEAPON SYSTEMS</button>
+                <button onclick="renderShop('items')">MAINTENANCE</button>
             </div>
             <div class="grid" id="shop-grid"></div>
-            <button class="nav-btn" onclick="backToMain()">BACK</button>
+            <button onclick="closePanels()">BACK</button>
         </div>
 
-        <div id="howtoplay" class="panel">
-            <h2 style="font-size:14px;">HOW TO PLAY</h2>
-            <div style="font-family:'Noto Sans JP'; line-height:2; font-size:14px; text-align:left; width:85%; padding:20px; color:#ccc;">
-                ・マウス移動：自機の操作<br>
-                ・クリック：ショットの発射<br>
-                ・自動ボム：被弾時、ストックがあれば自動で発動し無敵化<br>
-                ・隠し解禁：全9路線クリアで「F15ステージ」及び「中央線(超鬼むず)」が解禁されます
+        <div id="manual" class="panel">
+            <h2>FIELD MANUAL</h2>
+            <div style="font-family:'Noto Sans JP'; line-height:2.5; font-size:15px; text-align:left; color:#ccc; width:80%;">
+                ・【移動】マウスまたはタッチ操作で追従<br>
+                ・【攻撃】クリックまたは画面押しっぱなしで連射<br>
+                ・【ボム】ダメージを受けた際、自動的に発動。敵の弾を消去する<br>
+                ・【解禁】1〜9番目の鉄道セクターを全制覇すると、F15部隊および中央線エリアが解禁される
             </div>
-            <button class="nav-btn" onclick="backToMain()">BACK</button>
+            <button onclick="closePanels()">OK</button>
         </div>
-        
-        <div id="copyright">© 2026 MINAMI PROJECT | ALL RIGHTS RESERVED</div>
+    </div>
+
+    <div id="briefing">
+        <h2 id="b-title" style="color:#0ff; font-size:14px;">MISSION BRIEFING</h2>
+        <hr style="border-color:#333; margin:15px 0;">
+        <div id="b-desc" style="font-family:'Noto Sans JP'; font-size:14px; line-height:1.8;"></div>
+        <div style="margin-top:20px; font-size:10px; color:#ffd700;">
+            ESTIMATED REWARD: <span id="b-reward"></span> GOLD
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-top:30px;">
+            <button onclick="document.getElementById('briefing').style.display='none'">CANCEL</button>
+            <button style="border-color:#0f0; color:#0f0;" id="b-start-btn">ENGAGE</button>
+        </div>
     </div>
 
     <canvas id="game"></canvas>
@@ -108,47 +154,49 @@
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth; canvas.height = window.innerHeight;
 
-        let gameActive = false, score = 0, hp = 100, frame = 0, burstGauge = 0, bombAnim = 0;
-        let bullets = [], eBullets = [], enemies = [], currentMode = null, isDown = false;
-        let player = { x: canvas.width/2, y: canvas.height/2, targetX: canvas.width/2, targetY: canvas.height/2 };
+        // --- GAME STATE ---
+        let gameActive = false, score = 0, hp = 100, frame = 0, charge = 0, bossTime = false;
+        let bullets = [], eBullets = [], enemies = [], particles = [];
+        let player = { x: canvas.width/2, y: canvas.height/2, tx: canvas.width/2, ty: canvas.height/2 };
+        let isDown = false, currentStg = null;
 
-        const SAVE_KEY = 'minami_2026_perfect_v1';
-        let userData = JSON.parse(localStorage.getItem(SAVE_KEY)) || {
-            gold: 0, bombs: 2, cleared: [], skin: '#fff', licenses: ['#fff']
-        };
-
+        // --- STAGES DATA (15 STAGES) ---
         const STAGES = {
-            'SB': { name: 'ST=SB', color: '#ccaa00', diff: 1, reward: 2000, bossHp: 500, gim: 'vibrate', secret: false },
-            'KT': { name: 'ST=KT', color: '#0088cc', diff: 1.2, reward: 2500, bossHp: 700, gim: 'water', secret: false },
-            'SK': { name: 'ST=SK', color: '#008844', diff: 1.5, reward: 3000, bossHp: 900, gim: 'fog', secret: false },
-            'KY': { name: 'ST=KY', color: '#aa0022', diff: 2, reward: 4000, bossHp: 1200, gim: 'wind', secret: false },
-            'PK': { name: 'ST=PK', color: '#cc5588', diff: 2.2, reward: 5000, bossHp: 1500, gim: 'reverse', secret: false },
-            'JB': { name: 'ST=JB', color: '#006666', diff: 2.5, reward: 6000, bossHp: 1800, gim: 'jamming', secret: false },
-            'S1': { name: 'ST=S1', color: '#6600cc', diff: 3, reward: 7000, bossHp: 2200, gim: 'warp', secret: false },
-            'S2': { name: 'ST=S2', color: '#cc00cc', diff: 3.5, reward: 8500, bossHp: 2600, gim: 'poison', secret: false },
-            'S3': { name: 'ST=S3', color: '#00cccc', diff: 4, reward: 10000, bossHp: 3200, gim: 'gravity', secret: false },
-            // 隠しステージ (9個クリアで解禁)
-            'F1': { name: 'F15-A', color: '#778899', diff: 5, reward: 12000, bossHp: 4000, gim: 'highspeed', secret: true },
-            'F2': { name: 'F15-B', color: '#778899', diff: 6, reward: 15000, bossHp: 5000, gim: 'highspeed', secret: true },
-            'F3': { name: 'F15-C', color: '#778899', diff: 7, reward: 18000, bossHp: 6500, gim: 'highspeed', secret: true },
-            'F4': { name: 'F15-D', color: '#778899', diff: 8, reward: 22000, bossHp: 8000, gim: 'highspeed', secret: true },
-            'F5': { name: 'F15-E', color: '#b0c4de', diff: 10, reward: 30000, bossHp: 10000, gim: 'highspeed', secret: true },
-            'CO': { name: 'ST=CO', color: '#ff6600', diff: 30, reward: 150000, bossHp: 50000, gim: 'ultimate', secret: true }
+            'SB': { id: 'SB', n: 'ST=SB', c: '#ccaa00', d: 1.0, r: 2000, bh: 600, g: 'VIBRATION', s: false, desc: '総武線セクター。激しい振動が予測されます。' },
+            'KT': { id: 'KT', n: 'ST=KT', c: '#0088cc', d: 1.2, r: 2500, bh: 800, g: 'WATER', s: false, desc: '京浜東北線セクター。水圧による移動制限に注意せよ。' },
+            'SK': { id: 'SK', n: 'ST=SK', c: '#008844', d: 1.5, r: 3000, bh: 1000, g: 'FOG', s: false, desc: '埼京線セクター。深い霧が視界を遮ります。' },
+            'KY': { id: 'KY', n: 'ST=KY', c: '#aa0022', d: 2.0, r: 4000, bh: 1500, g: 'WIND', s: false, desc: '京葉線セクター。海沿いの強風により左方向へ流されます。' },
+            'PK': { id: 'PK', n: 'ST=PK', c: '#cc5588', d: 2.2, r: 5000, bh: 2000, g: 'REVERSE', s: false, desc: '中央総武各停セクター。操作回路の反転が確認されています。' },
+            'JB': { id: 'JB', n: 'ST=JB', c: '#006666', d: 2.5, r: 6000, bh: 2500, g: 'JAMMING', s: false, desc: '常磐線セクター。レーダーにジャミングが発生します。' },
+            'S1': { id: 'S1', n: 'ST=S1', c: '#6600cc', d: 3.0, r: 7500, bh: 3000, g: 'WARP', s: false, desc: '地下鉄セクター1。時空の歪みによるワープ現象に警戒。' },
+            'S2': { id: 'S2', n: 'ST=S2', c: '#cc00cc', d: 3.5, r: 9000, bh: 4000, g: 'POISON', s: false, desc: '地下鉄セクター2。腐食性ガスによりHPが徐々に減少します。' },
+            'S3': { id: 'S3', n: 'ST=S3', c: '#00cccc', d: 4.0, r: 11000, bh: 5000, g: 'GRAVITY', s: false, desc: '地下鉄セクター3。超重力エリア。回避が困難です。' },
+            // Secret
+            'F1': { id: 'F1', n: 'F15-ALPHA', c: '#778899', d: 6.0, r: 15000, bh: 8000, g: 'SPEED', s: true, desc: '航空自衛隊F15部隊との高速ドッグファイト。' },
+            'F2': { id: 'F2', n: 'F15-BETA', c: '#778899', d: 7.0, r: 18000, bh: 10000, g: 'SPEED', s: true, desc: '強化された高速戦闘機群を撃破せよ。' },
+            'F3': { id: 'F3', n: 'F15-GAMMA', c: '#778899', d: 8.5, r: 22000, bh: 12000, g: 'SPEED', s: true, desc: 'エースパイロットの弾幕を掻い潜れ。' },
+            'F4': { id: 'F4', n: 'F15-DELTA', c: '#778899', d: 10.0, r: 25000, bh: 15000, g: 'SPEED', s: true, desc: '最終防衛ライン。敵の速度は限界に達する。' },
+            'F5': { id: 'F5', n: 'F15-EPSILON', c: '#b0c4de', d: 12.0, r: 35000, bh: 20000, g: 'SPEED', s: true, desc: 'F15部隊隊長機。最速の絶望を打ち破れ。' },
+            'CO': { id: 'CO', n: 'ST=CO', c: '#ff6600', d: 25.0, r: 200000, bh: 60000, g: 'ULTIMATE', s: true, desc: '中央線セクター：超鬼むず。オレンジの地獄。生存確率はゼロ。' }
         };
 
         const WEAPONS = [
             { id: '#fff', name: 'WHITE', cost: 0, p: 2 },
-            { id: '#0f0', name: 'GREEN', cost: 3000, p: 2 },
-            { id: '#0ff', name: 'BLUE', cost: 5000, p: 2.5 },
-            { id: '#ff0', name: 'YELLOW', cost: 7000, p: 1.8 },
-            { id: '#aa0022', name: 'RED', cost: 10000, p: 8.0 }
+            { id: '#0f0', name: 'GREEN', cost: 5000, p: 2 },
+            { id: '#0ff', name: 'BLUE', cost: 10000, p: 2.5 },
+            { id: '#ff0', name: 'YELLOW', cost: 15000, p: 1.8 },
+            { id: '#aa0022', name: 'RED', cost: 25000, p: 8.5 }
         ];
 
-        function save() { localStorage.setItem(SAVE_KEY, JSON.stringify(userData)); refreshHUD(); }
-        function refreshHUD() {
-            document.getElementById('gold-val').innerText = `GOLD: ${userData.gold}`;
-            document.getElementById('bomb-stock').innerText = `BOMBS: ${"★".repeat(userData.bombs)}`;
-            document.getElementById('shop-gold-display').innerText = `GOLD: ${userData.gold}`;
+        // --- SYSTEM ---
+        let userData = JSON.parse(localStorage.getItem('minami_2026_grand')) || {
+            gold: 0, bombs: 2, cleared: [], skin: '#fff', licenses: ['#fff']
+        };
+
+        function save() { 
+            localStorage.setItem('minami_2026_grand', JSON.stringify(userData)); 
+            document.getElementById('gold-count').innerText = `GOLD: ${userData.gold}`;
+            document.getElementById('bomb-count').innerText = `BOMBS: ${"★".repeat(userData.bombs)}`;
         }
 
         function openPanel(id) {
@@ -156,50 +204,62 @@
             document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
             document.getElementById(id).classList.add('active');
             if(id === 'stage-select') renderStages();
-            if(id === 'shop') switchShop('skins');
+            if(id === 'shop') renderShop('skins');
         }
 
-        function backToMain() {
+        function closePanels() {
             document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
             document.getElementById('main-nav').style.display = 'flex';
         }
 
         function renderStages() {
             const grid = document.getElementById('stage-grid'); grid.innerHTML = '';
-            const normalClearedCount = Object.keys(STAGES).filter(id => !STAGES[id].secret && userData.cleared.includes(id)).length;
-            const unlockSecret = normalClearedCount >= 9;
+            const clearedN = Object.keys(STAGES).filter(k => !STAGES[k].s && userData.cleared.includes(k)).length;
+            const unlockedSecret = clearedN >= 9;
 
-            Object.keys(STAGES).forEach((id, index) => {
+            Object.keys(STAGES).forEach((id, i) => {
                 const s = STAGES[id];
-                if(s.secret && !unlockSecret) return;
-
                 const box = document.createElement('div');
-                box.className = `item-box ${userData.cleared.includes(id) ? 'cleared' : ''}`;
-                box.style.color = s.color; box.style.borderColor = s.color;
-                box.innerHTML = `${index + 1}<br>${s.name}`;
-                box.onclick = () => startGame(id);
+                const isLocked = s.s && !unlockedSecret;
+                box.className = `stage-item ${isLocked ? 'locked' : ''} ${userData.cleared.includes(id) ? 'cleared' : ''}`;
+                box.style.color = isLocked ? '#222' : s.c;
+                box.style.borderColor = isLocked ? '#222' : s.c;
+                box.innerHTML = `${i+1}<br>${s.n}`;
+                if(!isLocked) box.onclick = () => showBriefing(id);
                 grid.appendChild(box);
             });
         }
 
-        function switchShop(type) {
+        function showBriefing(id) {
+            const s = STAGES[id];
+            currentStg = s;
+            document.getElementById('b-title').innerText = `MISSION: ${s.n}`;
+            document.getElementById('b-title').style.color = s.c;
+            document.getElementById('b-desc').innerText = s.desc;
+            document.getElementById('b-reward').innerText = s.r;
+            document.getElementById('briefing').style.display = 'flex';
+            document.getElementById('b-start-btn').onclick = () => startGame(id);
+        }
+
+        function renderShop(type) {
             const grid = document.getElementById('shop-grid'); grid.innerHTML = '';
+            document.getElementById('shop-gold').innerText = `GOLD: ${userData.gold}`;
             if(type === 'skins') {
                 WEAPONS.forEach(w => {
                     const owned = userData.licenses.includes(w.id);
                     const box = document.createElement('div');
-                    box.className = 'item-box'; box.style.color = w.id;
-                    box.innerHTML = `${w.name}<br>${owned ? 'OWNED' : w.cost+'G'}`;
+                    box.className = 'stage-item'; box.style.color = w.id;
+                    box.innerHTML = `${w.name}<br>${owned ? 'EQUIP' : w.cost+'G'}`;
                     box.onclick = () => {
-                        if(!owned && userData.gold >= w.cost) { userData.gold -= w.cost; userData.licenses.push(w.id); save(); switchShop('skins'); }
-                        else if(owned) { userData.skin = w.id; save(); alert("EQUIPPED"); }
+                        if(!owned && userData.gold >= w.cost) { userData.gold -= w.cost; userData.licenses.push(w.id); save(); renderShop('skins'); }
+                        else if(owned) { userData.skin = w.id; save(); alert("SYSTEM EQUIPPED"); }
                     };
                     grid.appendChild(box);
                 });
             } else {
-                const items = [{id:'hp',n:'REPAIR',c:1000},{id:'b',n:'BOMB+1',c:2000}];
+                const items = [{id:'hp',n:'FIX ARMOR',c:1000},{id:'b',n:'ADD BOMB',c:2500}];
                 items.forEach(i => {
-                    const box = document.createElement('div'); box.className = 'item-box';
+                    const box = document.createElement('div'); box.className = 'stage-item';
                     box.innerHTML = `${i.n}<br>${i.c}G`;
                     box.onclick = () => {
                         if(userData.gold >= i.c) {
@@ -212,73 +272,84 @@
             }
         }
 
+        // --- GAME LOGIC ---
         function startGame(id) {
-            currentMode = { ...STAGES[id], id: id };
+            document.getElementById('briefing').style.display = 'none';
             document.getElementById('overlay').style.display = 'none';
             document.getElementById('hud').style.display = 'block';
-            const msg = document.getElementById('status-msg');
-            msg.innerText = "MISSION START"; msg.style.opacity = 1;
-            setTimeout(() => msg.style.opacity = 0, 1500);
-
-            gameActive = true; score = 0; hp = 100; burstGauge = 0; frame = 0;
-            enemies = []; bullets = []; eBullets = [];
+            
+            currentStg = STAGES[id];
+            gameActive = true; score = 0; hp = 100; frame = 0; charge = 0; bossTime = false;
+            bullets = []; eBullets = []; enemies = []; particles = [];
             player.x = canvas.width/2; player.y = canvas.height/2;
+
+            showMsg("MISSION START", 2000);
             loop();
+        }
+
+        function showMsg(txt, time) {
+            const m = document.getElementById('msg-main');
+            m.innerText = txt; m.style.display = 'block';
+            setTimeout(() => m.style.display = 'none', time);
+        }
+
+        function spawnParticle(x, y, color) {
+            for(let i=0; i<8; i++) particles.push({ x, y, vx:(Math.random()-0.5)*10, vy:(Math.random()-0.5)*10, a:1, c:color });
         }
 
         function finish(clear) {
             gameActive = false;
-            const msg = document.getElementById('status-msg');
-            msg.innerText = clear ? "MISSION CLEAR" : "MISSION FAILED";
-            msg.style.opacity = 1;
+            showMsg(clear ? "MISSION CLEAR" : "MISSION FAILED", 3000);
             setTimeout(() => {
                 if(clear) {
-                    if(!userData.cleared.includes(currentMode.id)) userData.cleared.push(currentMode.id);
-                    userData.gold += currentMode.reward;
+                    if(!userData.cleared.includes(currentStg.id)) userData.cleared.push(currentStg.id);
+                    userData.gold += currentStg.r;
                 }
                 save(); location.reload();
-            }, 2500);
+            }, 3000);
         }
 
         function update() {
-            if(!gameActive) return;
             frame++;
-            if(bombAnim > 0) bombAnim--;
+            // Move
+            let mv = 0.18;
+            if(currentStg.g === 'GRAVITY') mv = 0.04;
+            if(currentStg.g === 'SPEED') mv = 0.4;
+            let targetX = player.tx, targetY = player.ty;
+            if(currentStg.g === 'REVERSE') { targetX = canvas.width - targetX; targetY = canvas.height - targetY; }
+            player.x += (targetX - player.x) * mv;
+            player.y += (targetY - player.y) * mv;
 
-            // Gimmick Control
-            let mv = 0.2, tx = player.targetX, ty = player.targetY;
-            if(currentMode.gim === 'reverse') { tx = canvas.width - tx; ty = canvas.height - ty; }
-            if(currentMode.gim === 'gravity') mv = 0.05;
-            if(currentMode.gim === 'highspeed') mv = 0.4;
-            player.x += (tx - player.x) * mv;
-            player.y += (ty - player.y) * mv;
+            if(currentStg.g === 'WIND') player.x -= 2.5;
+            if(currentStg.g === 'VIBRATION') { player.x += (Math.random()-0.5)*15; player.y += (Math.random()-0.5)*15; }
+            if(currentStg.g === 'POISON' && frame % 60 === 0) hp -= 0.5;
 
-            if(currentMode.gim === 'wind') player.x -= 3;
-            if(currentMode.gim === 'vibrate') { player.x += (Math.random()-0.5)*15; player.y += (Math.random()-0.5)*15; }
-            if(currentMode.gim === 'poison' && frame % 60 === 0) hp -= 1;
-
-            // Player Fire
+            // Fire
             if(isDown && frame % 5 === 0) {
                 let p = WEAPONS.find(w => w.id === userData.skin).p;
-                bullets.push({ x: player.x, y: player.y-20, p: p, vy: -25 });
+                bullets.push({ x: player.x, y: player.y-20, p, vy: -25 });
             }
 
-            // Enemy Spawn
-            if(!enemies.some(e => e.isBoss) && frame % 25 === 0) 
-                enemies.push({ x: Math.random()*canvas.width, y: -50, hp: 20*currentMode.diff, size: 30, vy: 3 + currentMode.diff/2 });
+            // Enemies
+            if(!bossTime && frame % 25 === 0) 
+                enemies.push({ x: Math.random()*canvas.width, y: -50, hp: 20*currentStg.d, size: 35, vy: 3 + currentStg.d });
             
-            if(score > 15000 && !enemies.some(e => e.isBoss))
-                enemies.push({ x: canvas.width/2, y: -120, hp: currentMode.bossHp, size: 140, vy: 1, isBoss: true });
+            if(score > 20000 && !bossTime) {
+                bossTime = true;
+                showMsg("WARNING: BOSS APPROACHING", 3000);
+                enemies.push({ x: canvas.width/2, y: -150, hp: currentStg.bh, size: 150, vy: 1, isBoss: true });
+            }
 
-            // Collisions
+            // Bullet logic
             bullets.forEach((b, i) => {
                 b.y += b.vy;
                 enemies.forEach((e, ei) => {
                     if(Math.hypot(b.x-e.x, b.y-e.y) < e.size) {
                         e.hp -= b.p; bullets.splice(i, 1);
+                        spawnParticle(b.x, b.y, userData.skin);
                         if(e.hp <= 0) {
                             if(e.isBoss) finish(true);
-                            else { enemies.splice(ei, 1); score += 500; burstGauge += 10; if(burstGauge>=100){burstGauge=0;userData.bombs++;save();} }
+                            else { enemies.splice(ei, 1); score += 500; charge += 10; if(charge>=100){charge=0;userData.bombs++;save();} }
                         }
                     }
                 });
@@ -286,43 +357,62 @@
 
             enemies.forEach(e => {
                 e.y += e.vy; if(e.isBoss && e.y > 150) e.vy = 0;
-                let bSpd = currentMode.gim === 'highspeed' ? 14 : 6 + currentMode.diff;
-                if(Math.random() < 0.06 * currentMode.diff && bombAnim <= 0) eBullets.push({ x: e.x, y: e.y, vy: bSpd });
+                let bSpd = currentStg.g === 'SPEED' ? 15 : 7 + currentStg.d;
+                if(Math.random() < 0.07 * currentStg.d) eBullets.push({ x: e.x, y: e.y, vy: bSpd });
             });
 
             eBullets.forEach((eb, i) => {
                 eb.y += eb.vy;
-                if(Math.hypot(eb.x-player.x, eb.y-player.y) < 20) {
-                    if(userData.bombs > 0) { userData.bombs--; bombAnim = 60; eBullets = []; save(); }
-                    else { hp -= 10; eBullets.splice(i, 1); if(hp <= 0) finish(false); }
+                if(Math.hypot(eb.x-player.x, eb.y-player.y) < 22) {
+                    if(userData.bombs > 0) { userData.bombs--; eBullets = []; charge = 0; save(); showMsg("BOMB ACTIVATED", 500); }
+                    else { hp -= 15; eBullets.splice(i, 1); if(hp <= 0) finish(false); }
                 }
                 if(eb.y > canvas.height) eBullets.splice(i,1);
             });
 
-            document.getElementById('hp-fill').style.width = Math.max(0, hp) + "%";
-            document.getElementById('gauge-fill').style.width = burstGauge + "%";
-            document.getElementById('score-val').innerText = `SCORE: ${score.toString().padStart(6, '0')}`;
+            particles.forEach((p, i) => { p.x += p.vx; p.y += p.vy; p.a -= 0.02; if(p.a <= 0) particles.splice(i, 1); });
+
+            document.getElementById('hp-bar').style.width = hp + "%";
+            document.getElementById('bomb-bar').style.width = charge + "%";
+            document.getElementById('score-display').innerText = `SCORE: ${score.toString().padStart(6, '0')}`;
         }
 
         function draw() {
             ctx.fillStyle = "#000"; ctx.fillRect(0,0,canvas.width, canvas.height);
-            if(bombAnim > 0) { ctx.strokeStyle = "#ff0"; ctx.lineWidth = 5; ctx.beginPath(); ctx.arc(player.x, player.y, 80, 0, 7); ctx.stroke(); }
             
+            // Fog effect
+            if(currentStg.g === 'FOG') { ctx.fillStyle = "rgba(255,255,255,0.1)"; ctx.fillRect(0,0,canvas.width,canvas.height); }
+            
+            // Particles
+            particles.forEach(p => { ctx.fillStyle = `rgba(${p.c === '#fff' ? '255,255,255' : '0,255,255'},${p.a})`; ctx.fillRect(p.x, p.y, 4, 4); });
+
+            // Player
+            ctx.shadowBlur = 15; ctx.shadowColor = userData.skin;
             ctx.fillStyle = userData.skin; ctx.beginPath();
-            ctx.moveTo(player.x, player.y-25); ctx.lineTo(player.x+18, player.y+15); ctx.lineTo(player.x-18, player.y+15); ctx.fill();
-            
-            enemies.forEach(e => { ctx.strokeStyle = currentMode.color; ctx.lineWidth = 3; ctx.strokeRect(e.x-e.size/2, e.y-e.size/2, e.size, e.size); });
+            ctx.moveTo(player.x, player.y-30); ctx.lineTo(player.x+20, player.y+15); ctx.lineTo(player.x-20, player.y+15); ctx.fill();
+            ctx.shadowBlur = 0;
+
+            // Enemies
+            enemies.forEach(e => { 
+                ctx.strokeStyle = currentStg.c; ctx.lineWidth = e.isBoss ? 5 : 2;
+                ctx.strokeRect(e.x-e.size/2, e.y-e.size/2, e.size, e.size);
+                if(e.isBoss) { // Boss HP bar
+                    ctx.fillStyle = "#333"; ctx.fillRect(e.x-75, e.y-100, 150, 10);
+                    ctx.fillStyle = "#f00"; ctx.fillRect(e.x-75, e.y-100, 150 * (e.hp/currentStg.bh), 10);
+                }
+            });
+
+            // Bullets
             bullets.forEach(b => { ctx.fillStyle = userData.skin; ctx.fillRect(b.x-2, b.y, 4, 20); });
-            eBullets.forEach(eb => { ctx.fillStyle = "#f0f"; ctx.beginPath(); ctx.arc(eb.x, eb.y, 6, 0, 7); ctx.fill(); });
+            eBullets.forEach(eb => { ctx.fillStyle = "#f0f"; ctx.beginPath(); ctx.arc(eb.x, eb.y, 7, 0, 7); ctx.fill(); });
         }
 
         function loop() { if(gameActive) { update(); draw(); requestAnimationFrame(loop); } }
         
-        window.onmousedown = () => isDown = true; 
-        window.onmouseup = () => isDown = false;
-        window.onmousemove = e => { player.targetX = e.clientX; player.targetY = e.clientY; };
+        window.onmousedown = () => isDown = true; window.onmouseup = () => isDown = false;
+        window.onmousemove = e => { player.tx = e.clientX; player.ty = e.clientY; };
         
-        refreshHUD();
+        save(); // Init HUD
     </script>
 </body>
 </html>
