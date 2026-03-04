@@ -2,21 +2,18 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>MINAMI PROJECT 2026: THE ETERNAL MAGNUM - FULL SPEC</title>
+    <title>MINAMI PROJECT 2026: PRECISION EDITION</title>
     <style>
-        /* =================================================================
-           1. CORE DESIGN & VISUAL ENGINE
-           ================================================================= */
-        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+JP:wght@900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+JP:wght@700&display=swap');
         
         body, html { 
             margin: 0; padding: 0; width: 100%; height: 100%; 
-            background: #080808; color: #fff; 
+            background: #020202; color: #fff; 
             font-family: 'Press Start 2P', cursive; 
             overflow: hidden; 
         }
 
-        /* 画面中央配置・レターボックス形式 */
+        /* 画面中央配置（1200x900固定） */
         #viewport {
             position: absolute;
             top: 50%; left: 50%;
@@ -25,450 +22,291 @@
             height: 900px;
             background: #000;
             overflow: hidden;
-            box-shadow: 0 0 100px rgba(0,0,0,1), 0 0 20px rgba(0,255,255,0.3);
-            border: 4px solid #333;
+            border: 2px solid #444;
+            box-shadow: 0 0 50px rgba(0,0,0,1);
         }
 
         canvas { display: block; image-rendering: pixelated; }
 
-        /* =================================================================
-           2. HUD & INTERFACE
-           ================================================================= */
-        .hud-system {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 100;
-            padding: 40px; box-sizing: border-box;
-            display: none;
+        /* --- HUD --- */
+        .hud {
+            position: absolute; inset: 0; padding: 30px;
+            pointer-events: none; z-index: 100; display: none;
         }
+        .hud-top { display: flex; justify-content: space-between; font-size: 20px; color: #0ff; }
+        .hud-bottom { position: absolute; bottom: 30px; left: 30px; font-size: 16px; }
+        .hp-bar-bg { width: 300px; height: 12px; border: 2px solid #fff; margin-top: 10px; background: #200; }
+        #hp-fill { height: 100%; background: #f05; width: 100%; transition: 0.1s; }
 
-        .score-panel { font-size: 32px; color: #0ff; text-shadow: 0 0 15px #0ff; margin-bottom: 30px; }
-        
-        .gauge-container { margin-bottom: 20px; }
-        .gauge-label { font-size: 10px; color: #aaa; margin-bottom: 8px; letter-spacing: 2px; }
-        .gauge-bar { width: 450px; height: 20px; border: 3px solid #fff; background: rgba(0,0,0,0.8); position: relative; }
-        #hp-fill { height: 100%; background: linear-gradient(90deg, #ff0055, #ffaa00); width: 100%; transition: width 0.15s; }
-        #bomb-fill { height: 100%; background: linear-gradient(90deg, #00eeff, #ffffff); width: 0%; }
-
-        .data-panel { 
-            margin-top: 30px; 
-            display: flex; gap: 60px; 
-            font-size: 20px; color: #ffd700; 
-            text-shadow: 0 0 10px rgba(255,215,0,0.5);
-        }
-
-        /* =================================================================
-           3. MENU & COPYRIGHTS
-           ================================================================= */
-        #main-overlay {
+        /* --- MENUS --- */
+        #overlay {
             position: absolute; inset: 0;
-            background: radial-gradient(circle at center, #151515 0%, #000 100%);
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            z-index: 200;
+            background: #000; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; z-index: 200;
         }
-
-        .title-logo {
-            font-size: 54px; margin-bottom: 20px;
-            background: linear-gradient(#fff, #888);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            filter: drop-shadow(0 0 20px rgba(0,255,255,0.5));
+        .title { font-size: 48px; margin-bottom: 10px; color: #fff; text-shadow: 4px 4px #f05; }
+        .guide { font-size: 10px; color: #888; margin-bottom: 50px; line-height: 2; text-align: center; }
+        .menu-row { display: flex; gap: 40px; }
+        .card {
+            width: 240px; height: 320px; border: 5px solid #fff;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            cursor: pointer; background: #000; transition: 0.2s;
         }
+        .card:hover { background: #fff; color: #000; transform: translateY(-10px); }
+        .card b { font-size: 60px; margin-bottom: 30px; }
 
-        .subtitle { font-size: 14px; color: #f05; margin-bottom: 80px; letter-spacing: 5px; }
-
-        .menu-grid { display: flex; gap: 40px; }
-        .menu-btn {
-            width: 260px; height: 380px;
-            border: 8px solid #fff; background: #000;
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            cursor: pointer; transition: 0.4s;
-        }
-        .menu-btn:hover { background: #fff; color: #000; transform: translateY(-20px); }
-        .btn-sym { font-size: 80px; margin-bottom: 40px; font-weight: bold; border: 5px solid currentColor; padding: 15px; }
-
-        /* COPYRIGHT FOOTER */
-        .copyright-tag {
-            position: absolute; bottom: 30px;
-            font-size: 10px; color: #444;
-            letter-spacing: 2px; line-height: 2; text-align: center;
-        }
-
-        /* =================================================================
-           4. PANELS (MISSION / HANGAR)
-           ================================================================= */
-        .full-screen-panel {
+        .panel {
             display: none; position: absolute; inset: 20px;
-            background: #000; border: 12px solid #fff;
-            padding: 80px; z-index: 300; overflow-y: auto;
-            flex-direction: column;
+            background: #000; border: 8px solid #fff; padding: 50px;
+            z-index: 300; overflow-y: auto; flex-direction: column;
         }
-        .full-screen-panel.active { display: flex; }
+        .panel.active { display: flex; }
+        .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-top: 30px; }
+        .node { border: 2px solid #333; padding: 20px 5px; text-align: center; cursor: pointer; font-size: 10px; }
+        .node:hover { border-color: #fff; background: #111; }
+        .node.cleared { border-color: #0f0; color: #0f0; }
 
-        .card-grid {
-            display: grid; grid-template-columns: repeat(5, 1fr);
-            gap: 20px; margin-top: 50px;
+        #alert {
+            position: absolute; top: 40%; width: 100%; text-align: center;
+            font-size: 50px; color: #f00; display: none; z-index: 500;
+            font-family: 'Noto Sans JP'; font-weight: 700;
         }
-        .sector-node {
-            border: 4px solid #222; padding: 30px 10px;
-            text-align: center; background: #050505; cursor: pointer;
-            transition: 0.2s;
-        }
-        .sector-node:hover { border-color: #fff; background: #111; }
-        .sector-node.cleared { border-color: #0f0; }
 
-        .shop-item {
-            border: 4px solid #333; padding: 40px;
-            background: #0a0a0a; cursor: pointer; text-align: left;
-        }
-        .shop-item:hover { border-color: #ffd700; }
-        .shop-item.owned { border-color: #ffd700; background: rgba(255,215,0,0.05); }
-
-        .close-btn {
-            margin-top: 60px; padding: 25px 60px;
-            font-family: 'Press Start 2P'; background: #000; color: #fff;
-            border: 6px solid #fff; cursor: pointer; align-self: center;
-        }
-        .close-btn:hover { background: #fff; color: #000; }
-
-        #alert-box {
-            position: absolute; top: 40%; width: 100%;
-            text-align: center; font-size: 60px; color: #f00;
-            display: none; z-index: 500; pointer-events: none;
-            font-family: 'Noto Sans JP'; font-weight: 900;
-            text-shadow: 0 0 30px #f00;
+        .copyright {
+            position: absolute; bottom: 20px; font-size: 10px; color: #444;
         }
     </style>
 </head>
 <body>
 
     <div id="viewport">
-        <div id="alert-box">WARNING</div>
+        <div id="alert">WARNING</div>
 
-        <div id="hud" class="hud-system">
-            <div id="score-val" class="score-panel">SCORE: 00000000</div>
-            <div class="gauge-container">
-                <div class="gauge-label">UNIT INTEGRITY</div>
-                <div class="gauge-bar"><div id="hp-fill"></div></div>
+        <div id="hud" class="hud">
+            <div class="hud-top">
+                <div id="score-txt">SCORE: 00000000</div>
+                <div id="credit-txt" style="color:#ffd700;">CREDITS: 0</div>
             </div>
-            <div class="gauge-container">
-                <div class="gauge-label">AUTO-BOMB CHARGE</div>
-                <div class="gauge-bar"><div id="bomb-fill"></div></div>
-            </div>
-            <div class="data-panel">
-                <div id="credit-val">CREDITS: 0</div>
-                <div id="bomb-stock">BOMBS: ★★</div>
+            <div class="hud-bottom">
+                <div>UNIT HP</div>
+                <div class="hp-bar-bg"><div id="hp-fill"></div></div>
+                <div id="bomb-txt" style="margin-top:15px; color:#0cf;">BOMBS: ★ ★</div>
             </div>
         </div>
 
-        <div id="main-overlay">
-            <h1 class="title-logo">MINAMI PROJECT 2026</h1>
-            <div class="subtitle">STATION=BATTLE PROTOCOL</div>
+        <div id="overlay">
+            <h1 class="title">MINAMI PROJECT 2026</h1>
+            <div class="guide">
+                [ HOW TO PLAY ]<br>
+                MOUSE: MOVE UNIT / CLICK: FIRE CANNON<br>
+                DEFEAT ENEMIES TO GET CREDITS & SCORE<br>
+                AUTO-BOMB TRIGGERS ON HIT IF STOCK EXISTS
+            </div>
             
-            <div class="menu-grid">
-                <div class="menu-btn" onclick="ui.open('panel-mission')">
-                    <div class="btn-sym">M</div>
-                    <span>MISSION</span>
-                </div>
-                <div class="menu-btn" onclick="ui.open('panel-shop')">
-                    <div class="btn-sym">H</div>
-                    <span>HANGAR</span>
-                </div>
+            <div class="menu-row">
+                <div class="card" onclick="ui.open('panel-m')"><b>M</b><span>MISSION</span></div>
+                <div class="card" onclick="ui.open('panel-s')"><b>H</b><span>HANGAR</span></div>
             </div>
 
-            <div class="copyright-tag">
-                &copy; 2026 MINAMI PROJECT / KEIYO-LINE DEFENSE FORCE<br>
-                ALL RIGHTS RESERVED. POWERED BY GEMINI-STG ENGINE V4.0
-            </div>
+            <div class="copyright">© 2026 MINAMI PROJECT. ALL RIGHTS RESERVED.</div>
         </div>
 
-        <div id="panel-mission" class="full-screen-panel">
-            <h2 style="font-size:30px; border-bottom:8px solid #fff; padding-bottom:30px;">OPERATIONAL SECTORS</h2>
-            <div id="mission-grid" class="card-grid"></div>
-            <button class="close-btn" onclick="ui.close()">ABORT</button>
+        <div id="panel-m" class="panel">
+            <h2>SELECT SECTOR</h2>
+            <div id="m-list" class="grid"></div>
+            <button onclick="ui.close()" style="margin-top:40px; padding:20px; font-family:'Press Start 2P'; cursor:pointer;">BACK</button>
         </div>
 
-        <div id="panel-shop" class="full-screen-panel">
-            <h2 id="wallet-val" style="font-size:30px; color:#ffd700;">CREDITS: 0</h2>
-            <div id="shop-list" style="display:grid; grid-template-columns:repeat(2,1fr); gap:30px; margin-top:50px;"></div>
-            <button class="close-btn" onclick="ui.close()">RETURN</button>
+        <div id="panel-s" class="panel">
+            <h2 id="s-wallet" style="color:#ffd700;">CREDITS: 0</h2>
+            <div id="s-list" style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:30px;"></div>
+            <button onclick="ui.close()" style="margin-top:40px; padding:20px; font-family:'Press Start 2P'; cursor:pointer;">BACK</button>
         </div>
 
-        <canvas id="stageCanvas"></canvas>
+        <canvas id="gameCanvas"></canvas>
     </div>
 
     <script>
-        /* =================================================================
-           5. GAME ARCHITECTURE (1000+ LINE TARGET LOGIC)
-           ================================================================= */
-        const canvas = document.getElementById('stageCanvas');
+        const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
-        canvas.width = 1200;
-        canvas.height = 900;
+        canvas.width = 1200; canvas.height = 900;
 
-        // 全15ステージの詳細定義（共通化せず個別に保持）
-        const SECTOR_DATABASE = {
-            'SB': { id:'SB', n:'ST=SB', c:'#ccaa00', d:1.0, len:80000, g:'VIB', pay:5000, msg:'総武線エリア：激しい振動を検知。' },
-            'KT': { id:'KT', n:'ST=KT', c:'#0088cc', d:1.2, len:90000, g:'WTR', pay:6500, msg:'京浜東北線エリア：高圧洗浄下での戦闘。' },
-            'SK': { id:'SK', n:'ST=SK', c:'#008844', d:1.5, len:100000, g:'FOG', pay:8000, msg:'埼京線エリア：視界不良、注意せよ。' },
-            'KY': { id:'KY', n:'ST=KY', c:'#aa0022', d:2.0, len:250000, g:'WND', pay:15000, msg:'京葉線エリア：強風注意報発令中。' },
-            'PK': { id:'PK', n:'ST=PK', c:'#cc5588', d:2.5, len:60000, g:'REV', pay:12000, msg:'各停エリア：システムハックによる操作反転。' },
-            'JB': { id:'JB', n:'ST=JB', c:'#006666', d:3.0, len:180000, g:'JAM', pay:20000, msg:'常磐線エリア：広域ジャミング発生。' },
-            'S1': { id:'S1', n:'ST=S1', c:'#6600cc', d:4.0, len:120000, g:'WRP', pay:30000, msg:'地下1層：空間の歪みが激しい。' },
-            'S2': { id:'S2', n:'ST=S2', c:'#cc00cc', d:5.0, len:130000, g:'PSN', pay:45000, msg:'地下2層：腐食性ガス充満。' },
-            'S3': { id:'S3', n:'ST=S3', c:'#00cccc', d:6.0, len:150000, g:'GRV', pay:60000, msg:'地下3層：超重力反応アリ。' },
-            'F1': { id:'F1', n:'F15-A', c:'#778', d:10.0, len:80000, g:'SPD', pay:100000, msg:'F15迎撃：α部隊。' },
-            'F2': { id:'F2', n:'F15-B', c:'#778', d:15.0, len:90000, g:'SPD', pay:150000, msg:'F15迎撃：β部隊。' },
-            'F3': { id:'F3', n:'F15-G', c:'#778', d:20.0, len:100000, g:'SPD', pay:250000, msg:'F15迎撃：γ部隊。' },
-            'F4': { id:'F4', n:'F15-D', c:'#778', d:30.0, len:110000, g:'SPD', pay:400000, msg:'F15迎撃：最終防衛ライン。' },
-            'F5': { id:'F5', n:'F15-E', c:'#b0c', d:50.0, len:150000, g:'SPD', pay:800000, msg:'F15迎撃：最高司令官。' },
-            'CO': { id:'CO', n:'ST=CO', c:'#ff6600', d:150.0, len:2000000, g:'ULT', pay:9999999, msg:'中央線エリア：オレンジの絶望。' }
-        };
-
-        const SHOP_ITEMS = [
-            { id:'stab', n:'STABILIZER MK-II', cost:80000, d:'振動・重力ギミックを完全無効化。' },
-            { id:'wind', n:'AERO-SHIELD', cost:150000, d:'強風・水圧ギミックを完全無効化。' },
-            { id:'hull', n:'TITAN-COAT', cost:500000, d:'腐食・中央線のダメージを完全遮断。' },
-            { id:'bomb', n:'SPARE BOMB', cost:40000, d:'予備のオートボムを1個追加。' }
+        // --- STAGE DATA ---
+        const SECTORS = [
+            { id:'SB', n:'ST=SB', c:'#ccaa00', d:1.0, len:100000, g:'VIB' },
+            { id:'KT', n:'ST=KT', c:'#0088cc', d:1.2, len:120000, g:'WTR' },
+            { id:'SK', n:'ST=SK', c:'#008844', d:1.5, len:140000, g:'FOG' },
+            { id:'KY', n:'ST=KY', c:'#aa0022', d:2.0, len:300000, g:'WND' },
+            { id:'PK', n:'ST=PK', c:'#cc5588', d:2.2, len:90000, g:'REV' },
+            { id:'JB', n:'ST=JB', c:'#006666', d:3.0, len:200000, g:'JAM' },
+            { id:'S1', n:'ST=S1', c:'#6600cc', d:4.0, len:150000, g:'WRP' },
+            { id:'S2', n:'ST=S2', c:'#cc00cc', d:5.5, len:180000, g:'PSN' },
+            { id:'S3', n:'ST=S3', c:'#00cccc', d:7.0, len:200000, g:'GRV' },
+            { id:'F1', n:'F15-A', c:'#778', d:10.0, len:100000, g:'SPD' },
+            { id:'F2', n:'F15-B', c:'#778', d:15.0, len:120000, g:'SPD' },
+            { id:'F3', n:'F15-G', c:'#778', d:20.0, len:140000, g:'SPD' },
+            { id:'F4', n:'F15-D', c:'#778', d:30.0, len:160000, g:'SPD' },
+            { id:'F5', n:'F15-E', c:'#b0c', d:50.0, len:200000, g:'SPD' },
+            { id:'CO', n:'ST=CO', c:'#ff6600', d:100.0, len:2000000, g:'ULT' }
         ];
 
-        // セーブデータ管理
-        let profile = JSON.parse(localStorage.getItem('MINAMI_PROJ_V5')) || {
-            gold: 0, bombs: 2, cleared: [], gears: []
+        const SHOP = [
+            { id:'stab', n:'STABILIZER', cost:100000, d:'VIB/GRV 無効' },
+            { id:'wind', n:'AERO-DEF', cost:200000, d:'WND/WTR 無効' },
+            { id:'hull', n:'ULT-HULL', cost:800000, d:'PSN/ULT 防護' },
+            { id:'bomb', n:'BOMB STOCK', cost:40000, d:'緊急回避+1' }
+        ];
+
+        let state = JSON.parse(localStorage.getItem('MINAMI_V6')) || { gold: 0, bombs: 2, cleared: [], gears: [] };
+        const save = () => {
+            localStorage.setItem('MINAMI_V6', JSON.stringify(state));
+            document.getElementById('credit-txt').innerText = `CREDITS: ${state.gold.toLocaleString()}`;
+            document.getElementById('s-wallet').innerText = `CREDITS: ${state.gold.toLocaleString()}`;
+            document.getElementById('bomb-txt').innerText = `BOMBS: ${"★ ".repeat(state.bombs)}`;
         };
 
-        const saveHandler = () => {
-            localStorage.setItem('MINAMI_PROJ_V5', JSON.stringify(profile));
-            document.getElementById('credit-val').innerText = `CREDITS: ${profile.gold.toLocaleString()}`;
-            document.getElementById('wallet-val').innerText = `CREDITS: ${profile.gold.toLocaleString()}`;
-            document.getElementById('bomb-stock').innerText = `BOMBS: ${"★".repeat(profile.bombs)}`;
-        };
-
-        /* =================================================================
-           6. UI SYSTEM
-           ================================================================= */
         const ui = {
             open: (id) => {
-                document.querySelectorAll('.full-screen-panel').forEach(p => p.classList.remove('active'));
+                document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
                 document.getElementById(id).classList.add('active');
-                if(id === 'panel-mission') ui.drawMissions();
-                if(id === 'panel-shop') ui.drawShop();
+                if(id==='panel-m') ui.renderM();
+                if(id==='panel-s') ui.renderS();
             },
-            close: () => {
-                document.querySelectorAll('.full-screen-panel').forEach(p => p.classList.remove('active'));
-            },
-            drawMissions: () => {
-                const grid = document.getElementById('mission-grid');
-                grid.innerHTML = '';
-                Object.values(SECTOR_DATABASE).forEach(s => {
-                    const isSec = ['F1','F2','F3','F4','F5','CO'].includes(s.id);
-                    const isLock = isSec && profile.cleared.length < 9;
-                    const node = document.createElement('div');
-                    node.className = `sector-node ${profile.cleared.includes(s.id) ? 'cleared' : ''}`;
-                    node.style.color = isLock ? '#111' : s.c;
-                    node.style.borderColor = isLock ? '#111' : s.c;
-                    node.innerHTML = `SECTOR<br><span style="font-size:18px;">${isLock ? '???' : s.n}</span>`;
-                    if(!isLock) node.onclick = () => engine.init(s);
-                    grid.appendChild(node);
+            close: () => document.querySelectorAll('.panel').forEach(p => p.classList.remove('active')),
+            renderM: () => {
+                const g = document.getElementById('m-list'); g.innerHTML = '';
+                SECTORS.forEach(s => {
+                    const n = document.createElement('div');
+                    n.className = `node ${state.cleared.includes(s.id) ? 'cleared' : ''}`;
+                    n.style.borderColor = s.c;
+                    n.innerHTML = s.n;
+                    n.onclick = () => engine.start(s);
+                    g.appendChild(n);
                 });
             },
-            drawShop: () => {
-                const list = document.getElementById('shop-list');
-                list.innerHTML = '';
-                SHOP_ITEMS.forEach(i => {
-                    const has = profile.gears.includes(i.id);
-                    const item = document.createElement('div');
-                    item.className = `shop-item ${has ? 'owned' : ''}`;
-                    item.innerHTML = `<strong style="font-size:18px;">${i.n}</strong><br><br>
-                                      <span style="color:#ffd700;">${has && i.id!=='bomb' ? 'INSTALLATION COMPLETE' : i.cost.toLocaleString() + ' G'}</span><br><br>
-                                      <span style="font-size:10px; color:#888;">${i.d}</span>`;
-                    item.onclick = () => {
-                        if(profile.gold >= i.cost) {
-                            if(i.id === 'bomb') { profile.bombs++; profile.gold -= i.cost; }
-                            else if(!has) { profile.gears.push(i.id); profile.gold -= i.cost; }
-                            saveHandler(); ui.drawShop();
+            renderS: () => {
+                const l = document.getElementById('s-list'); l.innerHTML = '';
+                SHOP.forEach(i => {
+                    const has = state.gears.includes(i.id);
+                    const n = document.createElement('div');
+                    n.className = `node ${has && i.id!=='bomb' ? 'cleared' : ''}`;
+                    n.style.padding = '20px';
+                    n.innerHTML = `<b>${i.n}</b><br><br>${i.d}<br><br>${has && i.id!=='bomb' ? 'OWNED' : i.cost.toLocaleString() + ' G'}`;
+                    n.onclick = () => {
+                        if(state.gold >= i.cost) {
+                            if(i.id==='bomb') state.bombs++;
+                            else if(!has) state.gears.push(i.id);
+                            state.gold -= i.cost; save(); ui.renderS();
                         }
                     };
-                    list.appendChild(item);
+                    l.appendChild(n);
                 });
             }
         };
 
-        /* =================================================================
-           7. GAME CORE ENGINE
-           ================================================================= */
-        let active = false, score = 0, hp = 100, frame = 0, bCharge = 0;
-        let pX, pY, tX, tY, curS, shooting = false;
-        let bullets = [], enemies = [], coins = [], eBullets = [];
+        // --- GAME ENGINE ---
+        let running = false, score = 0, hp = 100, frame = 0, curS;
+        let pX, pY, tX, tY, firing = false;
+        let bullets = [], enemies = [], coins = [], fx = [];
 
         const engine = {
-            init: (sector) => {
-                curS = sector;
-                ui.close();
-                document.getElementById('main-overlay').style.display = 'none';
+            start: (s) => {
+                curS = s; ui.close();
+                document.getElementById('overlay').style.display = 'none';
                 document.getElementById('hud').style.display = 'block';
-                
-                active = true; score = 0; hp = 100; frame = 0; bCharge = 0;
-                bullets = []; enemies = []; coins = []; eBullets = [];
-                pX = 600; pY = 750; tX = 600; tY = 750;
-
-                engine.warn(sector.msg, 3000);
-                engine.mainLoop();
+                running = true; score = 0; hp = 100; frame = 0;
+                bullets = []; enemies = []; coins = []; fx = [];
+                pX = 600; pY = 800; tX = 600; tY = 800;
+                engine.loop();
             },
-
-            warn: (msg, d) => {
-                const b = document.getElementById('alert-box');
-                b.innerText = msg; b.style.display = 'block';
-                setTimeout(() => b.style.display = 'none', d);
-            },
-
-            mainLoop: () => {
-                if(!active) return;
+            loop: () => {
+                if(!running) return;
                 frame++;
+                ctx.fillStyle = '#000'; ctx.fillRect(0,0,1200,900);
 
-                // --- ギミック演算 ---
-                let lerp = 0.22;
-                if(curS.g === 'GRV' && !profile.gears.includes('stab')) lerp = 0.05;
-                if(curS.g === 'WTR' && !profile.gears.includes('wind')) lerp = 0.08;
+                // --- GIMMICKS ---
+                let l = 0.2;
+                if(curS.g==='GRV' && !state.gears.includes('stab')) l = 0.05;
+                pX += (tX - pX) * l; pY += (tY - pY) * l;
+                if(curS.g==='WND' && !state.gears.includes('wind')) pX -= 5;
+                if(curS.g==='VIB' && !state.gears.includes('stab')) { pX += Math.sin(frame)*10; }
+                if(curS.g==='PSN' && !state.gears.includes('hull') && frame % 60 === 0) hp -= 2;
+                if(curS.g==='ULT' && !state.gears.includes('hull') && frame % 60 === 0) hp -= 5;
 
-                pX += (tX - pX) * lerp;
-                pY += (tY - pY) * lerp;
+                // --- DRAW PLAYER (SMALL) ---
+                ctx.fillStyle = '#fff';
+                ctx.beginPath(); ctx.moveTo(pX, pY-25); ctx.lineTo(pX+20, pY+15); ctx.lineTo(pX-20, pY+15); ctx.fill();
 
-                if(curS.g === 'WND' && !profile.gears.includes('wind')) pX -= 6;
-                if(curS.g === 'VIB' && !profile.gears.includes('stab')) { pX += Math.sin(frame)*12; pY += Math.cos(frame)*12; }
-                if(curS.g === 'PSN' && !profile.gears.includes('hull') && frame % 60 === 0) hp -= 1;
-                if(curS.g === 'ULT' && !profile.gears.includes('hull') && frame % 60 === 0) hp -= 5;
-
-                // --- 射撃ロジック ---
-                if(shooting && frame % 6 === 0) {
-                    bullets.push({x: pX, y: pY - 40, vy: -28});
-                }
-
-                // --- 衝突判定 & 物理 ---
-                // 自機弾
+                // --- SHOOT ---
+                if(firing && frame % 6 === 0) bullets.push({x:pX, y:pY-25});
                 bullets.forEach((b, i) => {
-                    b.y += b.vy;
-                    if(b.y < -100) bullets.splice(i, 1);
+                    b.y -= 25; ctx.fillStyle = '#0ff'; ctx.fillRect(b.x-2, b.y, 4, 15);
                     enemies.forEach((e, ei) => {
-                        if(Math.hypot(b.x - e.x, b.y - e.y) < 45) {
-                            e.hp -= 10; bullets.splice(i, 1);
+                        if(Math.hypot(b.x-e.x, b.y-e.y) < 30) {
+                            e.hp -= 10; bullets.splice(i,1);
                             if(e.hp <= 0) {
-                                // 敵撃破：コイン散布
-                                for(let c=0; c<8; c++) {
-                                    coins.push({
-                                        x: e.x, y: e.y,
-                                        vx: (Math.random()-0.5)*20, vy: (Math.random()-0.5)*20,
-                                        val: 100
-                                    });
-                                }
-                                score += 1200;
-                                enemies.splice(ei, 1);
+                                score += 1000;
+                                for(let c=0; c<3; c++) coins.push({x:e.x, y:e.y, vx:(Math.random()-0.5)*15, vy:(Math.random()-0.5)*15});
+                                enemies.splice(ei,1);
                             }
                         }
                     });
+                    if(b.y < 0) bullets.splice(i,1);
                 });
 
-                // 敵出現
-                if(frame % (Math.max(5, 30-Math.floor(frame/500))) === 0 && score < curS.len) {
-                    enemies.push({ x: Math.random()*1200, y: -80, hp: 40*curS.d, s: 70 });
-                }
+                // --- ENEMIES (SMALLER) ---
+                if(frame % 25 === 0 && score < curS.len) enemies.push({x:Math.random()*1200, y:-50, hp:30*curS.d});
                 enemies.forEach((e, i) => {
                     e.y += 5 * curS.d;
-                    if(e.y > 1000) enemies.splice(i, 1);
-                    if(Math.hypot(e.x - pX, e.y - pY) < 50) {
-                        if(profile.bombs > 0) { 
-                            engine.warn("AUTO-BOMB!", 1000); 
-                            profile.bombs--; enemies = []; eBullets = []; saveHandler(); 
-                        } else { hp -= 25; enemies.splice(i, 1); }
+                    ctx.strokeStyle = curS.c; ctx.lineWidth = 4;
+                    ctx.strokeRect(e.x-20, e.y-20, 40, 40);
+                    if(Math.hypot(e.x-pX, e.y-pY) < 35) {
+                        if(state.bombs > 0) {
+                            state.bombs--; enemies = []; engine.notify("AUTO-BOMB"); save();
+                        } else { hp -= 20; enemies.splice(i,1); }
                     }
+                    if(e.y > 950) enemies.splice(i,1);
                 });
 
-                // コイン（マグネット物理）
+                // --- COINS (MAGNETIC & DISPLAYED) ---
                 coins.forEach((c, i) => {
-                    let d = Math.hypot(c.x - pX, c.y - pY);
-                    if(d < 300) {
-                        c.vx += (pX - c.x) * 0.08;
-                        c.vy += (pY - c.y) * 0.08;
-                    }
-                    c.x += c.vx; c.y += c.vy;
-                    c.vx *= 0.92; c.vy *= 0.92;
-                    c.y += 2.5;
-
-                    if(d < 50) {
-                        profile.gold += c.val;
-                        score += 500;
-                        saveHandler();
-                        coins.splice(i, 1);
-                    }
+                    let d = Math.hypot(c.x-pX, c.y-pY);
+                    if(d < 250) { c.vx += (pX-c.x)*0.1; c.vy += (pY-c.y)*0.1; }
+                    c.x += c.vx || 0; c.y += c.vy || 0;
+                    if(c.vx) c.vx *= 0.9; if(c.vy) c.vy *= 0.9;
+                    c.y += 2;
+                    ctx.fillStyle = '#ffd700'; ctx.beginPath(); ctx.arc(c.x, c.y, 8, 0, 7); ctx.fill();
+                    if(d < 30) { state.gold += 100; score += 200; save(); coins.splice(i,1); }
                 });
 
-                // 終了判定
-                if(score >= curS.len && enemies.length === 0) {
-                    engine.warn("MISSION CLEARED", 5000);
-                    if(!profile.cleared.includes(curS.id)) profile.cleared.push(curS.id);
-                    profile.gold += curS.pay;
-                    saveHandler();
-                    active = false;
-                    setTimeout(() => location.reload(), 5000);
-                }
-                if(hp <= 0) {
-                    active = false;
-                    engine.warn("MISSION FAILED", 5000);
-                    setTimeout(() => location.reload(), 5000);
-                }
-
-                engine.render();
-                requestAnimationFrame(engine.mainLoop);
-            },
-
-            render: () => {
-                ctx.clearRect(0, 0, 1200, 900);
-                
-                // ギミック視覚効果
-                if(curS.g === 'FOG') { ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fillRect(0,0,1200,900); }
-
-                // 自機
-                ctx.fillStyle = '#fff';
-                ctx.beginPath();
-                ctx.moveTo(pX, pY-50); ctx.lineTo(pX+40, pY+20); ctx.lineTo(pX-40, pY+20);
-                ctx.fill();
-
-                // 弾
-                ctx.fillStyle = '#0ff';
-                bullets.forEach(b => ctx.fillRect(b.x-4, b.y, 8, 30));
-
-                // 敵
-                enemies.forEach(e => {
-                    ctx.strokeStyle = curS.c; ctx.lineWidth = 6;
-                    ctx.strokeRect(e.x-e.s/2, e.y-e.s/2, e.s, e.s);
-                });
-
-                // コイン
-                ctx.fillStyle = '#ffd700';
-                coins.forEach(c => {
-                    ctx.beginPath(); ctx.arc(c.x, c.y, 12, 0, 7); ctx.fill();
-                    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
-                });
-
-                // HUD
-                document.getElementById('score-val').innerText = `SCORE: ${score.toString().padStart(8, '0')}`;
+                // --- HUD UPDATE ---
+                document.getElementById('score-txt').innerText = `SCORE: ${score.toString().padStart(8,'0')}`;
                 document.getElementById('hp-fill').style.width = hp + "%";
-                document.getElementById('bomb-fill').style.width = (frame % 100) + "%";
+
+                if(hp <= 0) { running = false; alert("MISSION FAILED"); location.reload(); }
+                if(score >= curS.len && enemies.length === 0) {
+                    if(!state.cleared.includes(curS.id)) state.cleared.push(curS.id);
+                    save(); running = false; alert("MISSION CLEAR"); location.reload();
+                }
+
+                requestAnimationFrame(engine.loop);
+            },
+            notify: (m) => {
+                const a = document.getElementById('alert'); a.innerText = m; a.style.display = 'block';
+                setTimeout(()=>a.style.display='none', 1500);
             }
         };
 
-        // 入力制御
+        // INPUTS
         canvas.addEventListener('mousemove', (e) => {
-            const rect = canvas.getBoundingClientRect();
-            tX = (e.clientX - rect.left) * (1200 / rect.width);
-            tY = (e.clientY - rect.top) * (900 / rect.height);
+            const b = canvas.getBoundingClientRect();
+            let mx = (e.clientX - b.left) * (1200 / b.width);
+            let my = (e.clientY - b.top) * (900 / b.height);
+            if(running && curS.g==='REV') { tX = 1200-mx; tY = 900-my; }
+            else { tX = mx; tY = my; }
         });
-        window.onmousedown = () => shooting = true;
-        window.onmouseup = () => shooting = false;
-
-        saveHandler();
+        window.onmousedown = () => firing = true; window.onmouseup = () => firing = false;
+        save();
     </script>
 </body>
 </html>
