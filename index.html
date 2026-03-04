@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Minami Project 2026: Burst Finale - DEFINITIVE</title>
+    <title>Minami Project 2026: Burst Finale - CUSTOM MISSIONS</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+JP:wght@700;900&display=swap');
         
@@ -17,7 +17,7 @@
         #gauge-fill { height: 100%; background: #00ccff; width: 0%; transition: width 0.1s; }
         #bomb-stock { color: #ff0; font-size: 14px; text-shadow: 0 0 5px #f60; }
 
-        /* フェーズ告知（画面中央） */
+        /* フェーズ告知 */
         #phase-notice { position: absolute; top: 20%; left: 50%; transform: translate(-50%, -50%); font-size: 40px; color: #fff; text-shadow: 0 0 25px #0ff; z-index: 5; pointer-events: none; opacity: 0; transition: 0.5s; text-align: center; }
 
         /* メニュー */
@@ -29,7 +29,7 @@
         .nav-btn:hover:not(:disabled) { background: #0ff; color: #000; box-shadow: 0 0 20px #0ff; transform: scale(1.05); }
         .nav-btn:disabled { border-color: #333; color: #333; cursor: not-allowed; }
 
-        /* ステージ選択レイアウト */
+        /* ステージ選択 */
         .stage-layout { display: flex; flex-direction: row; gap: 25px; width: 92%; align-items: stretch; margin-bottom: 20px; }
         .mode-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; flex: 2; }
         .mode-btn { padding: 25px 5px; border: 2px solid #333; background: #111; color: #555; cursor: pointer; text-align: center; font-size: 10px; position: relative; transition: 0.2s; }
@@ -95,8 +95,7 @@
                 <button class="nav-btn" onclick="buy('heal', 1000)">REPAIR (1000G)</button>
                 <button class="nav-btn" onclick="buy('bit', 5000)">DRONE BIT (5000G)</button>
             </div>
-            <p style="font-size:8px; color:#888; margin-top:20px;">*アイテムはリロードまで有効</p>
-            <button class="nav-btn" onclick="backToMain()">BACK</button>
+            <button class="nav-btn" style="margin-top:20px;" onclick="backToMain()">BACK</button>
         </div>
 
         <div id="guide" class="panel">
@@ -104,9 +103,8 @@
                 <b>操作方法:</b><br>
                 ・移動: マウス / 攻撃: 左クリック<br>
                 ・ボム: 右クリック or Space (ストック消費)<br>
-                <b>システム:</b><br>
-                ・バーストゲージ最大でボムが1つ増えます。<br>
-                ・全15ステージ。特定数クリアで隠し・最終ステージ解禁。
+                <b>条件変更:</b><br>
+                ・各ステージごとにボス出現までの必要スコアが異なります。
             </div>
             <button class="nav-btn" style="margin-top:30px;" onclick="backToMain()">BACK</button>
         </div>
@@ -133,27 +131,30 @@
         let currentMode = null;
         let sessionData = { atk: 3, hasBit: false };
 
-        const STORAGE_KEY = 'minami_2026_definitive_v1';
+        const STORAGE_KEY = 'minami_2026_custom_score_v1';
         let userData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
             gold: 0, bombs: 1, cleared: [], skin: '#fff', ownedSkins: ['#fff']
         };
 
+        // --- 全15ステージ：各ステージごとにフェーズ条件(score1, score2)を変更 ---
         const STAGES = {
-            'SB': { name: 'ST=SB', color: '#ccaa00', diff: 1.0, star: '★', score1: 5000, score2: 15000, bossHp: 600, g: ['vibrate'], info: '基礎訓練。激しい振動が発生。' },
-            'KT': { name: 'ST=KT', color: '#0088cc', diff: 1.2, star: '★', score1: 5000, score2: 15000, bossHp: 800, g: ['water'], info: '水中走行。移動速度が減衰。' },
-            'SK': { name: 'ST=SK', color: '#008844', diff: 1.4, star: '★★', score1: 5000, score2: 15000, bossHp: 1100, g: ['fog'], info: '濃霧。視界制限と微量ダメージ。' },
-            'KY': { name: 'ST=KY', color: '#aa0022', diff: 1.6, star: '★★', score1: 5000, score2: 15000, bossHp: 1600, g: ['wind'], info: '強風。機体が常に左へ流される。' },
-            'PK': { name: 'ST=PK', color: '#cc5588', diff: 1.8, star: '★★', score1: 5000, score2: 15000, bossHp: 1900, g: ['reverse'], info: '電磁障害。操作が上下左右反転。' },
-            'JB': { name: 'ST=JB', color: '#006666', diff: 2.1, star: '★★★', score1: 5000, score2: 15000, bossHp: 2300, g: ['jamming'], info: '妨害電波。弾丸速度が不安定。' },
-            'S1': { name: 'ST=S1', color: '#6600cc', diff: 2.4, star: '★★★', score1: 5000, score2: 15000, bossHp: 2700, g: ['warp'], info: '空間歪曲。敵弾がワープする。' },
-            'S2': { name: 'ST=S2', color: '#cc00cc', diff: 2.7, star: '★★★', score1: 5000, score2: 15000, bossHp: 3200, g: ['poison'], info: '毒素地帯。HPが持続的に減少。' },
-            'S3': { name: 'ST=S3', color: '#00cccc', diff: 3.2, star: '★★★★', score1: 5000, score2: 15000, bossHp: 3800, g: ['gravity'], info: '重力異常。制動が効かない。' },
-            'NM': { name: 'ST=NM', color: '#00bb00', diff: 5.0, star: '★★★★★', score1: 10000, score2: 30000, bossHp: 8000, g: ['vibrate','fog'], secret: 1, info: '【SECRET】振動＋霧。視覚の限界。' },
-            'TY': { name: 'ST=TY', color: '#888888', diff: 6.0, star: '★★★★★', score1: 10000, score2: 30000, bossHp: 10000, g: ['water','wind'], secret: 1, info: '【SECRET】減速＋強風。機動力の喪失。' },
-            'YF': { name: 'ST=YF', color: '#dddd00', diff: 7.5, star: '★★★★★★', score1: 10000, score2: 30000, bossHp: 15000, g: ['reverse','jamming'], secret: 1, info: '【SECRET】反転＋撹乱。脳への負荷。' },
-            'ME': { name: 'ST=ME', color: '#ff0000', diff: 12.0, star: '★★★★★★★', score1: 20000, score2: 70000, bossHp: 30000, g: ['warp','poison','gravity'], secret: 2, info: '【ULTIMATE】空間・大気・重力。' },
-            'SL': { name: 'ST=SL', color: '#00aa00', diff: 25.0, star: '★★★★★★★★★', score1: 30000, score2: 100000, bossHp: 90000, g: ['vibrate','wind','reverse','jamming'], secret: 2, info: '【ULTIMATE】四重複合ギミック。' },
-            'CO': { name: 'ST=CO', color: '#ff6600', diff: 150.0, star: '★★★★★★★★★★', score1: 150000, score2: 400000, bossHp: 999999, g: ['all'], secret: 2, info: '【THE END】全ギミック完全解禁。橙の終焉。' }
+            'SB': { name: 'ST=SB', color: '#ccaa00', diff: 1.0, star: '★', score1: 3000, score2: 8000, bossHp: 600, g: ['vibrate'], info: '基礎。短時間のミッション。' },
+            'KT': { name: 'ST=KT', color: '#0088cc', diff: 1.2, star: '★', score1: 4000, score2: 10000, bossHp: 800, g: ['water'], info: '水中。バランス型の設定。' },
+            'SK': { name: 'ST=SK', color: '#008844', diff: 1.4, star: '★★', score1: 5000, score2: 12000, bossHp: 1100, g: ['fog'], info: '濃霧。持久力が試される。' },
+            'KY': { name: 'ST=KY', color: '#aa0022', diff: 1.6, star: '★★', score1: 5000, score2: 12000, bossHp: 1600, g: ['wind'], info: '強風。回避を優先せよ。' },
+            'PK': { name: 'ST=PK', color: '#cc5588', diff: 1.8, star: '★★', score1: 6000, score2: 15000, bossHp: 1900, g: ['reverse'], info: '反転。混乱の長期戦。' },
+            'JB': { name: 'ST=JB', color: '#006666', diff: 2.1, star: '★★★', score1: 7000, score2: 18000, bossHp: 2300, g: ['jamming'], info: '妨害。道中の敵密度が高い。' },
+            'S1': { name: 'ST=S1', color: '#6600cc', diff: 2.4, star: '★★★', score1: 8000, score2: 20000, bossHp: 2700, g: ['warp'], info: '歪曲。予測不能な弾幕。' },
+            'S2': { name: 'ST=S2', color: '#cc00cc', diff: 2.7, star: '★★★', score1: 8000, score2: 20000, bossHp: 3200, g: ['poison'], info: '毒素。HP管理が鍵を握る。' },
+            'S3': { name: 'ST=S3', color: '#00cccc', diff: 3.2, star: '★★★★', score1: 10000, score2: 25000, bossHp: 3800, g: ['gravity'], info: '重力。難関ミッション。' },
+            // 隠し（条件が重くなる）
+            'NM': { name: 'ST=NM', color: '#00bb00', diff: 5.0, star: '★★★★★', score1: 15000, score2: 40000, bossHp: 8000, g: ['vibrate','fog'], secret: 1, info: '【SECRET】長期の視覚戦。' },
+            'TY': { name: 'ST=TY', color: '#888888', diff: 6.0, star: '★★★★★', score1: 15000, score2: 45000, bossHp: 10000, g: ['water','wind'], secret: 1, info: '【SECRET】極限の移動制限。' },
+            'YF': { name: 'ST=YF', color: '#dddd00', diff: 7.5, star: '★★★★★★', score1: 20000, score2: 50000, bossHp: 15000, g: ['reverse','jamming'], secret: 1, info: '【SECRET】脳への高負荷。' },
+            // 最終（ボスまでが非常に遠い）
+            'ME': { name: 'ST=ME', color: '#ff0000', diff: 12.0, star: '★★★★★★★', score1: 30000, score2: 80000, bossHp: 30000, g: ['warp','poison','gravity'], secret: 2, info: '【ULTIMATE】三重複合。地獄。' },
+            'SL': { name: 'ST=SL', color: '#00aa00', diff: 25.0, star: '★★★★★★★★★', score1: 50000, score2: 120000, bossHp: 90000, g: ['vibrate','wind','reverse','jamming'], secret: 2, info: '【ULTIMATE】四重複合。絶望。' },
+            'CO': { name: 'ST=CO', color: '#ff6600', diff: 150.0, star: '★★★★★★★★★★', score1: 100000, score2: 400000, bossHp: 999999, g: ['all'], secret: 2, info: '【THE END】全ギミック。伝説へ。' }
         };
 
         const AVATARS = [
@@ -179,7 +180,6 @@
             document.getElementById(id).classList.add('active');
             if(id === 'stage-select') renderStages();
             if(id === 'garage') renderGarage();
-            if(id === 'shop') document.getElementById('shop-gold').innerText = `GOLD: ${userData.gold}`;
         }
 
         function backToMain() { document.querySelectorAll('.panel').forEach(p => p.classList.remove('active')); document.getElementById('main-nav').style.display = 'block'; }
@@ -203,7 +203,7 @@
                         document.getElementById('brief-title').innerText = s.name;
                         document.getElementById('brief-title').style.color = s.color;
                         document.getElementById('brief-meta').innerText = `RANK: ${s.star}`;
-                        document.getElementById('brief-desc').innerText = `${s.info}\n\n[OBJECTIVE]\nPHASE 2: ${s.score1}\nBOSS: ${s.score2}`;
+                        document.getElementById('brief-desc').innerText = `${s.info}\n\n[SCORE TARGETS]\nPHASE 2: ${s.score1}\nBOSS AT: ${s.score2}`;
                         const lBtn = document.getElementById('launch-btn');
                         lBtn.style.display = 'block'; lBtn.style.borderColor = s.color; lBtn.style.color = s.color;
                         lBtn.onclick = () => startGame(id);
@@ -219,11 +219,10 @@
                 const owned = userData.ownedSkins.includes(a.id);
                 const btn = document.createElement('button');
                 btn.className = 'nav-btn'; btn.style.borderColor = a.id;
-                btn.innerHTML = `<b>${a.name}</b><br><span style="font-size:8px">${a.desc}</span><br>${owned ? 'EQUIP' : a.cost+'G'}`;
-                if(!owned && userData.gold < a.cost) btn.disabled = true;
+                btn.innerHTML = `<b>${a.name}</b><br>${owned ? 'EQUIP' : a.cost+'G'}`;
                 btn.onclick = () => {
-                    if(!owned) { userData.gold -= a.cost; userData.ownedSkins.push(a.id); save(); renderGarage(); }
-                    else { userData.skin = a.id; save(); alert("EQUIPPED"); }
+                    if(!owned && userData.gold >= a.cost) { userData.gold -= a.cost; userData.ownedSkins.push(a.id); save(); renderGarage(); }
+                    else if(owned) { userData.skin = a.id; save(); alert("EQUIPPED"); }
                 };
                 list.appendChild(btn);
             });
@@ -235,7 +234,7 @@
                 if(type === 'atk') sessionData.atk += 2;
                 if(type === 'heal') hp = 100;
                 if(type === 'bit') sessionData.hasBit = true;
-                save(); openPanel('shop');
+                save(); alert("PURCHASED");
             }
         }
 
@@ -276,10 +275,10 @@
             if(g.includes('wind') || g.includes('all')) pX -= 8 * res;
             if(g.includes('poison') || g.includes('all')) if(frame % 60 === 0) hp -= 2;
 
+            // 各ステージ固有のスコア条件で判定
             if(phase === 1 && score >= currentMode.score1) { phase = 2; showPhaseMsg("PHASE 2: DANGER"); }
             if(phase === 2 && score >= currentMode.score2) { phase = 3; showPhaseMsg("WARNING: BOSS"); }
 
-            // 武器分岐
             if(isDown && frame % 5 === 0) {
                 const s = userData.skin; const a = sessionData.atk;
                 if(s === '#0f0') { if(frame % 3 === 0) bullets.push({ x: pX, y: pY-20, p: a*0.8, vy: -35, vx: 0, w: 6 }); }
@@ -291,7 +290,7 @@
 
             if(sessionData.hasBit && frame % 15 === 0) {
                 let bx = pX + Math.cos(frame*0.1)*65; let by = pY + Math.sin(frame*0.1)*65;
-                bullets.push({ x: bx, y: by, p: 2, vy: -30, vx: 0, w: 5, isBit: true });
+                bullets.push({ x: bx, y: by, p: 2, vy: -30, vx: 0, w: 5 });
             }
 
             if(phase < 3 && !enemies.some(e => e.isBoss) && frame % (phase === 1 ? 40 : 20) === 0) {
@@ -309,7 +308,7 @@
                         if(e.hp <= 0) {
                             createExplosion(e.x, e.y, currentMode.color);
                             if(e.isBoss) finish(true);
-                            else { score += 500; userData.gold += Math.floor(50*currentMode.diff); enemies.splice(ei, 1); 
+                            else { score += 500; userData.gold += Math.floor(40*currentMode.diff); enemies.splice(ei, 1); 
                                 burstGauge += 6; if(burstGauge >= 100) { burstGauge = 0; userData.bombs++; }
                             }
                         }
@@ -351,7 +350,7 @@
                 ctx.strokeRect(e.x-e.size/2, e.y-e.size/2, e.size, e.size);
                 if(e.isBoss) { ctx.fillStyle = "#333"; ctx.fillRect(e.x-150, e.y-140, 300, 15); ctx.fillStyle = "#f00"; ctx.fillRect(e.x-150, e.y-140, 300*(e.hp/e.maxHp), 15); }
             });
-            bullets.forEach(b => { ctx.fillStyle = b.isBit ? "#fff" : (userData.skin === '#fff' ? "#0ff" : userData.skin); ctx.fillRect(b.x-b.w/2, b.y, b.w, 25); });
+            bullets.forEach(b => { ctx.fillStyle = (userData.skin === '#fff' ? "#0ff" : userData.skin); ctx.fillRect(b.x-b.w/2, b.y, b.w, 25); });
             eBullets.forEach(eb => { ctx.fillStyle = "#f0f"; ctx.beginPath(); ctx.arc(eb.x, eb.y, 9, 0, 7); ctx.fill(); });
             particles.forEach(p => { ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, 3, 3); });
         }
