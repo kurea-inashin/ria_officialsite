@@ -17,14 +17,15 @@
         #hp-fill { height: 100%; background: linear-gradient(90deg, #ff0055, #00ffaa); width: 100%; transition: width 0.3s; }
         #gold-val { color:#ffd700; font-size:12px; margin-top:5px; }
 
-        /* Boss HP Bar (New) */
-        #boss-hud { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); width: 60%; display: none; text-align: center; }
-        #boss-hp-fill { height: 10px; background: #ff0000; width: 100%; box-shadow: 0 0 10px #ff0000; }
+        /* ボスHP */
+        #boss-hud { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); width: 60%; display: none; text-align: center; z-index: 10; }
+        #boss-hp-fill { height: 10px; background: #ff0000; width: 100%; box-shadow: 0 0 15px #ff0000; }
 
-        /* Menu */
+        /* メニュー */
         #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,15,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20; backdrop-filter: blur(8px); }
         .panel { display: none; flex-direction: column; align-items: center; width: 90%; max-height: 80vh; overflow-y: auto; }
         .active { display: flex; }
+        
         .nav-btn { padding: 12px 24px; border: 2px solid #fff; background: rgba(255,255,255,0.1); color: #fff; cursor: pointer; font-family: 'Press Start 2P'; font-size: 10px; margin: 8px; transition: 0.2s; text-align: center; }
         .nav-btn:hover { background: #fff; color: #000; box-shadow: 0 0 15px #fff; }
         .nav-btn.equipped { border-color: #0f0; color: #0f0; }
@@ -34,10 +35,14 @@
         .mode-btn { width: 120px; padding: 10px; border: 2px solid #333; background: #000; color: #444; cursor: pointer; text-align: center; font-size: 9px; }
         .mode-btn.unlocked { border-color: var(--c); color: var(--c); }
         
-        /* Messages */
-        #msg { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; opacity: 0; pointer-events: none; z-index: 100; text-align: center; white-space: nowrap; }
-        @keyframes shake { 0%, 100% { transform: translate(-50%, -50%) translateX(0); } 20%, 60% { transform: translate(-50%, -50%) translateX(-20px); } 40%, 80% { transform: translate(-50%, -50%) translateX(20px); } }
-        .shake { animation: shake 0.3s ease-in-out; }
+        /* コイン不足時のブルブル表示 */
+        #msg { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; opacity: 0; pointer-events: none; z-index: 100; text-align: center; white-space: nowrap; color: #ff0000; }
+        @keyframes shake {
+            0%, 100% { transform: translate(-50%, -50%) translateX(0); }
+            20%, 60% { transform: translate(-50%, -50%) translateX(-20px); }
+            40%, 80% { transform: translate(-50%, -50%) translateX(20px); }
+        }
+        .shake-active { animation: shake 0.3s ease-in-out; }
 
         #copyright { position: absolute; bottom: 15px; width: 100%; text-align: center; font-size: 9px; color: #666; pointer-events: none; }
     </style>
@@ -52,8 +57,8 @@
     </div>
 
     <div id="boss-hud">
-        <div style="font-size:10px; color:#ff0000; margin-bottom:5px;">BOSS IDENTIFIED</div>
-        <div class="bar-container" style="width:100%; height:10px;"><div id="boss-hp-fill"></div></div>
+        <div style="font-size:10px; color:#ff0000; margin-bottom:5px;">WARNING: BOSS IDENTIFIED</div>
+        <div class="bar-container" style="width:100%; height:10px; border-color:#ff0000;"><div id="boss-hp-fill"></div></div>
     </div>
 
     <div id="overlay">
@@ -63,25 +68,30 @@
             <button class="nav-btn" onclick="openPanel('shop')">SKINS & SHOP</button>
             <button class="nav-btn" onclick="openPanel('how-to')">MISSION CONTROL</button>
         </div>
+
         <div id="stage-select" class="panel">
-            <h2 style="color:#00ffff; font-size:14px;">SELECT MISSION</h2>
+            <h2 style="color:#00ffff; font-size:14px;">SELECT DESTINATION</h2>
             <div class="mode-grid" id="grid"></div>
             <button class="nav-btn" style="margin-top:20px;" onclick="backToTitle()">BACK</button>
         </div>
+
         <div id="shop" class="panel">
             <h2 id="shop-gold" style="color:#ffd700; font-size:16px;"></h2>
-            <div class="shop-grid" id="shop-list"></div>
+            <div class="shop-grid" id="shop-items"></div>
             <button class="nav-btn" style="margin-top:20px;" onclick="backToTitle()">BACK</button>
         </div>
-        <div id="how-to" class="panel"><div class="info-box" style="padding:20px; border:1px solid #333; font-family:'Noto Sans JP'; font-size:12px; line-height:1.8;">
-            <h3 style="color:#0ff; text-align:center;">■ MISSION CONTROL ■</h3>
-            <p>・<b>移動:</b> マウス追従 / <b>攻撃:</b> 左クリック長押し</p>
-            <p>・<b>ボス:</b> スコアが一定に達すると警告(WARNING)と共に登場！</p>
-            <p>・<b>全制覇:</b> 9路線クリアで中央線(ST=CO)解禁！</p>
-        </div><button class="nav-btn" style="margin-top:20px;" onclick="backToTitle()">BACK</button></div>
+
+        <div id="how-to" class="panel">
+            <div style="padding:20px; border:1px solid #333; font-family:'Noto Sans JP'; font-size:12px; line-height:1.8;">
+                <h3 style="color:#0ff; text-align:center;">■ MISSION CONTROL ■</h3>
+                <p>・<b>移動:</b> マウス追従 / <b>攻撃:</b> 左クリック</p>
+                <p>・<b>全路線制覇:</b> 9ステージクリアで中央線(ST=CO)解禁</p>
+            </div>
+            <button class="nav-btn" style="margin-top:20px;" onclick="backToTitle()">BACK</button>
+        </div>
     </div>
 
-    <div id="msg"></div>
+    <div id="msg">NOT ENOUGH GOLD!</div>
     <div id="copyright">© 2026 MINAMI PROJECT - BURST FINALE EXTENDED</div>
     <canvas id="game"></canvas>
 
@@ -96,7 +106,7 @@
         let isDown = false, currentMode = null, bossMode = false;
 
         const NORMAL_STAGES = ['SB', 'KT', 'SK', 'KY', 'PK', 'JB', 'S1', 'S2', 'S3'];
-        let userData = JSON.parse(localStorage.getItem('minami_2026_v11')) || {
+        let userData = JSON.parse(localStorage.getItem('minami_2026_orig')) || {
             gold: 0, atk: 2, unlocked: [...NORMAL_STAGES], cleared: [], 
             skin: '#ffffff', shipType: 'STANDARD', weapon: 'NORMAL'
         };
@@ -114,13 +124,13 @@
             'CO': { name: 'ST=CO', color: '#ff6600', diff: 50, bossHp: 100000, score1: 50000, secret: true }
         };
 
-        function save() { localStorage.setItem('minami_2026_v11', JSON.stringify(userData)); }
+        function save() { localStorage.setItem('minami_2026_orig', JSON.stringify(userData)); }
 
-        function showMessage(text, color, isError = false) {
+        function showCoinError() {
             const m = document.getElementById('msg');
-            m.innerText = text; m.style.color = color; m.style.opacity = 1;
-            if(isError) { m.classList.add('shake'); setTimeout(()=>m.classList.remove('shake'), 300); }
-            setTimeout(() => { m.style.opacity = 0; }, 1500);
+            m.style.opacity = 1;
+            m.classList.add('shake-active');
+            setTimeout(() => { m.style.opacity = 0; m.classList.remove('shake-active'); }, 1000);
         }
 
         function openPanel(id) {
@@ -133,33 +143,30 @@
 
         function updateShopUI() {
             document.getElementById('shop-gold').innerText = `GOLD: ${userData.gold}`;
-            const list = document.getElementById('shop-list'); list.innerHTML = '';
+            const shop = document.getElementById('shop-items'); shop.innerHTML = '';
             const items = [
-                {n:'KY-RED', c:'#ff4444', col:'#ff0000', s:'SPEEDER', p:1500},
-                {n:'KT-BLUE', c:'#4444ff', col:'#0088ff', s:'TWIN', p:1500},
-                {n:'SB-YELLOW', c:'#ffff44', col:'#ffff00', s:'HEAVY', p:1500},
-                {n:'SK-GREEN', c:'#44ff44', col:'#00ff44', s:'SPEEDER', p:1500},
-                {n:'WIDE SHOT', c:'#0ff', w:'WIDE', p:5000}
+                {id:'KY', n:'KY-RED', c:'#ff0000', s:'SPEEDER', p:1500},
+                {id:'KT', n:'KT-BLUE', c:'#0088ff', s:'TWIN', p:1500},
+                {id:'SB', n:'SB-YELLOW', c:'#ffff00', s:'HEAVY', p:1500},
+                {id:'SK', n:'SK-GREEN', c:'#00ff44', s:'SPEEDER', p:1500},
+                {id:'WD', n:'WIDE SHOT', w:'WIDE', p:5000}
             ];
-            if(userData.cleared.length >= 9) items.push({n:'CENTRAL-ORE', c:'#ff8800', col:'#ff6600', s:'ULTIMATE', p:10000});
+            if(userData.cleared.length >= 9) items.push({id:'CO', n:'CENTRAL-ORE', c:'#ff6600', s:'ULTIMATE', p:10000});
 
             items.forEach(i => {
                 const btn = document.createElement('button');
-                btn.className = 'nav-btn'; btn.style.color = i.c;
+                btn.className = `nav-btn ${ (userData.skin===i.c || userData.weapon===i.w) ? 'equipped' : '' }`;
+                btn.style.color = i.c || '#0ff';
                 btn.innerText = `${i.n} (${i.p}G)`;
-                if(userData.skin === i.col || userData.weapon === i.w) btn.classList.add('equipped');
-                btn.onclick = () => i.w ? buyWeapon(i.w, i.p) : buySkin(i.n, i.col, i.s, i.p);
-                list.appendChild(btn);
+                btn.onclick = () => {
+                    if(userData.gold >= i.p) {
+                        userData.gold -= i.p;
+                        if(i.w) userData.weapon = i.w; else { userData.skin = i.c; userData.shipType = i.s; }
+                        save(); updateShopUI();
+                    } else { showCoinError(); }
+                };
+                shop.appendChild(btn);
             });
-        }
-
-        function buySkin(n, col, s, p) {
-            if(userData.gold >= p) { userData.gold -= p; userData.skin = col; userData.shipType = s; save(); updateShopUI(); showMessage("EQUIPPED!", col); }
-            else showMessage("NOT ENOUGH GOLD!", "#f00", true);
-        }
-        function buyWeapon(w, p) {
-            if(userData.gold >= p) { userData.gold -= p; userData.weapon = w; save(); updateShopUI(); showMessage("WIDE READY!", "#0ff"); }
-            else showMessage("NOT ENOUGH GOLD!", "#f00", true);
         }
 
         function renderStages() {
@@ -170,7 +177,7 @@
                 const btn = document.createElement('div');
                 btn.className = `mode-btn unlocked ${userData.cleared.includes(id) ? 'cleared' : ''}`;
                 btn.style.setProperty('--c', STAGES[id].color);
-                btn.innerHTML = id === 'CO' ? "<b>ST=CO</b>" : STAGES[id].name;
+                btn.innerText = STAGES[id].name;
                 btn.onclick = () => startGame(id);
                 grid.appendChild(btn);
             });
@@ -201,7 +208,6 @@
                 enemies.push({ x: canvas.width/2, y: -150, hp: currentMode.bossHp, maxHp: currentMode.bossHp, size: 120, vy: 1, isBoss: true });
                 document.getElementById('boss-hud').style.display = 'block';
             }
-
             bullets.forEach((b, i) => {
                 b.x += b.vx; b.y += b.vy;
                 enemies.forEach((e, ei) => {
@@ -209,8 +215,8 @@
                         e.hp -= userData.atk; bullets.splice(i, 1);
                         if(e.isBoss) document.getElementById('boss-hp-fill').style.width = (e.hp/e.maxHp)*100 + "%";
                         if(e.hp <= 0) {
-                            userData.gold += e.isBoss ? 5000 : 20;
-                            if(e.isBoss) { if(!userData.cleared.includes(currentMode.id)) userData.cleared.push(currentMode.id); save(); alert("MISSION SUCCESS!"); location.reload(); }
+                            userData.gold += e.isBoss ? 5000 : 25;
+                            if(e.isBoss) { if(!userData.cleared.includes(currentMode.id)) userData.cleared.push(currentMode.id); save(); alert("MISSION CLEAR!"); location.reload(); }
                             enemies.splice(ei, 1); score += 100;
                         }
                     }
@@ -221,7 +227,7 @@
                 if(Math.random() < 0.05 * currentMode.diff) eBullets.push({x: e.x, y: e.y, vy: 5});
             });
             eBullets.forEach((eb, i) => {
-                eb.y += eb.vy; if(Math.hypot(eb.x-player.x, eb.y-player.y) < 15) { hp -= 10; eBullets.splice(i, 1); if(hp <= 0) { alert("FAILED"); location.reload(); } }
+                eb.y += eb.vy; if(Math.hypot(eb.x-player.x, eb.y-player.y) < 15) { hp -= 10; eBullets.splice(i, 1); if(hp <= 0) { alert("GAME OVER"); location.reload(); } }
             });
             document.getElementById('hp-fill').style.width = hp + "%";
             document.getElementById('gold-val').innerText = `GOLD: ${userData.gold}`;
@@ -230,11 +236,10 @@
 
         function draw() {
             ctx.fillStyle = "rgba(0,0,20,0.3)"; ctx.fillRect(0,0,canvas.width, canvas.height);
-            // Player Draw
+            // 自機描画
             ctx.save(); ctx.translate(player.x, player.y); ctx.fillStyle = userData.skin; ctx.beginPath();
             if(userData.shipType==='SPEEDER') { ctx.moveTo(0,-22); ctx.lineTo(12,18); ctx.lineTo(0,10); ctx.lineTo(-12,18); }
             else if(userData.shipType==='HEAVY') { ctx.moveTo(-18,-10); ctx.lineTo(18,-10); ctx.lineTo(22,18); ctx.lineTo(-22,18); }
-            else if(userData.shipType==='ULTIMATE') { ctx.arc(0,0,20,0,7); ctx.moveTo(-25,10); ctx.lineTo(0,-35); ctx.lineTo(25,10); }
             else { ctx.moveTo(0,-20); ctx.lineTo(15,15); ctx.lineTo(-15,15); }
             ctx.fill(); ctx.restore();
 
@@ -242,13 +247,10 @@
             ctx.fillStyle="#f00"; eBullets.forEach(eb=>{ctx.beginPath(); ctx.arc(eb.x, eb.y, 5, 0, 7); ctx.fill();});
             enemies.forEach(e => { ctx.strokeStyle = e.isBoss ? "#f00" : currentMode.color; ctx.lineWidth = 3; ctx.strokeRect(e.x-e.size/2, e.y-e.size/2, e.size, e.size); });
 
-            // Warning Effect
             if(bossMode && Math.floor(frame/20)%2===0) {
-                ctx.fillStyle = "rgba(255,0,0,0.2)"; ctx.fillRect(0,0,canvas.width, canvas.height);
-                ctx.fillStyle = "#ff0000"; ctx.font = "20px 'Press Start 2P'"; ctx.textAlign="center";
-                ctx.fillText("WARNING", canvas.width/2, 100);
+                ctx.fillStyle = "rgba(255,0,0,0.1)"; ctx.fillRect(0,0,canvas.width, canvas.height);
+                ctx.fillStyle = "#f00"; ctx.textAlign="center"; ctx.font="20px 'Press Start 2P'"; ctx.fillText("WARNING", canvas.width/2, 100);
             }
-            // Start Effect
             if(startAnim > 0) {
                 ctx.fillStyle = currentMode.color; ctx.globalAlpha = 0.5; ctx.fillRect(0, canvas.height/2-40, canvas.width, 80); ctx.globalAlpha = 1;
                 ctx.fillStyle="#fff"; ctx.font="20px 'Press Start 2P'"; ctx.textAlign="center"; ctx.fillText("MISSION START", canvas.width/2, canvas.height/2+10);
