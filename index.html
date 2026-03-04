@@ -15,37 +15,31 @@
         .bar-label { font-size: 8px; margin-top: 8px; color: #aaa; }
         .bar-container { width: 200px; height: 12px; background: rgba(255,255,255,0.1); border: 2px solid #fff; border-radius: 6px; overflow: hidden; margin-bottom: 5px; }
         #hp-fill { height: 100%; background: linear-gradient(90deg, #ff0055, #00ffaa); width: 100%; transition: width 0.3s; }
-        #gauge-fill { height: 100%; background: #00ccff; width: 0%; }
-        #bomb-stock { color: #ffff00; font-size: 12px; }
+        #gold-val { color:#ffd700; font-size:12px; margin-top:5px; }
 
-        /* Menu System */
+        /* Boss HP Bar (New) */
+        #boss-hud { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); width: 60%; display: none; text-align: center; }
+        #boss-hp-fill { height: 10px; background: #ff0000; width: 100%; box-shadow: 0 0 10px #ff0000; }
+
+        /* Menu */
         #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,15,0.9); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20; backdrop-filter: blur(8px); }
         .panel { display: none; flex-direction: column; align-items: center; width: 90%; max-height: 80vh; overflow-y: auto; }
         .active { display: flex; }
         .nav-btn { padding: 12px 24px; border: 2px solid #fff; background: rgba(255,255,255,0.1); color: #fff; cursor: pointer; font-family: 'Press Start 2P'; font-size: 10px; margin: 8px; transition: 0.2s; text-align: center; }
         .nav-btn:hover { background: #fff; color: #000; box-shadow: 0 0 15px #fff; }
-        .nav-btn.equipped { border-color: #0f0; color: #0f0; background: rgba(0,255,0,0.1); }
+        .nav-btn.equipped { border-color: #0f0; color: #0f0; }
 
-        /* Grids */
         .mode-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
         .shop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; max-width: 700px; }
         .mode-btn { width: 120px; padding: 10px; border: 2px solid #333; background: #000; color: #444; cursor: pointer; text-align: center; font-size: 9px; }
         .mode-btn.unlocked { border-color: var(--c); color: var(--c); }
-        .mode-btn.unlocked:hover { background: var(--c); color: #000; }
         
-        /* 警告メッセージアニメーション */
-        @keyframes shake {
-            0% { transform: translate(-50%, -50%) translateX(0); }
-            25% { transform: translate(-50%, -50%) translateX(-10px); }
-            50% { transform: translate(-50%, -50%) translateX(10px); }
-            75% { transform: translate(-50%, -50%) translateX(-10px); }
-            100% { transform: translate(-50%, -50%) translateX(0); }
-        }
-        .error-shake { animation: shake 0.2s ease-in-out 3; }
-
+        /* Messages */
         #msg { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 24px; opacity: 0; pointer-events: none; z-index: 100; text-align: center; white-space: nowrap; }
+        @keyframes shake { 0%, 100% { transform: translate(-50%, -50%) translateX(0); } 20%, 60% { transform: translate(-50%, -50%) translateX(-20px); } 40%, 80% { transform: translate(-50%, -50%) translateX(20px); } }
+        .shake { animation: shake 0.3s ease-in-out; }
 
-        #copyright { position: absolute; bottom: 10px; width: 100%; text-align: center; font-size: 8px; color: #555; pointer-events: none; }
+        #copyright { position: absolute; bottom: 15px; width: 100%; text-align: center; font-size: 9px; color: #666; pointer-events: none; }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -54,40 +48,37 @@
         <div id="score-val">SCORE: 000000</div>
         <div class="bar-label">ARMOR (HP)</div>
         <div class="bar-container"><div id="hp-fill"></div></div>
-        <div class="bar-label">BURST GAUGE</div>
-        <div class="bar-container"><div id="gauge-fill"></div></div>
-        <div id="bomb-stock">BOMBS: </div>
-        <div id="gold-val" style="color:#ffd700; font-size:12px; margin-top:5px;">GOLD: 0</div>
+        <div id="gold-val">GOLD: 0</div>
+    </div>
+
+    <div id="boss-hud">
+        <div style="font-size:10px; color:#ff0000; margin-bottom:5px;">BOSS IDENTIFIED</div>
+        <div class="bar-container" style="width:100%; height:10px;"><div id="boss-hp-fill"></div></div>
     </div>
 
     <div id="overlay">
         <h1 style="font-size:24px; margin-bottom:30px; text-shadow: 0 0 20px #0088ff;">MINAMI PROJECT 2026</h1>
-        
         <div id="main-nav">
             <button class="nav-btn" onclick="openPanel('stage-select')">SELECT MISSION</button>
-            <button class="nav-btn" onclick="openPanel('shop')">SKINS & TECH SHOP</button>
+            <button class="nav-btn" onclick="openPanel('shop')">SKINS & SHOP</button>
+            <button class="nav-btn" onclick="openPanel('how-to')">MISSION CONTROL</button>
         </div>
-
         <div id="stage-select" class="panel">
-            <h2 style="color:#00ffff; font-size:14px;">SELECT DESTINATION</h2>
+            <h2 style="color:#00ffff; font-size:14px;">SELECT MISSION</h2>
             <div class="mode-grid" id="grid"></div>
             <button class="nav-btn" style="margin-top:20px;" onclick="backToTitle()">BACK</button>
         </div>
-
         <div id="shop" class="panel">
             <h2 id="shop-gold" style="color:#ffd700; font-size:16px;"></h2>
-            <div class="shop-grid" id="shop-items">
-                <button id="btn-KY" class="nav-btn" style="color:#ff4444;" onclick="buySkin('KY-RED', '#ff0000', 'SPEEDER', 1500)">KY-RED (1500G)</button>
-                <button id="btn-KT" class="nav-btn" style="color:#4444ff;" onclick="buySkin('KT-BLUE', '#0088ff', 'TWIN', 1500)">KT-BLUE (1500G)</button>
-                <button id="btn-SB" class="nav-btn" style="color:#ffff44;" onclick="buySkin('SB-YELLOW', '#ffff00', 'HEAVY', 1500)">SB-YELLOW (1500G)</button>
-                <button id="btn-SK" class="nav-btn" style="color:#44ff44;" onclick="buySkin('SK-GREEN', '#00ff44', 'SPEEDER', 1500)">SK-GREEN (1500G)</button>
-                <button id="btn-CO" class="nav-btn" style="color:#ff8800; display:none;" onclick="buySkin('CENTRAL-ORE', '#ff6600', 'ULTIMATE', 10000)">CENTRAL-ORE (10000G)</button>
-                
-                <button id="btn-WIDE" class="nav-btn" onclick="buyWeapon('WIDE', 5000)">WIDE SHOT (5000G)</button>
-                <button id="btn-STAB" class="nav-btn" onclick="buyItem('stabilizer', 3000)">STABILIZER (3000G)</button>
-            </div>
+            <div class="shop-grid" id="shop-list"></div>
             <button class="nav-btn" style="margin-top:20px;" onclick="backToTitle()">BACK</button>
         </div>
+        <div id="how-to" class="panel"><div class="info-box" style="padding:20px; border:1px solid #333; font-family:'Noto Sans JP'; font-size:12px; line-height:1.8;">
+            <h3 style="color:#0ff; text-align:center;">■ MISSION CONTROL ■</h3>
+            <p>・<b>移動:</b> マウス追従 / <b>攻撃:</b> 左クリック長押し</p>
+            <p>・<b>ボス:</b> スコアが一定に達すると警告(WARNING)と共に登場！</p>
+            <p>・<b>全制覇:</b> 9路線クリアで中央線(ST=CO)解禁！</p>
+        </div><button class="nav-btn" style="margin-top:20px;" onclick="backToTitle()">BACK</button></div>
     </div>
 
     <div id="msg"></div>
@@ -99,19 +90,15 @@
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth; canvas.height = window.innerHeight;
 
-        let gameActive = false, score = 0, hp = 100, frame = 0, burstGauge = 0;
-        let bullets = [], eBullets = [], enemies = [], particles = [], bombActive = 0;
+        let gameActive = false, score = 0, hp = 100, frame = 0, startAnim = 0;
+        let bullets = [], eBullets = [], enemies = [], particles = [];
         let player = { x: canvas.width/2, y: canvas.height/2, radius: 15 };
-        let isDown = false, currentMode = null;
+        let isDown = false, currentMode = null, bossMode = false;
 
         const NORMAL_STAGES = ['SB', 'KT', 'SK', 'KY', 'PK', 'JB', 'S1', 'S2', 'S3'];
-        
-        // データの読み込み
-        let userData = JSON.parse(localStorage.getItem('minami_2026_final')) || {
-            gold: 0, atk: 2, bombs: 2, 
-            unlocked: [...NORMAL_STAGES], cleared: [], 
-            skin: '#ffffff', shipType: 'STANDARD', weapon: 'NORMAL',
-            inventory: { WIDE: false, LASER: false, stabilizer: false }
+        let userData = JSON.parse(localStorage.getItem('minami_2026_v11')) || {
+            gold: 0, atk: 2, unlocked: [...NORMAL_STAGES], cleared: [], 
+            skin: '#ffffff', shipType: 'STANDARD', weapon: 'NORMAL'
         };
 
         const STAGES = {
@@ -127,20 +114,12 @@
             'CO': { name: 'ST=CO', color: '#ff6600', diff: 50, bossHp: 100000, score1: 50000, secret: true }
         };
 
-        function save() { localStorage.setItem('minami_2026_final', JSON.stringify(userData)); }
+        function save() { localStorage.setItem('minami_2026_v11', JSON.stringify(userData)); }
 
-        // メッセージ表示 (コイン不足含む)
         function showMessage(text, color, isError = false) {
             const m = document.getElementById('msg');
-            m.innerText = text;
-            m.style.color = color;
-            m.style.opacity = 1;
-            m.classList.remove('error-shake');
-            
-            if(isError) {
-                m.classList.add('error-shake');
-            }
-
+            m.innerText = text; m.style.color = color; m.style.opacity = 1;
+            if(isError) { m.classList.add('shake'); setTimeout(()=>m.classList.remove('shake'), 300); }
             setTimeout(() => { m.style.opacity = 0; }, 1500);
         }
 
@@ -153,76 +132,45 @@
         }
 
         function updateShopUI() {
-            document.getElementById('shop-gold').innerText = `TOTAL GOLD: ${userData.gold}`;
-            if(userData.cleared.length >= 9) document.getElementById('btn-CO').style.display = 'block';
-            
-            // 装備中表示のリセット
-            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('equipped'));
-            
-            // 現在の装備をハイライト
-            if(userData.skin === '#ff0000') document.getElementById('btn-KY').classList.add('equipped');
-            if(userData.skin === '#0088ff') document.getElementById('btn-KT').classList.add('equipped');
-            if(userData.skin === '#ffff00') document.getElementById('btn-SB').classList.add('equipped');
-            if(userData.skin === '#00ff44') document.getElementById('btn-SK').classList.add('equipped');
-            if(userData.skin === '#ff6600') document.getElementById('btn-CO').classList.add('equipped');
-            if(userData.weapon === 'WIDE') document.getElementById('btn-WIDE').classList.add('equipped');
-            if(userData.inventory.stabilizer) document.getElementById('btn-STAB').classList.add('equipped');
+            document.getElementById('shop-gold').innerText = `GOLD: ${userData.gold}`;
+            const list = document.getElementById('shop-list'); list.innerHTML = '';
+            const items = [
+                {n:'KY-RED', c:'#ff4444', col:'#ff0000', s:'SPEEDER', p:1500},
+                {n:'KT-BLUE', c:'#4444ff', col:'#0088ff', s:'TWIN', p:1500},
+                {n:'SB-YELLOW', c:'#ffff44', col:'#ffff00', s:'HEAVY', p:1500},
+                {n:'SK-GREEN', c:'#44ff44', col:'#00ff44', s:'SPEEDER', p:1500},
+                {n:'WIDE SHOT', c:'#0ff', w:'WIDE', p:5000}
+            ];
+            if(userData.cleared.length >= 9) items.push({n:'CENTRAL-ORE', c:'#ff8800', col:'#ff6600', s:'ULTIMATE', p:10000});
+
+            items.forEach(i => {
+                const btn = document.createElement('button');
+                btn.className = 'nav-btn'; btn.style.color = i.c;
+                btn.innerText = `${i.n} (${i.p}G)`;
+                if(userData.skin === i.col || userData.weapon === i.w) btn.classList.add('equipped');
+                btn.onclick = () => i.w ? buyWeapon(i.w, i.p) : buySkin(i.n, i.col, i.s, i.p);
+                list.appendChild(btn);
+            });
         }
 
-        function backToTitle() {
-            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-            document.getElementById('main-nav').style.display = 'flex';
+        function buySkin(n, col, s, p) {
+            if(userData.gold >= p) { userData.gold -= p; userData.skin = col; userData.shipType = s; save(); updateShopUI(); showMessage("EQUIPPED!", col); }
+            else showMessage("NOT ENOUGH GOLD!", "#f00", true);
         }
-
-        function buySkin(name, color, shape, cost) {
-            if(userData.gold >= cost) {
-                userData.gold -= cost;
-                userData.skin = color;
-                userData.shipType = shape;
-                save();
-                updateShopUI();
-                showMessage(`EQUIPPED: ${name}`, color);
-            } else {
-                showMessage("NOT ENOUGH GOLD!", "#ff0000", true);
-            }
-        }
-
-        function buyWeapon(w, cost) {
-            if(userData.gold >= cost) {
-                userData.gold -= cost;
-                userData.weapon = w;
-                userData.inventory[w] = true;
-                save();
-                updateShopUI();
-                showMessage(`${w} SHOT READY!`, "#00ffff");
-            } else {
-                showMessage("NOT ENOUGH GOLD!", "#ff0000", true);
-            }
-        }
-
-        function buyItem(item, cost) {
-            if(userData.gold >= cost) {
-                userData.gold -= cost;
-                userData.inventory[item] = true;
-                save();
-                updateShopUI();
-                showMessage(`${item.toUpperCase()} ACTIVE!`, "#00ff00");
-            } else {
-                showMessage("NOT ENOUGH GOLD!", "#ff0000", true);
-            }
+        function buyWeapon(w, p) {
+            if(userData.gold >= p) { userData.gold -= p; userData.weapon = w; save(); updateShopUI(); showMessage("WIDE READY!", "#0ff"); }
+            else showMessage("NOT ENOUGH GOLD!", "#f00", true);
         }
 
         function renderStages() {
             const grid = document.getElementById('grid'); grid.innerHTML = '';
-            if(NORMAL_STAGES.every(id => userData.cleared.includes(id)) && !userData.unlocked.includes('CO')) {
-                userData.unlocked.push('CO');
-            }
+            if(NORMAL_STAGES.every(id => userData.cleared.includes(id)) && !userData.unlocked.includes('CO')) userData.unlocked.push('CO');
             Object.keys(STAGES).forEach(id => {
                 if(STAGES[id].secret && !userData.unlocked.includes(id)) return;
                 const btn = document.createElement('div');
                 btn.className = `mode-btn unlocked ${userData.cleared.includes(id) ? 'cleared' : ''}`;
                 btn.style.setProperty('--c', STAGES[id].color);
-                btn.innerHTML = id === 'CO' ? "<b>CENTRAL ORE</b>" : STAGES[id].name;
+                btn.innerHTML = id === 'CO' ? "<b>ST=CO</b>" : STAGES[id].name;
                 btn.onclick = () => startGame(id);
                 grid.appendChild(btn);
             });
@@ -232,56 +180,26 @@
             currentMode = { ...STAGES[id], id: id };
             document.getElementById('overlay').style.display = 'none';
             document.getElementById('hud').style.display = 'block';
-            gameActive = true; score = 0; hp = 100; burstGauge = 0;
-            enemies = []; bullets = []; eBullets = []; particles = [];
+            gameActive = true; score = 0; hp = 100; frame = 0; startAnim = 120; bossMode = false;
+            enemies = []; bullets = []; eBullets = [];
+            document.getElementById('boss-hud').style.display = 'none';
             loop();
         }
 
-        function drawPlayer() {
-            ctx.save();
-            ctx.translate(player.x, player.y);
-            ctx.fillStyle = userData.skin;
-            ctx.shadowBlur = 15; ctx.shadowColor = userData.skin;
-            ctx.beginPath();
-            
-            switch(userData.shipType) {
-                case 'SPEEDER':
-                    ctx.moveTo(0, -22); ctx.lineTo(12, 18); ctx.lineTo(0, 10); ctx.lineTo(-12, 18);
-                    break;
-                case 'HEAVY':
-                    ctx.moveTo(-18, -10); ctx.lineTo(18, -10); ctx.lineTo(22, 18); ctx.lineTo(-22, 18);
-                    break;
-                case 'TWIN':
-                    ctx.fillRect(-20, -15, 8, 30); ctx.fillRect(12, -15, 8, 30); ctx.fillRect(-10, 5, 20, 5);
-                    break;
-                case 'ULTIMATE':
-                    ctx.arc(0, 0, 20, 0, Math.PI*2); ctx.moveTo(-25, 10); ctx.lineTo(0, -35); ctx.lineTo(25, 10);
-                    break;
-                default:
-                    ctx.moveTo(0, -20); ctx.lineTo(15, 15); ctx.lineTo(-15, 15);
-            }
-            ctx.closePath(); ctx.fill();
-            ctx.restore();
-        }
+        function backToTitle() { document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active')); document.getElementById('main-nav').style.display='flex'; }
 
         function update() {
+            if(startAnim > 0) { startAnim--; return; }
             frame++;
             if(isDown && frame % 6 === 0) {
-                if(userData.weapon === 'WIDE') {
-                    bullets.push({x: player.x, y: player.y, vx: -3, vy: -12});
-                    bullets.push({x: player.x, y: player.y, vx: 0, vy: -15});
-                    bullets.push({x: player.x, y: player.y, vx: 3, vy: -12});
-                } else {
-                    bullets.push({x: player.x, y: player.y, vx: 0, vy: -15});
-                }
+                if(userData.weapon === 'WIDE') { [-3, 0, 3].forEach(vx => bullets.push({x: player.x, y: player.y, vx: vx, vy: -15})); }
+                else bullets.push({x: player.x, y: player.y, vx: 0, vy: -15});
             }
-
-            if(frame % 40 === 0) {
-                enemies.push({ x: Math.random()*canvas.width, y: -50, hp: 10 * currentMode.diff, size: 30, vy: 3 });
-            }
-
-            if(score >= currentMode.score1 && !enemies.some(e => e.isBoss)) {
-                enemies.push({ x: canvas.width/2, y: -100, hp: currentMode.bossHp, size: 100, vy: 1, isBoss: true });
+            if(!bossMode && frame % 40 === 0) enemies.push({ x: Math.random()*canvas.width, y: -50, hp: 10 * currentMode.diff, size: 30, vy: 3 });
+            if(!bossMode && score >= currentMode.score1) {
+                bossMode = true;
+                enemies.push({ x: canvas.width/2, y: -150, hp: currentMode.bossHp, maxHp: currentMode.bossHp, size: 120, vy: 1, isBoss: true });
+                document.getElementById('boss-hud').style.display = 'block';
             }
 
             bullets.forEach((b, i) => {
@@ -289,32 +207,22 @@
                 enemies.forEach((e, ei) => {
                     if(Math.hypot(b.x-e.x, b.y-e.y) < e.size) {
                         e.hp -= userData.atk; bullets.splice(i, 1);
+                        if(e.isBoss) document.getElementById('boss-hp-fill').style.width = (e.hp/e.maxHp)*100 + "%";
                         if(e.hp <= 0) {
                             userData.gold += e.isBoss ? 5000 : 20;
-                            if(e.isBoss) {
-                                if(!userData.cleared.includes(currentMode.id)) userData.cleared.push(currentMode.id);
-                                save(); alert("MISSION CLEAR!"); location.reload();
-                            }
-                            enemies.splice(ei, 1);
-                            score += 100;
+                            if(e.isBoss) { if(!userData.cleared.includes(currentMode.id)) userData.cleared.push(currentMode.id); save(); alert("MISSION SUCCESS!"); location.reload(); }
+                            enemies.splice(ei, 1); score += 100;
                         }
                     }
                 });
             });
-
             enemies.forEach(e => {
                 e.y += e.vy; if(e.isBoss && e.y > 150) e.vy = 0;
                 if(Math.random() < 0.05 * currentMode.diff) eBullets.push({x: e.x, y: e.y, vy: 5});
             });
-
             eBullets.forEach((eb, i) => {
-                eb.y += eb.vy;
-                if(Math.hypot(eb.x-player.x, eb.y-player.y) < 15) {
-                    hp -= 10; eBullets.splice(i, 1);
-                    if(hp <= 0) { alert("GAME OVER"); location.reload(); }
-                }
+                eb.y += eb.vy; if(Math.hypot(eb.x-player.x, eb.y-player.y) < 15) { hp -= 10; eBullets.splice(i, 1); if(hp <= 0) { alert("FAILED"); location.reload(); } }
             });
-
             document.getElementById('hp-fill').style.width = hp + "%";
             document.getElementById('gold-val').innerText = `GOLD: ${userData.gold}`;
             document.getElementById('score-val').innerText = `SCORE: ${score.toString().padStart(6, '0')}`;
@@ -322,21 +230,34 @@
 
         function draw() {
             ctx.fillStyle = "rgba(0,0,20,0.3)"; ctx.fillRect(0,0,canvas.width, canvas.height);
-            drawPlayer();
-            ctx.fillStyle = "#0ff"; bullets.forEach(b => ctx.fillRect(b.x-2, b.y, 4, 10));
-            ctx.fillStyle = "#f00"; eBullets.forEach(eb => ctx.beginPath() || ctx.arc(eb.x, eb.y, 5, 0, 7) || ctx.fill());
-            enemies.forEach(e => {
-                ctx.strokeStyle = currentMode.color; ctx.lineWidth = 3;
-                ctx.strokeRect(e.x-e.size/2, e.y-e.size/2, e.size, e.size);
-            });
+            // Player Draw
+            ctx.save(); ctx.translate(player.x, player.y); ctx.fillStyle = userData.skin; ctx.beginPath();
+            if(userData.shipType==='SPEEDER') { ctx.moveTo(0,-22); ctx.lineTo(12,18); ctx.lineTo(0,10); ctx.lineTo(-12,18); }
+            else if(userData.shipType==='HEAVY') { ctx.moveTo(-18,-10); ctx.lineTo(18,-10); ctx.lineTo(22,18); ctx.lineTo(-22,18); }
+            else if(userData.shipType==='ULTIMATE') { ctx.arc(0,0,20,0,7); ctx.moveTo(-25,10); ctx.lineTo(0,-35); ctx.lineTo(25,10); }
+            else { ctx.moveTo(0,-20); ctx.lineTo(15,15); ctx.lineTo(-15,15); }
+            ctx.fill(); ctx.restore();
+
+            ctx.fillStyle="#0ff"; bullets.forEach(b=>ctx.fillRect(b.x-2, b.y, 4, 10));
+            ctx.fillStyle="#f00"; eBullets.forEach(eb=>{ctx.beginPath(); ctx.arc(eb.x, eb.y, 5, 0, 7); ctx.fill();});
+            enemies.forEach(e => { ctx.strokeStyle = e.isBoss ? "#f00" : currentMode.color; ctx.lineWidth = 3; ctx.strokeRect(e.x-e.size/2, e.y-e.size/2, e.size, e.size); });
+
+            // Warning Effect
+            if(bossMode && Math.floor(frame/20)%2===0) {
+                ctx.fillStyle = "rgba(255,0,0,0.2)"; ctx.fillRect(0,0,canvas.width, canvas.height);
+                ctx.fillStyle = "#ff0000"; ctx.font = "20px 'Press Start 2P'"; ctx.textAlign="center";
+                ctx.fillText("WARNING", canvas.width/2, 100);
+            }
+            // Start Effect
+            if(startAnim > 0) {
+                ctx.fillStyle = currentMode.color; ctx.globalAlpha = 0.5; ctx.fillRect(0, canvas.height/2-40, canvas.width, 80); ctx.globalAlpha = 1;
+                ctx.fillStyle="#fff"; ctx.font="20px 'Press Start 2P'"; ctx.textAlign="center"; ctx.fillText("MISSION START", canvas.width/2, canvas.height/2+10);
+            }
         }
 
         function loop() { if(!gameActive) return; update(); draw(); requestAnimationFrame(loop); }
-
         window.onmousemove = e => { player.x = e.clientX; player.y = e.clientY; };
-        window.onmousedown = () => isDown = true;
-        window.onmouseup = () => isDown = false;
-
+        window.onmousedown = () => isDown = true; window.onmouseup = () => isDown = false;
     </script>
 </body>
 </html>
