@@ -70,7 +70,7 @@
             <h2>HOW TO PLAY</h2>
             <div class="info-text">
                 ・<b>移動</b>: マウスカーソルに追従します。<br>
-                ・<b>攻撃</b>: 左クリック長押しでメイン射撃を行います。<br>
+                ・<b>攻撃</b>: 左クリック長押しで射撃を行います。<br>
                 ・<b>ボム</b>: 右クリック または スペースキーで発動。敵弾を消去し大ダメージを与えます。<br>
                 ・<b>バースト</b>: 敵を撃破してゲージを溜めるとボムが追加されます。<br>
                 ・<b>ギミック</b>: ステージ特有の妨害（揺れ、霧など）はショップの装備で対策可能です。
@@ -80,18 +80,14 @@
 
         <div id="garage" class="panel">
             <h2>GARAGE</h2>
-            <div style="margin-bottom:20px;">
-                <p style="font-size:10px;">WEAPON TYPE</p>
-                <button class="nav-btn" onclick="setWeapon('standard')">STANDARD</button>
-                <button class="nav-btn" onclick="setWeapon('wide')">WIDE SHOT</button>
-            </div>
             <div>
                 <p style="font-size:10px;">COLOR SKIN</p>
                 <button class="nav-btn" style="border-color:#fff" onclick="setSkin('#fff')">WHITE</button>
                 <button class="nav-btn" style="border-color:#0f0" onclick="setSkin('#0f0')">GREEN</button>
                 <button class="nav-btn" style="border-color:#0ff" onclick="setSkin('#0ff')">CYAN</button>
+                <button class="nav-btn" style="border-color:#ff0" onclick="setSkin('#ff0')">YELLOW</button>
             </div>
-            <button class="nav-btn" style="margin-top:20px;" onclick="backToMain()">BACK</button>
+            <button class="nav-btn" style="margin-top:40px;" onclick="backToMain()">BACK</button>
         </div>
 
         <div id="shop" class="panel">
@@ -129,9 +125,9 @@
         let currentMode = null;
 
         const NORMAL_STAGES = ['SB', 'KT', 'SK', 'KY', 'PK', 'JB', 'S1', 'S2', 'S3'];
-        let userData = JSON.parse(localStorage.getItem('minami_2026_v5')) || {
+        let userData = JSON.parse(localStorage.getItem('minami_2026_v6')) || {
             gold: 0, atk: 2, bombs: 1, unlocked: [...NORMAL_STAGES], cleared: [], aura: 'none',
-            skin: '#fff', weapon: 'standard', items: []
+            skin: '#fff', items: [] // 武器選択(weapon)を削除
         };
 
         const STAGES = {
@@ -152,7 +148,7 @@
             'CO': { name: 'ST=CO', color: '#ff6600', diff: 60, bossHp: 150000, score1: 300000, score2: 999999, secret: true, ultimate: true }
         };
 
-        function save() { localStorage.setItem('minami_2026_v5', JSON.stringify(userData)); }
+        function save() { localStorage.setItem('minami_2026_v6', JSON.stringify(userData)); }
 
         function openPanel(id) {
             document.getElementById('main-nav').style.display = 'none';
@@ -168,7 +164,6 @@
         }
 
         function setSkin(c) { userData.skin = c; save(); }
-        function setWeapon(w) { userData.weapon = w; save(); }
 
         function renderStages() {
             const grid = document.getElementById('grid'); grid.innerHTML = '';
@@ -248,13 +243,9 @@
             }
             if(currentMode.gimmick === 'poison' && !userData.items.includes('anti_fog') && frame % 100 === 0) hp -= 1;
 
-            // 武器分岐
+            // 自機の射撃ロジックを元のコードと完全に同一（1-way）にする
             if(isDown && frame % 5 === 0) {
-                bullets.push({ x: player.x, y: player.y - 20, p: userData.atk, vx: 0 });
-                if(userData.weapon === 'wide') {
-                    bullets.push({ x: player.x, y: player.y - 20, p: userData.atk * 0.5, vx: -4 });
-                    bullets.push({ x: player.x, y: player.y - 20, p: userData.atk * 0.5, vx: 4 });
-                }
+                bullets.push({ x: player.x, y: player.y - 20, p: userData.atk });
             }
 
             if(!enemies.some(e => e.isBoss) && frame % 35 === 0) {
@@ -265,7 +256,7 @@
             }
 
             bullets.forEach((b, i) => {
-                b.y -= 20; b.x += b.vx || 0;
+                b.y -= 20; // x方向の移動(b.vx)を削除
                 enemies.forEach((e, ei) => {
                     if(Math.hypot(b.x-e.x, b.y-e.y) < e.size) {
                         e.hp -= b.p; score += 20; bullets.splice(i, 1);
