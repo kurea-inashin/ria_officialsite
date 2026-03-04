@@ -2,200 +2,284 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>MINAMI SHOOTING GAME PROJECT 2026</title>
+    <title>MINAMI SHOOTING 2026 - Advanced Edition</title>
     <style>
-        body { background: #111; color: #fff; font-family: sans-serif; margin: 0; overflow: hidden; text-align: center; }
-        canvas { background: #000; display: block; margin: 20px auto; border: 4px solid #444; }
-        .ui-container { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); width: 800px; display: flex; justify-content: space-between; pointer-events: none; }
-        .stat { background: rgba(0,0,0,0.7); padding: 10px; border-radius: 5px; border: 1px solid #fff; }
-        #menu, #shop, #stage-select { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(20,20,20,0.95); padding: 30px; border: 2px solid #fff; width: 500px; }
-        button { background: #444; color: #fff; border: none; padding: 10px 20px; margin: 10px; cursor: pointer; font-size: 16px; border-bottom: 3px solid #000; }
-        button:hover { background: #666; }
-        .hidden { display: none; }
-        .rail-sobu { color: #f1ca00; } /* 黄 */
-        .rail-saikyo { color: #00ac4a; } /* 緑 */
-        .rail-keihin { color: #00a4e4; } /* 青 */
-        .rail-keiyo { color: #e50012; } /* 赤 */
-        .rail-chuo { color: #f39700; } /* オレンジ */
+        body { background: #000; color: #fff; font-family: 'Courier New', Courier, monospace; margin: 0; overflow: hidden; }
+        canvas { display: block; margin: 0 auto; background: linear-gradient(to bottom, #000428, #004e92); border: 2px solid #555; }
+        .ui-overlay { position: absolute; top: 10px; width: 100%; display: flex; justify-content: space-around; pointer-events: none; text-shadow: 2px 2px 4px #000; }
+        .panel { background: rgba(0,0,0,0.8); padding: 15px; border: 1px solid #fff; border-radius: 10px; min-width: 150px; }
+        #menu-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
+        .btn { background: #222; color: #fff; border: 2px solid #fff; padding: 15px 40px; margin: 10px; cursor: pointer; font-size: 1.2rem; transition: 0.3s; width: 300px; }
+        .btn:hover { background: #fff; color: #000; }
+        .hidden { display: none !important; }
+        #boss-hp-bar { position: absolute; top: 80px; left: 50%; transform: translateX(-50%); width: 600px; height: 10px; border: 1px solid #fff; display: none; }
+        #boss-hp-inner { width: 100%; height: 100%; background: #ff0000; transition: width 0.2s; }
+        .rail-sobu { border-color: #f1ca00; color: #f1ca00; }
+        .rail-saikyo { border-color: #00ac4a; color: #00ac4a; }
+        .rail-keihin { border-color: #00a4e4; color: #00a4e4; }
+        .rail-keiyo { border-color: #e50012; color: #e50012; }
+        .rail-chuo { border-color: #f39700; color: #f39700; font-weight: bold; box-shadow: 0 0 15px #f39700; }
     </style>
 </head>
 <body>
 
-<div class="ui-container">
-    <div class="stat">HP: <span id="hp-val">100</span> | SCORE: <span id="score-val">0</span></div>
-    <div class="stat">COIN: <span id="coin-val">0</span></div>
+<div class="ui-overlay">
+    <div class="panel">HP: <span id="hp-val">100</span><br>SCORE: <span id="score-val">0</span></div>
+    <div class="panel">COIN: <span id="coin-val">0</span><br>ATK LV: <span id="atk-val">1</span></div>
 </div>
 
-<canvas id="gameCanvas" width="800" height="600"></canvas>
+<div id="boss-hp-bar"><div id="boss-hp-inner"></div></div>
 
-<div id="menu">
-    <h1>MINAMI SHOOTING 2026</h1>
-    <button onclick="showStageSelect()">STAGE SELECT</button><br>
-    <button onclick="showShop()">SHOP</button><br>
-    <button onclick="alert('操作方法: 矢印キーで移動 / スペースキーで射撃\n全モードクリアで隠しステージ解禁！')">HOW TO PLAY</button>
-</div>
+<canvas id="gameCanvas"></canvas>
 
-<div id="stage-select" class="hidden">
-    <h2>STAGE SELECT</h2>
-    <div id="stage-list"></div>
-    <button onclick="showMenu()">BACK</button>
-</div>
-
-<div id="shop" class="hidden">
-    <h2>SHOP</h2>
-    <p>所持コイン: <span id="shop-coin">0</span></p>
-    <button onclick="buyItem('atk')">攻撃力UP (50枚)</button>
-    <button onclick="buyItem('hp')">回復リペア (30枚)</button><br>
-    <button onclick="showMenu()">BACK</button>
+<div id="menu-layer">
+    <h1 id="title-text">MINAMI SHOOTING 2026</h1>
+    <div id="main-btns">
+        <button class="btn" onclick="showStageSelect()">STAGE SELECT</button><br>
+        <button class="btn" onclick="showShop()">SHOP</button>
+    </div>
+    
+    <div id="stage-list" class="hidden"></div>
+    
+    <div id="shop-ui" class="hidden">
+        <h2>SHOP (Coin Exchange)</h2>
+        <button class="btn" onclick="buyItem('atk')">攻撃力UP (50枚)</button><br>
+        <button class="btn" onclick="buyItem('hp')">HP全回復 (30枚)</button><br>
+        <button class="btn" onclick="backToMenu()">BACK</button>
+    </div>
 </div>
 
 <script>
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
+canvas.width = 800;
+canvas.height = 600;
 
-// --- ゲーム設定・セーブデータ ---
-let saveData = {
+// --- セーブデータ構造 ---
+let saveData = JSON.parse(localStorage.getItem('minami_save_2026')) || {
     coins: 0,
-    clearedStages: [], // 例: "ST=KY 01"
-    atkLevel: 1
+    clearedStages: [],
+    atkLevel: 1,
+    unlockedSkins: ['Normal']
 };
 
-// ローカルストレージから読み込み
-if (localStorage.getItem('minami_shooting_save')) {
-    saveData = JSON.parse(localStorage.getItem('minami_shooting_save'));
-}
-
-function saveGame() {
-    localStorage.setItem('minami_shooting_save', JSON.stringify(saveData));
+function save() {
+    localStorage.setItem('minami_save_2026', JSON.stringify(saveData));
     updateUI();
 }
 
-// --- ステージ定義 ---
-const stages = [
-    { id: "ST=KY 01", color: "#f1ca00", difficulty: "Easy" },
-    { id: "ST=KY 02", color: "#f1ca00", difficulty: "Easy" },
-    { id: "ST=KY 03", color: "#f1ca00", difficulty: "Easy" },
-    { id: "ST=KY 04", color: "#00ac4a", difficulty: "Normal" },
-    { id: "ST=KY 05", color: "#00ac4a", difficulty: "Normal" },
-    { id: "ST=KY 06", color: "#00ac4a", difficulty: "Normal" },
-    { id: "ST=KY 07", color: "#00a4e4", difficulty: "Hard" },
-    { id: "ST=KY 08", color: "#00a4e4", difficulty: "Hard" },
-    { id: "ST=KY 09", color: "#00a4e4", difficulty: "Hard" },
-    { id: "EX-FRONT", color: "#e50012", difficulty: "Expert", hidden: true },
-    { id: "EX-BACK", color: "#e50012", difficulty: "Expert", hidden: true },
-    { id: "TRUE-FINAL", color: "#f39700", difficulty: "Inferno", hidden: true }
+// --- ステージデータ ---
+const STAGES = [
+    { id: "ST=KY 01", color: "#f1ca00", type: "Sobu" },
+    { id: "ST=KY 02", color: "#f1ca00", type: "Sobu" },
+    { id: "ST=KY 03", color: "#f1ca00", type: "Sobu" },
+    { id: "ST=KY 04", color: "#00ac4a", type: "Saikyo" },
+    { id: "ST=KY 05", color: "#00ac4a", type: "Saikyo" },
+    { id: "ST=KY 06", color: "#00ac4a", type: "Saikyo" },
+    { id: "ST=KY 07", color: "#00a4e4", type: "Keihin" },
+    { id: "ST=KY 08", color: "#00a4e4", type: "Keihin" },
+    { id: "ST=KY 09", color: "#00a4e4", type: "Keihin" },
+    { id: "EX-FRONT", color: "#e50012", type: "Keiyo", hidden: true },
+    { id: "EX-BACK", color: "#e50012", type: "Keiyo", hidden: true },
+    { id: "TRUE-FINAL", color: "#f39700", type: "Chuo", hidden: true }
 ];
 
-// --- UI制御 ---
-function updateUI() {
-    document.getElementById('coin-val').innerText = saveData.coins;
-    document.getElementById('shop-coin').innerText = saveData.coins;
-}
+// --- ゲームオブジェクト ---
+let player = { x: 400, y: 550, hp: 100, maxHp: 100, score: 0, size: 20 };
+let bullets = [];
+let enemies = [];
+let enemyBullets = [];
+let boss = null;
+let keys = {};
+let gameActive = false;
+let currentStage = null;
 
-function showMenu() {
-    document.querySelectorAll('>div').forEach(el => el.classList.add('hidden'));
-    document.getElementById('menu').classList.remove('hidden');
+window.addEventListener('keydown', e => keys[e.code] = true);
+window.addEventListener('keyup', e => keys[e.code] = false);
+
+// --- UI操作 ---
+function updateUI() {
+    document.getElementById('hp-val').innerText = player.hp;
+    document.getElementById('score-val').innerText = player.score;
+    document.getElementById('coin-val').innerText = saveData.coins;
+    document.getElementById('atk-val').innerText = saveData.atkLevel;
 }
 
 function showStageSelect() {
-    document.getElementById('menu').classList.add('hidden');
+    document.getElementById('main-btns').classList.add('hidden');
     const list = document.getElementById('stage-list');
-    list.innerHTML = '';
+    list.classList.remove('hidden');
+    list.innerHTML = '<h2>STAGE SELECT</h2>';
     
-    // 全モードクリアチェック（真ステージ解禁条件）
-    const normalCleared = stages.filter(s => !s.hidden).every(s => saveData.clearedStages.includes(s.id));
+    const normalCleared = STAGES.filter(s => !s.hidden).every(s => saveData.clearedStages.includes(s.id));
+    const allExCleared = saveData.clearedStages.includes("EX-FRONT") && saveData.clearedStages.includes("EX-BACK");
 
-    stages.forEach(s => {
-        let canPlay = !s.hidden || (s.id.includes('EX') && normalCleared) || (s.id === 'TRUE-FINAL' && saveData.clearedStages.length >= 11);
-        
-        if (canPlay) {
+    STAGES.forEach(s => {
+        let locked = s.hidden;
+        if (s.type === "Keiyo" && normalCleared) locked = false;
+        if (s.type === "Chuo" && normalCleared && allExCleared) locked = false;
+
+        if (!locked) {
             const btn = document.createElement('button');
+            btn.className = `btn rail-${s.type.toLowerCase()}`;
             btn.innerText = s.id;
-            btn.style.color = s.color;
-            btn.onclick = () => startGame(s);
+            btn.onclick = () => initGame(s);
             list.appendChild(btn);
         }
     });
-    document.getElementById('stage-select').classList.remove('hidden');
+    const back = document.createElement('button');
+    back.className = "btn";
+    back.innerText = "BACK";
+    back.onclick = backToMenu;
+    list.appendChild(back);
 }
 
 function showShop() {
-    document.getElementById('menu').classList.add('hidden');
-    document.getElementById('shop').classList.remove('hidden');
+    document.getElementById('main-btns').classList.add('hidden');
+    document.getElementById('shop-ui').classList.remove('hidden');
+}
+
+function backToMenu() {
+    document.getElementById('stage-list').classList.add('hidden');
+    document.getElementById('shop-ui').classList.add('hidden');
+    document.getElementById('main-btns').classList.remove('hidden');
 }
 
 function buyItem(type) {
     if (type === 'atk' && saveData.coins >= 50) {
-        saveData.coins -= 50;
-        saveData.atkLevel++;
-        alert('攻撃力がアップしました！');
+        saveData.coins -= 50; saveData.atkLevel++;
     } else if (type === 'hp' && saveData.coins >= 30) {
-        saveData.coins -= 30;
-        alert('HPを回復しました！');
-    } else {
-        alert('コインが足りません');
+        saveData.coins -= 30; player.hp = 100;
     }
-    saveGame();
+    save();
 }
 
-// --- ゲーム本体の簡易エンジン ---
-let gameState = "MENU";
-let player = { x: 400, y: 500, hp: 100, score: 0 };
-let currentStage = null;
-
-function startGame(stage) {
+// --- ゲームロジック ---
+function initGame(stage) {
     currentStage = stage;
-    gameState = "PLAYING";
-    document.getElementById('stage-select').classList.add('hidden');
+    document.getElementById('menu-layer').classList.add('hidden');
     player.hp = 100;
     player.score = 0;
-    // ここでゲームループ開始
-    requestAnimationFrame(update);
+    player.x = 400;
+    bullets = []; enemies = []; enemyBullets = [];
+    boss = { x: 400, y: -100, hp: 500, maxHp: 500, phase: 1, timer: 0 };
+    gameActive = true;
+    updateUI();
+    loop();
 }
 
-function update() {
-    if (gameState !== "PLAYING") return;
+function spawnEnemy() {
+    if (Math.random() < 0.05 && !boss.active) {
+        enemies.push({ x: Math.random() * 760 + 20, y: -20, hp: 2 });
+    }
+}
 
-    // 描画
-    ctx.fillStyle = "#000";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+function loop() {
+    if (!gameActive) return;
 
-    // プレイヤー描画（簡易）
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // 自機移動
+    if (keys['ArrowLeft'] && player.x > 20) player.x -= 5;
+    if (keys['ArrowRight'] && player.x < 780) player.x += 5;
+    if (keys['Space']) {
+        if (Date.now() % 150 < 20) bullets.push({ x: player.x, y: player.y - 20 });
+    }
+
+    // 自機描画 (オーラ演出)
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = currentStage.color;
     ctx.fillStyle = "#fff";
-    ctx.fillRect(player.x - 15, player.y - 15, 30, 30);
-    
-    // ステージ情報の表示
-    ctx.fillStyle = currentStage.color;
-    ctx.font = "20px Arial";
-    ctx.fillText("Stage: " + currentStage.id, 20, 40);
+    ctx.beginPath();
+    ctx.moveTo(player.x, player.y - 15);
+    ctx.lineTo(player.x - 15, player.y + 15);
+    ctx.lineTo(player.x + 15, player.y + 15);
+    ctx.fill();
+    ctx.shadowBlur = 0;
 
-    // ※ ここに本来の敵や弾の処理が入ります。
-    // 簡易クリア処理（テスト用）
-    if (player.score > 500) {
-        winStage();
-        return;
+    // 自機ショット
+    bullets.forEach((b, i) => {
+        b.y -= 10;
+        ctx.fillStyle = "cyan";
+        ctx.fillRect(b.x - 2, b.y, 4, 10);
+        if (b.y < 0) bullets.splice(i, 1);
+    });
+
+    // ボス登場・攻撃
+    if (boss) {
+        if (boss.y < 100) boss.y += 2;
+        document.getElementById('boss-hp-bar').style.display = 'block';
+        document.getElementById('boss-hp-inner').style.width = (boss.hp / boss.maxHp * 100) + '%';
+        
+        ctx.fillStyle = currentStage.color;
+        ctx.fillRect(boss.x - 50, boss.y - 30, 100, 60);
+        
+        boss.timer++;
+        // フェーズ別弾幕
+        if (boss.timer % 60 === 0) {
+            if (boss.phase >= 1) { // 直線弾
+                enemyBullets.push({ x: boss.x, y: boss.y, vx: 0, vy: 5 });
+            }
+            if (boss.phase >= 2) { // 拡散弾
+                enemyBullets.push({ x: boss.x, y: boss.y, vx: -2, vy: 4 });
+                enemyBullets.push({ x: boss.x, y: boss.y, vx: 2, vy: 4 });
+            }
+        }
+        if (boss.phase === 3 && boss.timer % 100 === 0) { // 全方位弾幕 (真ステージ意識)
+            for(let i=0; i<8; i++) {
+                let ang = (Math.PI * 2 / 8) * i;
+                enemyBullets.push({ x: boss.x, y: boss.y, vx: Math.cos(ang)*3, vy: Math.sin(ang)*3 });
+            }
+        }
+
+        // 当たり判定 (自機ショット -> ボス)
+        bullets.forEach((b, bi) => {
+            if (b.x > boss.x - 50 && b.x < boss.x + 50 && b.y < boss.y + 30) {
+                boss.hp -= saveData.atkLevel;
+                bullets.splice(bi, 1);
+                if (boss.hp < 350 && boss.phase === 1) boss.phase = 2;
+                if (boss.hp < 150 && boss.phase === 2) boss.phase = 3;
+                if (boss.hp <= 0) win();
+            }
+        });
     }
-    
-    player.score++;
-    document.getElementById('score-val').innerText = player.score;
 
-    requestAnimationFrame(update);
+    // 敵弾移動・当たり判定
+    enemyBullets.forEach((eb, i) => {
+        eb.x += eb.vx || 0;
+        eb.y += eb.vy;
+        ctx.fillStyle = "red";
+        ctx.beginPath(); ctx.arc(eb.x, eb.y, 5, 0, Math.PI*2); ctx.fill();
+
+        if (Math.hypot(eb.x - player.x, eb.y - player.y) < 15) {
+            player.hp -= 10;
+            enemyBullets.splice(i, 1);
+            updateUI();
+            if (player.hp <= 0) gameOver();
+        }
+    });
+
+    requestAnimationFrame(loop);
 }
 
-function winStage() {
-    alert(currentStage.id + " クリア！コインを獲得しました。");
+function win() {
+    gameActive = false;
+    alert(currentStage.id + " MISSION COMPLETE!\n100コイン獲得！");
     saveData.coins += 100;
-    if (!saveData.clearedStages.includes(currentStage.id)) {
-        saveData.clearedStages.push(currentStage.id);
-    }
-    gameState = "MENU";
-    saveGame();
-    showMenu();
+    if (!saveData.clearedStages.includes(currentStage.id)) saveData.clearedStages.push(currentStage.id);
+    document.getElementById('boss-hp-bar').style.display = 'none';
+    save();
+    location.reload();
 }
 
-// 初期化
+function gameOver() {
+    gameActive = false;
+    alert("撃沈... ショップで装備を整え直そう。");
+    save();
+    location.reload();
+}
+
 updateUI();
 </script>
-
 </body>
 </html>
