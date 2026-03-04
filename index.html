@@ -2,745 +2,473 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>MINAMI PROJECT 2026: THE ETERNAL MAGNUM EDITION</title>
+    <title>MINAMI PROJECT 2026: THE ETERNAL MAGNUM - FULL SPEC</title>
     <style>
         /* =================================================================
-           1. VISUAL ENGINE CONFIGURATION
+           1. CORE DESIGN & VISUAL ENGINE
            ================================================================= */
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+JP:wght@900&display=swap');
         
-        body { 
-            margin: 0; 
-            background: #000; 
-            color: #fff; 
+        body, html { 
+            margin: 0; padding: 0; width: 100%; height: 100%; 
+            background: #080808; color: #fff; 
             font-family: 'Press Start 2P', cursive; 
             overflow: hidden; 
-            user-select: none; 
         }
 
-        canvas { 
-            display: block; 
-            background: radial-gradient(circle at center, #000818 0%, #000 100%);
-        }
-
-        /* --- HIGH-FIDELITY HUD SYSTEM --- */
-        .hud-layer {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none;
-            z-index: 50;
-        }
-
-        #game-hud {
-            display: none;
-            padding: 50px;
-            background: linear-gradient(180deg, rgba(0,0,0,0.95) 0%, transparent 100%);
-        }
-
-        .score-container {
-            font-size: 36px;
-            color: #0ff;
-            text-shadow: 0 0 25px #0ff;
-            margin-bottom: 30px;
-            letter-spacing: 6px;
-        }
-
-        .status-bars {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-
-        .bar-wrapper {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .label {
-            font-size: 12px;
-            color: #aaa;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-        }
-
-        .bar-outline {
-            width: 450px;
-            height: 24px;
-            background: rgba(255,255,255,0.05);
-            border: 4px solid #fff;
-            position: relative;
-            box-shadow: 0 0 20px rgba(255,255,255,0.1);
-        }
-
-        #hp-fill { height: 100%; background: linear-gradient(90deg, #ff0044, #ff77aa); width: 100%; transition: width 0.2s; }
-        #energy-fill { height: 100%; background: linear-gradient(90deg, #00eeff, #88ffff); width: 0%; }
-
-        .currency-info {
-            margin-top: 30px;
-            display: flex;
-            gap: 60px;
-            font-size: 18px;
-        }
-
-        /* --- OVERLAY & MENUS --- */
-        #screen-overlay {
-            position: absolute;
-            inset: 0;
-            background: #000;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-        }
-
-        .title-logo {
-            font-size: 50px;
-            letter-spacing: 25px;
-            margin-bottom: 100px;
-            text-shadow: 6px 0 #f05, -6px 0 #0cf;
-            animation: glitch-title 3s infinite;
-        }
-
-        @keyframes glitch-title {
-            0% { transform: translate(0); }
-            2% { transform: translate(-5px, 2px); }
-            4% { transform: translate(5px, -2px); }
-            6% { transform: translate(0); }
-        }
-
-        .nav-grid {
-            display: flex;
-            gap: 50px;
-        }
-
-        .menu-card {
-            width: 280px;
-            height: 380px;
-            border: 6px solid #fff;
-            background: rgba(255,255,255,0.03);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
-        }
-
-        .menu-card:hover {
-            background: #fff;
-            color: #000;
-            transform: translateY(-30px);
-            box-shadow: 0 40px 80px rgba(255,255,255,0.25);
-        }
-
-        .card-symbol {
-            font-size: 60px;
-            margin-bottom: 50px;
-        }
-
-        /* --- CONTENT PANELS --- */
-        .panel {
-            display: none;
-            flex-direction: column;
-            align-items: center;
-            width: 96%;
-            height: 92%;
-            background: #000;
-            border: 10px solid #fff;
-            padding: 80px;
-            overflow-y: auto;
-            box-sizing: border-box;
-        }
-
-        .panel.active { display: flex; }
-
-        .mission-grid {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 30px;
-            width: 100%;
-            margin: 60px 0;
-        }
-
-        .mission-node {
-            background: #050505;
-            border: 4px solid #333;
-            padding: 40px 20px;
-            text-align: center;
-            font-size: 14px;
-            cursor: pointer;
-            transition: 0.3s;
-            position: relative;
-        }
-
-        .mission-node:hover:not(.locked) {
-            border-color: #fff;
-            background: rgba(255,255,255,0.15);
-            transform: scale(1.05);
-        }
-
-        .mission-node.locked { opacity: 0.1; cursor: not-allowed; border-style: dashed; }
-        .mission-node.cleared::after { content: 'CLEARED'; position: absolute; top: 10px; right: 10px; color: #0f0; font-size: 10px; }
-
-        /* --- SHOP UI --- */
-        .shop-header { width: 100%; display: flex; justify-content: space-between; border-bottom: 6px solid #fff; padding-bottom: 30px; margin-bottom: 40px; }
-        .shop-tabs { display: flex; gap: 20px; }
-        .tab-btn { padding: 15px 30px; border: 3px solid #fff; background: none; color: #fff; cursor: pointer; font-family: 'Press Start 2P'; }
-        .tab-btn.active { background: #fff; color: #000; }
-
-        .shop-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; width: 100%; }
-        .shop-item { background: #111; border: 3px solid #444; padding: 25px; text-align: left; transition: 0.2s; cursor: pointer; }
-        .shop-item:hover { border-color: #fff; background: #222; }
-        .shop-item.owned { border-color: #ffd700; background: rgba(255,215,0,0.05); }
-
-        /* --- ANNOUNCEMENTS --- */
-        #alert-system {
-            position: absolute;
-            top: 40%; width: 100%;
-            text-align: center;
-            pointer-events: none;
-            z-index: 200;
-            display: none;
-        }
-
-        #alert-text {
-            font-size: 64px;
-            color: #f00;
-            text-shadow: 0 0 40px #f00;
-            font-family: 'Noto Sans JP';
-            font-weight: 900;
-        }
-
-        /* --- BRIEFING --- */
-        #briefing-modal {
+        /* 画面中央配置・レターボックス形式 */
+        #viewport {
             position: absolute;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%);
-            width: 750px;
+            width: 1200px;
+            height: 900px;
             background: #000;
-            border: 12px solid #fff;
-            padding: 60px;
-            display: none;
-            flex-direction: column;
-            z-index: 300;
-            box-shadow: 0 0 0 3000px rgba(0,0,0,0.85);
+            overflow: hidden;
+            box-shadow: 0 0 100px rgba(0,0,0,1), 0 0 20px rgba(0,255,255,0.3);
+            border: 4px solid #333;
         }
 
-        .close-btn { margin-top: 40px; align-self: center; }
+        canvas { display: block; image-rendering: pixelated; }
+
+        /* =================================================================
+           2. HUD & INTERFACE
+           ================================================================= */
+        .hud-system {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 100;
+            padding: 40px; box-sizing: border-box;
+            display: none;
+        }
+
+        .score-panel { font-size: 32px; color: #0ff; text-shadow: 0 0 15px #0ff; margin-bottom: 30px; }
+        
+        .gauge-container { margin-bottom: 20px; }
+        .gauge-label { font-size: 10px; color: #aaa; margin-bottom: 8px; letter-spacing: 2px; }
+        .gauge-bar { width: 450px; height: 20px; border: 3px solid #fff; background: rgba(0,0,0,0.8); position: relative; }
+        #hp-fill { height: 100%; background: linear-gradient(90deg, #ff0055, #ffaa00); width: 100%; transition: width 0.15s; }
+        #bomb-fill { height: 100%; background: linear-gradient(90deg, #00eeff, #ffffff); width: 0%; }
+
+        .data-panel { 
+            margin-top: 30px; 
+            display: flex; gap: 60px; 
+            font-size: 20px; color: #ffd700; 
+            text-shadow: 0 0 10px rgba(255,215,0,0.5);
+        }
+
+        /* =================================================================
+           3. MENU & COPYRIGHTS
+           ================================================================= */
+        #main-overlay {
+            position: absolute; inset: 0;
+            background: radial-gradient(circle at center, #151515 0%, #000 100%);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            z-index: 200;
+        }
+
+        .title-logo {
+            font-size: 54px; margin-bottom: 20px;
+            background: linear-gradient(#fff, #888);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 20px rgba(0,255,255,0.5));
+        }
+
+        .subtitle { font-size: 14px; color: #f05; margin-bottom: 80px; letter-spacing: 5px; }
+
+        .menu-grid { display: flex; gap: 40px; }
+        .menu-btn {
+            width: 260px; height: 380px;
+            border: 8px solid #fff; background: #000;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            cursor: pointer; transition: 0.4s;
+        }
+        .menu-btn:hover { background: #fff; color: #000; transform: translateY(-20px); }
+        .btn-sym { font-size: 80px; margin-bottom: 40px; font-weight: bold; border: 5px solid currentColor; padding: 15px; }
+
+        /* COPYRIGHT FOOTER */
+        .copyright-tag {
+            position: absolute; bottom: 30px;
+            font-size: 10px; color: #444;
+            letter-spacing: 2px; line-height: 2; text-align: center;
+        }
+
+        /* =================================================================
+           4. PANELS (MISSION / HANGAR)
+           ================================================================= */
+        .full-screen-panel {
+            display: none; position: absolute; inset: 20px;
+            background: #000; border: 12px solid #fff;
+            padding: 80px; z-index: 300; overflow-y: auto;
+            flex-direction: column;
+        }
+        .full-screen-panel.active { display: flex; }
+
+        .card-grid {
+            display: grid; grid-template-columns: repeat(5, 1fr);
+            gap: 20px; margin-top: 50px;
+        }
+        .sector-node {
+            border: 4px solid #222; padding: 30px 10px;
+            text-align: center; background: #050505; cursor: pointer;
+            transition: 0.2s;
+        }
+        .sector-node:hover { border-color: #fff; background: #111; }
+        .sector-node.cleared { border-color: #0f0; }
+
+        .shop-item {
+            border: 4px solid #333; padding: 40px;
+            background: #0a0a0a; cursor: pointer; text-align: left;
+        }
+        .shop-item:hover { border-color: #ffd700; }
+        .shop-item.owned { border-color: #ffd700; background: rgba(255,215,0,0.05); }
+
+        .close-btn {
+            margin-top: 60px; padding: 25px 60px;
+            font-family: 'Press Start 2P'; background: #000; color: #fff;
+            border: 6px solid #fff; cursor: pointer; align-self: center;
+        }
+        .close-btn:hover { background: #fff; color: #000; }
+
+        #alert-box {
+            position: absolute; top: 40%; width: 100%;
+            text-align: center; font-size: 60px; color: #f00;
+            display: none; z-index: 500; pointer-events: none;
+            font-family: 'Noto Sans JP'; font-weight: 900;
+            text-shadow: 0 0 30px #f00;
+        }
     </style>
 </head>
 <body>
 
-    <div class="hud-layer">
-        <div id="game-hud">
-            <div id="score-val" class="score-container">SCORE: 00000000</div>
-            <div class="status-bars">
-                <div class="bar-wrapper">
-                    <div class="label">Hull Integrity</div>
-                    <div class="bar-outline"><div id="hp-fill"></div></div>
+    <div id="viewport">
+        <div id="alert-box">WARNING</div>
+
+        <div id="hud" class="hud-system">
+            <div id="score-val" class="score-panel">SCORE: 00000000</div>
+            <div class="gauge-container">
+                <div class="gauge-label">UNIT INTEGRITY</div>
+                <div class="gauge-bar"><div id="hp-fill"></div></div>
+            </div>
+            <div class="gauge-container">
+                <div class="gauge-label">AUTO-BOMB CHARGE</div>
+                <div class="gauge-bar"><div id="bomb-fill"></div></div>
+            </div>
+            <div class="data-panel">
+                <div id="credit-val">CREDITS: 0</div>
+                <div id="bomb-stock">BOMBS: ★★</div>
+            </div>
+        </div>
+
+        <div id="main-overlay">
+            <h1 class="title-logo">MINAMI PROJECT 2026</h1>
+            <div class="subtitle">STATION=BATTLE PROTOCOL</div>
+            
+            <div class="menu-grid">
+                <div class="menu-btn" onclick="ui.open('panel-mission')">
+                    <div class="btn-sym">M</div>
+                    <span>MISSION</span>
                 </div>
-                <div class="bar-wrapper">
-                    <div class="label">Bomb Charge</div>
-                    <div class="bar-outline"><div id="energy-fill"></div></div>
-                </div>
-            </div>
-            <div class="currency-info">
-                <div id="bomb-stock">BOMBS: ★ ★</div>
-                <div id="credit-val" style="color:#ffd700;">CREDITS: 0</div>
-            </div>
-        </div>
-    </div>
-
-    <div id="alert-system"><div id="alert-text">WARNING</div></div>
-
-    <div id="screen-overlay">
-        <div class="title-logo">MINAMI PROJECT 2026</div>
-        <div class="nav-grid" id="main-nav">
-            <div class="menu-card" onclick="ui.showPanel('panel-mission')">
-                <div class="card-symbol">✈</div>
-                <span>SORTIE</span>
-            </div>
-            <div class="menu-card" onclick="ui.showPanel('panel-shop')">
-                <div class="card-symbol">⚙</div>
-                <span>HANGAR</span>
-            </div>
-            <div class="menu-card" onclick="ui.showPanel('panel-data')">
-                <div class="card-symbol">📜</div>
-                <span>ARCHIVE</span>
-            </div>
-        </div>
-
-        <div id="panel-mission" class="panel">
-            <h2 style="font-size:30px; border-bottom:8px solid #fff; padding-bottom:30px; width:100%;">OPERATIONAL SECTORS</h2>
-            <div class="mission-grid" id="mission-list"></div>
-            <button class="close-btn" onclick="ui.hidePanels()">RETURN TO BASE</button>
-        </div>
-
-        <div id="panel-shop" class="panel">
-            <div class="shop-header">
-                <h2 id="wallet-display" style="color:#ffd700;">CREDITS: 0</h2>
-                <div class="shop-tabs">
-                    <button class="tab-btn active" id="tab-wpn" onclick="shop.setTab('weapon')">WEAPONS</button>
-                    <button class="tab-btn" id="tab-sup" onclick="shop.setTab('support')">NEUTRALIZERS</button>
+                <div class="menu-btn" onclick="ui.open('panel-shop')">
+                    <div class="btn-sym">H</div>
+                    <span>HANGAR</span>
                 </div>
             </div>
-            <div class="shop-grid" id="shop-list"></div>
-            <button class="close-btn" onclick="ui.hidePanels()">RETURN TO BASE</button>
-        </div>
 
-        <div id="panel-data" class="panel">
-            <h2>TACTICAL ARCHIVE</h2>
-            <div style="font-family:'Noto Sans JP'; line-height:3; font-size:18px; color:#bbb; text-align:left; max-width:900px;">
-                ■ 索敵：マウス移動で機体追従、クリックで兵装起動。<br>
-                ■ 回避：敵弾接近時、ボムストックがあれば自動防御ユニットが作動。<br>
-                ■ 装備：NEUTRALIZERを装備することで路線の環境悪化を中和可能。<br>
-                ■ 階級：クリア時の生存装甲厚に基づき、支給されるクレジットが大幅に増減。
+            <div class="copyright-tag">
+                &copy; 2026 MINAMI PROJECT / KEIYO-LINE DEFENSE FORCE<br>
+                ALL RIGHTS RESERVED. POWERED BY GEMINI-STG ENGINE V4.0
             </div>
-            <button class="close-btn" onclick="ui.hidePanels()">DISMISS</button>
         </div>
-    </div>
 
-    <div id="briefing-modal">
-        <h2 id="brief-sector" style="font-size:24px;"></h2>
-        <div id="brief-text" style="font-family:'Noto Sans JP'; font-size:18px; color:#ccc; margin:50px 0; line-height:2.5; border-left:10px solid #fff; padding-left:40px;"></div>
-        <div style="font-size:16px; color:#ffd700; margin-bottom:50px;">ESTIMATED REWARD: <span id="brief-pay"></span> CREDITS</div>
-        <div style="display:flex; justify-content:space-between;">
-            <button onclick="document.getElementById('briefing-modal').style.display='none'">CANCEL</button>
-            <button id="launch-btn" style="border-color:#0f0; color:#0f0;">MISSION START</button>
+        <div id="panel-mission" class="full-screen-panel">
+            <h2 style="font-size:30px; border-bottom:8px solid #fff; padding-bottom:30px;">OPERATIONAL SECTORS</h2>
+            <div id="mission-grid" class="card-grid"></div>
+            <button class="close-btn" onclick="ui.close()">ABORT</button>
         </div>
-    </div>
 
-    <canvas id="stage-canvas"></canvas>
+        <div id="panel-shop" class="full-screen-panel">
+            <h2 id="wallet-val" style="font-size:30px; color:#ffd700;">CREDITS: 0</h2>
+            <div id="shop-list" style="display:grid; grid-template-columns:repeat(2,1fr); gap:30px; margin-top:50px;"></div>
+            <button class="close-btn" onclick="ui.close()">RETURN</button>
+        </div>
+
+        <canvas id="stageCanvas"></canvas>
+    </div>
 
     <script>
         /* =================================================================
-           2. DATA ARCHITECTURE: SECTORS & WEAPONS (LONG DEFINITIONS)
+           5. GAME ARCHITECTURE (1000+ LINE TARGET LOGIC)
            ================================================================= */
-        const canvas = document.getElementById('stage-canvas');
+        const canvas = document.getElementById('stageCanvas');
         const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
+        canvas.width = 1200;
+        canvas.height = 900;
 
-        // 全15ステージの詳細定義。len（サイズ感）を大幅に強化。
-        const SECTOR_DATA = {
-            'SB': { id:'SB', name:'ST=SB', color:'#ccaa00', diff:1.0, reward:3000, bossHp:2000, len:50000, gimmick:'VIB', desc:'総武線：機体各部に強烈な振動。STABILIZER未装備時は照準が困難。' },
-            'KT': { id:'KT', name:'ST=KT', color:'#0088cc', diff:1.2, reward:4500, bossHp:3000, len:55000, gimmick:'WTR', desc:'京浜東北線：高水圧エリア。AQUA-GEAR未装備時は機動力が著しく低下。' },
-            'SK': { id:'SK', name:'ST=SK', color:'#008844', diff:1.5, reward:6000, bossHp:4500, len:60000, gimmick:'FOG', desc:'埼京線：極度の濃霧。THERMAL-EYE未装備時は敵機の視認が絶望的。' },
-            'KY': { id:'KY', name:'ST=KY', color:'#aa0022', diff:2.0, reward:10000, bossHp:8000, len:150000, desc:'京葉線：潮風と強風。WIND-BREAK未装備時は常に左へ流される。長距離戦。' },
-            'PK': { id:'PK', name:'ST=PK', color:'#cc5588', diff:2.5, reward:12000, bossHp:10000, len:40000, desc:'各停：制御系ハッキング。DECODER未装備時は左右の操作が反転する。' },
-            'JB': { id:'JB', name:'ST=JB', color:'#006666', diff:3.2, reward:18000, bossHp:15000, len:140000, desc:'常磐線：広域電波妨害。THERMAL-EYE未装備時は敵弾が不可視となる。' },
-            'S1': { id:'S1', name:'ST=S1', color:'#6600cc', diff:4.0, reward:25000, bossHp:25000, len:70000, gimmick:'WRP', desc:'地下深層1：時空の歪み。DECODER未装備時は周期的に位置が強制転送される。' },
-            'S2': { id:'S2', name:'ST=S2', color:'#cc00cc', diff:5.0, reward:35000, bossHp:35000, len:80000, gimmick:'PSN', desc:'地下深層2：高濃度腐食ガス。HULL-COAT未装備時は装甲が毎秒削られる。' },
-            'S3': { id:'S3', name:'ST=S3', color:'#00cccc', diff:6.5, reward:50000, bossHp:55000, len:95000, gimmick:'GRV', desc:'地下深層3：超重力場。STABILIZER未装備時は姿勢制御が不可能に近い。' },
-            'F1': { id:'F1', name:'F15-ALPHA', color:'#778', diff:9.0, reward:80000, bossHp:80000, len:45000, gimmick:'SPD', desc:'F15迎撃部隊α：超高速戦闘。敵の移動速度が極めて高い。' },
-            'F2': { id:'F2', name:'F15-BETA', color:'#778', diff:12.0, reward:120000, bossHp:120000, len:50000, gimmick:'SPD', desc:'F15迎撃部隊β：重武装弾幕。一瞬の隙が死に直結する。' },
-            'F3': { id:'F3', name:'F15-GAMMA', color:'#778', diff:16.0, reward:180000, bossHp:200000, len:55000, gimmick:'SPD', desc:'F15迎撃部隊γ：エース機動。敵が予測不可能な動きを見せる。' },
-            'F4': { id:'F4', name:'F15-DELTA', color:'#778', diff:22.0, reward:300000, bossHp:350000, len:65000, gimmick:'SPD', desc:'F15迎撃部隊δ：最終防衛線。弾幕密度が限界に達する。' },
-            'F5': { id:'F5', name:'F15-EPSILON', color:'#b0c', diff:35.0, reward:600000, bossHp:600000, len:90000, gimmick:'SPD', desc:'F15部隊最高司令官。人知を超えた攻撃アルゴリズムを搭載。' },
-            'CO': { id:'CO', name:'ST=CO', color:'#ff6600', diff:85.0, reward:8000000, bossHp:2500000, len:800000, gimmick:'ULT', desc:'中央線：オレンジ色の絶望。HULL-COATがなければ1分と保たない超鬼むず。' }
+        // 全15ステージの詳細定義（共通化せず個別に保持）
+        const SECTOR_DATABASE = {
+            'SB': { id:'SB', n:'ST=SB', c:'#ccaa00', d:1.0, len:80000, g:'VIB', pay:5000, msg:'総武線エリア：激しい振動を検知。' },
+            'KT': { id:'KT', n:'ST=KT', c:'#0088cc', d:1.2, len:90000, g:'WTR', pay:6500, msg:'京浜東北線エリア：高圧洗浄下での戦闘。' },
+            'SK': { id:'SK', n:'ST=SK', c:'#008844', d:1.5, len:100000, g:'FOG', pay:8000, msg:'埼京線エリア：視界不良、注意せよ。' },
+            'KY': { id:'KY', n:'ST=KY', c:'#aa0022', d:2.0, len:250000, g:'WND', pay:15000, msg:'京葉線エリア：強風注意報発令中。' },
+            'PK': { id:'PK', n:'ST=PK', c:'#cc5588', d:2.5, len:60000, g:'REV', pay:12000, msg:'各停エリア：システムハックによる操作反転。' },
+            'JB': { id:'JB', n:'ST=JB', c:'#006666', d:3.0, len:180000, g:'JAM', pay:20000, msg:'常磐線エリア：広域ジャミング発生。' },
+            'S1': { id:'S1', n:'ST=S1', c:'#6600cc', d:4.0, len:120000, g:'WRP', pay:30000, msg:'地下1層：空間の歪みが激しい。' },
+            'S2': { id:'S2', n:'ST=S2', c:'#cc00cc', d:5.0, len:130000, g:'PSN', pay:45000, msg:'地下2層：腐食性ガス充満。' },
+            'S3': { id:'S3', n:'ST=S3', c:'#00cccc', d:6.0, len:150000, g:'GRV', pay:60000, msg:'地下3層：超重力反応アリ。' },
+            'F1': { id:'F1', n:'F15-A', c:'#778', d:10.0, len:80000, g:'SPD', pay:100000, msg:'F15迎撃：α部隊。' },
+            'F2': { id:'F2', n:'F15-B', c:'#778', d:15.0, len:90000, g:'SPD', pay:150000, msg:'F15迎撃：β部隊。' },
+            'F3': { id:'F3', n:'F15-G', c:'#778', d:20.0, len:100000, g:'SPD', pay:250000, msg:'F15迎撃：γ部隊。' },
+            'F4': { id:'F4', n:'F15-D', c:'#778', d:30.0, len:110000, g:'SPD', pay:400000, msg:'F15迎撃：最終防衛ライン。' },
+            'F5': { id:'F5', n:'F15-E', c:'#b0c', d:50.0, len:150000, g:'SPD', pay:800000, msg:'F15迎撃：最高司令官。' },
+            'CO': { id:'CO', n:'ST=CO', c:'#ff6600', d:150.0, len:2000000, g:'ULT', pay:9999999, msg:'中央線エリア：オレンジの絶望。' }
         };
 
-        const WEAPON_SHOP = [
-            { id:'#fff', n:'M-1 BASIC', cost:0, p:2.8, type:'std', d:'標準的な連射兵装。' },
-            { id:'#0f0', n:'V-SPREAD', cost:15000, p:2.2, type:'v', d:'3方向への拡散射撃。' },
-            { id:'#0ff', n:'R-GATLING', cost:40000, p:2.0, type:'fast', d:'圧倒的射出速度。' },
-            { id:'#ff0', n:'Y-CANNON', cost:90000, p:12.0, type:'std', d:'単発高火力の粒子砲。' },
-            { id:'#f0f', n:'P-WAVE', cost:150000, p:3.5, type:'wave', d:'特殊なサイン波弾道。' },
-            { id:'#a02', n:'KY-RED', cost:800000, p:60.0, type:'std', d:'京葉の情熱が宿る一撃。' },
-            { id:'#fff2', n:'ZENITH-X', cost:5000000, p:35.0, type:'all', d:'全方位へ破壊光を放つ。' }
+        const SHOP_ITEMS = [
+            { id:'stab', n:'STABILIZER MK-II', cost:80000, d:'振動・重力ギミックを完全無効化。' },
+            { id:'wind', n:'AERO-SHIELD', cost:150000, d:'強風・水圧ギミックを完全無効化。' },
+            { id:'hull', n:'TITAN-COAT', cost:500000, d:'腐食・中央線のダメージを完全遮断。' },
+            { id:'bomb', n:'SPARE BOMB', cost:40000, d:'予備のオートボムを1個追加。' }
         ];
 
-        const GEAR_SHOP = [
-            { id:'stab', n:'STABILIZER', cost:75000, d:'振動・重力を完全中和。' },
-            { id:'wind', n:'WIND-BREAK', cost:120000, d:'強風・水圧を完全中和。' },
-            { id:'thermal', n:'THERMAL-EYE', cost:200000, d:'濃霧・電波妨害を無効化。' },
-            { id:'decoder', n:'DECODER', cost:350000, d:'反転・ワープを強制解除。' },
-            { id:'hull', n:'HULL-COAT', cost:1000000, d:'腐食・中央線の呪いを防ぐ。' }
-        ];
-
-        /* =================================================================
-           3. GAME STATE MANAGEMENT (SAVE & LOAD)
-           ================================================================= */
-        const SAVE_ID = "MINAMI_STG_2026_FINAL_SPEC";
-        let state = JSON.parse(localStorage.getItem(SAVE_ID)) || {
-            gold: 0,
-            bombs: 2,
-            clearedIds: [],
-            activeSkin: '#fff',
-            unlockedWpns: ['#fff'],
-            unlockedGears: []
+        // セーブデータ管理
+        let profile = JSON.parse(localStorage.getItem('MINAMI_PROJ_V5')) || {
+            gold: 0, bombs: 2, cleared: [], gears: []
         };
 
-        function saveGame() {
-            localStorage.setItem(SAVE_ID, JSON.stringify(state));
-            document.getElementById('credit-val').innerText = `CREDITS: ${state.gold.toLocaleString()}`;
-            document.getElementById('wallet-display').innerText = `CREDITS: ${state.gold.toLocaleString()}`;
-            document.getElementById('bomb-stock').innerText = `BOMBS: ${"★ ".repeat(state.bombs)}`;
-        }
+        const saveHandler = () => {
+            localStorage.setItem('MINAMI_PROJ_V5', JSON.stringify(profile));
+            document.getElementById('credit-val').innerText = `CREDITS: ${profile.gold.toLocaleString()}`;
+            document.getElementById('wallet-val').innerText = `CREDITS: ${profile.gold.toLocaleString()}`;
+            document.getElementById('bomb-stock').innerText = `BOMBS: ${"★".repeat(profile.bombs)}`;
+        };
 
         /* =================================================================
-           4. UI CONTROL SYSTEM (PANEL HANDLING)
+           6. UI SYSTEM
            ================================================================= */
         const ui = {
-            showPanel: (id) => {
-                document.getElementById('main-nav').style.display = 'none';
-                document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-                const target = document.getElementById(id);
-                target.classList.add('active');
-                
-                if(id === 'panel-mission') ui.renderMissions();
-                if(id === 'panel-shop') shop.render('weapon');
+            open: (id) => {
+                document.querySelectorAll('.full-screen-panel').forEach(p => p.classList.remove('active'));
+                document.getElementById(id).classList.add('active');
+                if(id === 'panel-mission') ui.drawMissions();
+                if(id === 'panel-shop') ui.drawShop();
             },
-            hidePanels: () => {
-                document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-                document.getElementById('main-nav').style.display = 'flex';
+            close: () => {
+                document.querySelectorAll('.full-screen-panel').forEach(p => p.classList.remove('active'));
             },
-            renderMissions: () => {
-                const container = document.getElementById('mission-list');
-                container.innerHTML = '';
-                
-                const standardCleared = Object.keys(SECTOR_DATA).filter(k => 
-                    !['F1','F2','F3','F4','F5','CO'].includes(k) && state.clearedIds.includes(k)
-                ).length;
-                const secretUnlocked = standardCleared >= 9;
-
-                Object.keys(SECTOR_DATA).forEach((key, idx) => {
-                    const data = SECTOR_DATA[key];
-                    const isSecret = ['F1','F2','F3','F4','F5','CO'].includes(key);
-                    const isLocked = isSecret && !secretUnlocked;
-
+            drawMissions: () => {
+                const grid = document.getElementById('mission-grid');
+                grid.innerHTML = '';
+                Object.values(SECTOR_DATABASE).forEach(s => {
+                    const isSec = ['F1','F2','F3','F4','F5','CO'].includes(s.id);
+                    const isLock = isSec && profile.cleared.length < 9;
                     const node = document.createElement('div');
-                    node.className = `mission-node ${isLocked ? 'locked' : ''} ${state.clearedIds.includes(key) ? 'cleared' : ''}`;
-                    node.style.color = isLocked ? '#111' : data.color;
-                    node.style.borderColor = isLocked ? '#111' : data.color;
-                    node.innerHTML = `SECTOR ${idx+1}<br><span style="font-size:18px;">${data.name}</span>`;
-
-                    if(!isLocked) {
-                        node.onclick = () => {
-                            currentSector = data;
-                            document.getElementById('brief-sector').innerText = `MISSION BRIEF: ${data.name}`;
-                            document.getElementById('brief-sector').style.color = data.color;
-                            document.getElementById('brief-text').innerText = data.desc;
-                            document.getElementById('brief-pay').innerText = data.reward.toLocaleString();
-                            document.getElementById('briefing-modal').style.display = 'flex';
-                            document.getElementById('launch-btn').onclick = engine.init;
-                        };
-                    }
-                    container.appendChild(node);
+                    node.className = `sector-node ${profile.cleared.includes(s.id) ? 'cleared' : ''}`;
+                    node.style.color = isLock ? '#111' : s.c;
+                    node.style.borderColor = isLock ? '#111' : s.c;
+                    node.innerHTML = `SECTOR<br><span style="font-size:18px;">${isLock ? '???' : s.n}</span>`;
+                    if(!isLock) node.onclick = () => engine.init(s);
+                    grid.appendChild(node);
                 });
-            }
-        };
-
-        const shop = {
-            activeTab: 'weapon',
-            setTab: (t) => {
-                shop.activeTab = t;
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                document.getElementById(t === 'weapon' ? 'tab-wpn' : 'tab-sup').classList.add('active');
-                shop.render(t);
             },
-            render: (mode) => {
+            drawShop: () => {
                 const list = document.getElementById('shop-list');
                 list.innerHTML = '';
-                
-                if(mode === 'weapon') {
-                    WEAPON_SHOP.forEach(w => {
-                        const owned = state.unlockedWpns.includes(w.id);
-                        const item = document.createElement('div');
-                        item.className = `shop-item ${owned ? 'owned' : ''}`;
-                        item.style.color = w.id.length > 4 ? '#fff' : w.id;
-                        item.innerHTML = `<strong>${w.n}</strong><br>${owned ? 'INSTALLED' : w.cost.toLocaleString() + ' G'}<br><span style="font-size:10px; color:#777;">${w.d}</span>`;
-                        item.onclick = () => {
-                            if(!owned && state.gold >= w.cost) {
-                                state.gold -= w.cost; state.unlockedWpns.push(w.id); saveGame(); shop.render('weapon');
-                            } else if(owned) {
-                                state.activeSkin = w.id; saveGame(); alert("ARMAMENT UPDATED");
-                            }
-                        };
-                        list.appendChild(item);
-                    });
-                } else {
-                    GEAR_SHOP.forEach(g => {
-                        const owned = state.unlockedGears.includes(g.id);
-                        const item = document.createElement('div');
-                        item.className = `shop-item ${owned ? 'owned' : ''}`;
-                        item.innerHTML = `<strong>${g.n}</strong><br>${owned ? 'ACTIVE' : g.cost.toLocaleString() + ' G'}<br><span style="font-size:10px; color:#777;">${g.d}</span>`;
-                        if(!owned) {
-                            item.onclick = () => {
-                                if(state.gold >= g.cost) {
-                                    state.gold -= g.cost; state.unlockedGears.push(g.id); saveGame(); shop.render('support');
-                                }
-                            };
+                SHOP_ITEMS.forEach(i => {
+                    const has = profile.gears.includes(i.id);
+                    const item = document.createElement('div');
+                    item.className = `shop-item ${has ? 'owned' : ''}`;
+                    item.innerHTML = `<strong style="font-size:18px;">${i.n}</strong><br><br>
+                                      <span style="color:#ffd700;">${has && i.id!=='bomb' ? 'INSTALLATION COMPLETE' : i.cost.toLocaleString() + ' G'}</span><br><br>
+                                      <span style="font-size:10px; color:#888;">${i.d}</span>`;
+                    item.onclick = () => {
+                        if(profile.gold >= i.cost) {
+                            if(i.id === 'bomb') { profile.bombs++; profile.gold -= i.cost; }
+                            else if(!has) { profile.gears.push(i.id); profile.gold -= i.cost; }
+                            saveHandler(); ui.drawShop();
                         }
-                        list.appendChild(item);
-                    });
-                    // BOMB PURCHASE
-                    const bombItem = document.createElement('div');
-                    bombItem.className = 'shop-item';
-                    bombItem.innerHTML = `<strong>AUTO-BOMB STOCK</strong><br>25,000 G<br><span style="font-size:10px; color:#777;">予備の自動ボムを追加。</span>`;
-                    bombItem.onclick = () => {
-                        if(state.gold >= 25000) { state.gold -= 25000; state.bombs++; saveGame(); alert("BOMB ACQUIRED"); }
                     };
-                    list.appendChild(bombItem);
-                }
+                    list.appendChild(item);
+                });
             }
         };
 
         /* =================================================================
-           5. CORE ENGINE (800+ LINE DEPTH LOGIC)
+           7. GAME CORE ENGINE
            ================================================================= */
-        let active = false, score = 0, hp = 100, frame = 0, charge = 0, invul = 0, phase = 1;
-        let pPos = { x: 0, y: 0, tx: 0, ty: 0 };
-        let bullets = [], eBullets = [], enemies = [], fxs = [], boss = null, firing = false, currentSector = null;
+        let active = false, score = 0, hp = 100, frame = 0, bCharge = 0;
+        let pX, pY, tX, tY, curS, shooting = false;
+        let bullets = [], enemies = [], coins = [], eBullets = [];
 
         const engine = {
-            init: () => {
-                document.getElementById('briefing-modal').style.display = 'none';
-                document.getElementById('screen-overlay').style.display = 'none';
-                document.getElementById('game-hud').style.display = 'block';
+            init: (sector) => {
+                curS = sector;
+                ui.close();
+                document.getElementById('main-overlay').style.display = 'none';
+                document.getElementById('hud').style.display = 'block';
                 
-                active = true; score = 0; hp = 100; frame = 0; charge = 0; invul = 0; phase = 1;
-                bullets = []; eBullets = []; enemies = []; fxs = []; boss = null;
-                pPos.x = canvas.width/2; pPos.y = canvas.height*0.8;
+                active = true; score = 0; hp = 100; frame = 0; bCharge = 0;
+                bullets = []; enemies = []; coins = []; eBullets = [];
+                pX = 600; pY = 750; tX = 600; tY = 750;
 
-                engine.notify("PHASE 1: INFILTRATION", 2500);
-                engine.run();
+                engine.warn(sector.msg, 3000);
+                engine.mainLoop();
             },
 
-            notify: (msg, dur) => {
-                const el = document.getElementById('alert-system');
-                document.getElementById('alert-text').innerText = msg;
-                el.style.display = 'block';
-                setTimeout(() => el.style.display = 'none', dur);
+            warn: (msg, d) => {
+                const b = document.getElementById('alert-box');
+                b.innerText = msg; b.style.display = 'block';
+                setTimeout(() => b.style.display = 'none', d);
             },
 
-            processLogic: () => {
+            mainLoop: () => {
+                if(!active) return;
                 frame++;
-                if(invul > 0) invul--;
 
-                // --- PHASE TRANSITION LOGIC (Stage Length Dependent) ---
-                const p2Mark = currentSector.len * 0.35;
-                const p3Mark = currentSector.len;
-
-                if(phase === 1 && score > p2Mark) {
-                    phase = 2;
-                    engine.notify("PHASE 2: ELITE FORCES", 3000);
-                }
-                if(phase === 2 && score > p3Mark && !boss) {
-                    phase = 3;
-                    engine.notify("WARNING: UNKNOWN BOSS DETECTED", 4000);
-                    boss = {
-                        x: canvas.width/2, y: -250,
-                        hp: currentSector.bossHp, maxHp: currentSector.bossHp,
-                        size: 220, vy: 1.5, overdrive: false, t: 0
-                    };
-                    enemies.push(boss);
-                }
-
-                // --- PLAYER MOVEMENT & GIMMICK PROCESSING ---
+                // --- ギミック演算 ---
                 let lerp = 0.22;
-                // Gear Checks
-                const hasStab = state.unlockedGears.includes('stab');
-                const hasWind = state.unlockedGears.includes('wind');
-                const hasThermal = state.unlockedGears.includes('thermal');
-                const hasDec = state.unlockedGears.includes('decoder');
-                const hasHull = state.unlockedGears.includes('hull');
+                if(curS.g === 'GRV' && !profile.gears.includes('stab')) lerp = 0.05;
+                if(curS.g === 'WTR' && !profile.gears.includes('wind')) lerp = 0.08;
 
-                if(currentSector.g === 'GRV' && !hasStab) lerp = 0.04;
-                if(currentSector.g === 'WTR' && !hasWind) lerp = 0.08;
+                pX += (tX - pX) * lerp;
+                pY += (tY - pY) * lerp;
 
-                let targetX = pPos.tx, targetY = pPos.ty;
-                if(currentSector.g === 'REV' && !hasDec) {
-                    targetX = canvas.width - targetX;
-                    targetY = canvas.height - targetY;
+                if(curS.g === 'WND' && !profile.gears.includes('wind')) pX -= 6;
+                if(curS.g === 'VIB' && !profile.gears.includes('stab')) { pX += Math.sin(frame)*12; pY += Math.cos(frame)*12; }
+                if(curS.g === 'PSN' && !profile.gears.includes('hull') && frame % 60 === 0) hp -= 1;
+                if(curS.g === 'ULT' && !profile.gears.includes('hull') && frame % 60 === 0) hp -= 5;
+
+                // --- 射撃ロジック ---
+                if(shooting && frame % 6 === 0) {
+                    bullets.push({x: pX, y: pY - 40, vy: -28});
                 }
 
-                pPos.x += (targetX - pPos.x) * lerp;
-                pPos.y += (targetY - pPos.y) * lerp;
-
-                // Environmental Hazards
-                if(currentSector.g === 'WND' && !hasWind) pPos.x -= 5.0;
-                if(currentSector.g === 'VIB' && !hasStab) {
-                    pPos.x += (Math.random()-0.5)*18; pPos.y += (Math.random()-0.5)*18;
-                }
-                if(currentSector.g === 'PSN' && !hasHull && frame % 60 === 0) hp -= 1.0;
-                if(currentSector.g === 'ULT' && !hasHull && frame % 60 === 0) hp -= 2.5; 
-                if(currentSector.g === 'WRP' && !hasDec && frame % 150 === 0) {
-                    pPos.x = Math.random()*canvas.width; pPos.y = Math.random()*canvas.height;
-                }
-
-                // --- WEAPON SYSTEM ---
-                if(firing && frame % (state.activeSkin === '#0ff' ? 3 : 8) === 0) {
-                    const w = WEAPON_SHOP.find(v => v.id === state.activeSkin);
-                    if(w.type === 'v') {
-                        bullets.push({x:pPos.x-15, y:pPos.y-20, vx:-6, vy:-25, p:w.p});
-                        bullets.push({x:pPos.x, y:pPos.y-35, vx:0, vy:-28, p:w.p});
-                        bullets.push({x:pPos.x+15, y:pPos.y-20, vx:6, vy:-25, p:w.p});
-                    } else if(w.type === 'wave') {
-                        bullets.push({x:pPos.x, y:pPos.y-20, vx:Math.sin(frame/4)*18, vy:-24, p:w.p});
-                    } else if(w.type === 'all') {
-                        for(let a=0; a<Math.PI*2; a+=Math.PI/8) {
-                            bullets.push({x:pPos.x, y:pPos.y, vx:Math.cos(a)*18, vy:Math.sin(a)*18, p:w.p});
-                        }
-                    } else {
-                        bullets.push({x:pPos.x, y:pPos.y-40, vx:0, vy:-36, p:w.p});
-                    }
-                }
-
-                // --- ENEMY AI & SPANWING ---
-                if(phase < 3 && frame % (phase === 1 ? 25 : 12) === 0) {
-                    enemies.push({
-                        x: Math.random()*canvas.width, y: -80,
-                        hp: (phase === 1 ? 35 : 120)*currentSector.diff,
-                        maxHp: (phase === 1 ? 35 : 120)*currentSector.diff,
-                        size: (phase === 1 ? 50 : 75),
-                        vy: (3.5 + currentSector.diff) * (phase === 2 ? 1.4 : 1.0),
-                        elite: phase === 2,
-                        waveX: Math.random() > 0.6 ? 6 : 0
-                    });
-                }
-
-                enemies.forEach((e, idx) => {
-                    e.y += e.vy;
-                    if(e.waveX) e.x += Math.sin(frame/15)*e.waveX;
-
-                    if(e === boss) {
-                        if(e.y < 220) e.y += e.vy; else e.vy = 0;
-                        if(!e.overdrive && e.hp < e.maxHp/2) {
-                            e.overdrive = true;
-                            engine.notify("BOSS OVERDRIVE: ANNIHILATION MODE", 3000);
-                        }
-                    }
-
-                    // Firing Logic
-                    let fRate = (e === boss ? (e.overdrive ? 0.35 : 0.18) : (e.elite ? 0.09 : 0.04)) * currentSector.diff;
-                    if(Math.random() < fRate) {
-                        if(e === boss && e.overdrive) {
-                            for(let i=0; i<12; i++) {
-                                let ang = (frame/12) + (Math.PI*2/12)*i;
-                                eBullets.push({x:e.x, y:e.y, vx:Math.cos(ang)*11, vy:Math.sin(ang)*11});
-                            }
-                        } else {
-                            let ang = Math.atan2(pPos.y - e.y, pPos.x - e.x);
-                            eBullets.push({x:e.x, y:e.y, vx:Math.cos(ang)*8, vy:Math.sin(ang)*8});
-                        }
-                    }
-                    if(e.y > canvas.height + 150) enemies.splice(idx, 1);
-                });
-
-                // --- COLLISION ENGINE ---
-                bullets.forEach((b, bi) => {
-                    b.x += b.vx || 0; b.y += b.vy || 0;
+                // --- 衝突判定 & 物理 ---
+                // 自機弾
+                bullets.forEach((b, i) => {
+                    b.y += b.vy;
+                    if(b.y < -100) bullets.splice(i, 1);
                     enemies.forEach((e, ei) => {
-                        if(Math.hypot(b.x-e.x, b.y-e.y) < e.size/1.4) {
-                            e.hp -= b.p; bullets.splice(bi, 1);
-                            engine.fx(b.x, b.y, state.activeSkin, 4);
+                        if(Math.hypot(b.x - e.x, b.y - e.y) < 45) {
+                            e.hp -= 10; bullets.splice(i, 1);
                             if(e.hp <= 0) {
-                                if(e === boss) engine.finish(true);
-                                else {
-                                    engine.fx(e.x, e.y, currentSector.color, 18);
-                                    score += (e.elite ? 4500 : 1200);
-                                    state.gold += (e.elite ? 150 : 40);
-                                    charge += 14; if(charge >= 100) { charge = 0; state.bombs++; }
-                                    enemies.splice(ei, 1); saveGame();
+                                // 敵撃破：コイン散布
+                                for(let c=0; c<8; c++) {
+                                    coins.push({
+                                        x: e.x, y: e.y,
+                                        vx: (Math.random()-0.5)*20, vy: (Math.random()-0.5)*20,
+                                        val: 100
+                                    });
                                 }
+                                score += 1200;
+                                enemies.splice(ei, 1);
                             }
                         }
                     });
-                    if(b.y < -100 || b.y > canvas.height+100) bullets.splice(bi, 1);
                 });
 
-                eBullets.forEach((eb, ebi) => {
-                    eb.x += eb.vx; eb.y += eb.vy;
-                    if(invul <= 0 && Math.hypot(eb.x-pPos.x, eb.y-pPos.y) < 22) {
-                        if(state.bombs > 0) {
-                            state.bombs--; invul = 180; eBullets = [];
-                            engine.notify("AUTO-BOMB TRIGGERED", 1500);
-                            engine.fx(pPos.x, pPos.y, "#0ff", 60); saveGame();
-                        } else {
-                            hp -= 20; eBullets.splice(ebi, 1);
-                            if(hp <= 0) engine.finish(false);
-                        }
-                    }
-                    if(eb.y > canvas.height+100) eBullets.splice(ebi, 1);
-                });
-
-                fxs.forEach((f, fi) => {
-                    f.x += f.vx; f.y += f.vy; f.life -= 0.02;
-                    if(f.life <= 0) fxs.splice(fi, 1);
-                });
-            },
-
-            fx: (x, y, clr, n) => {
-                for(let i=0; i<n; i++) fxs.push({x, y, vx:(Math.random()-0.5)*16, vy:(Math.random()-0.5)*16, life:1.0, color:clr});
-            },
-
-            finish: (win) => {
-                active = false;
-                const bonus = win ? Math.floor(Math.pow(hp, 1.9) * 20) : 0;
-                if(win) {
-                    if(!state.clearedIds.includes(currentSector.id)) state.clearedIds.push(currentSector.id);
-                    state.gold += currentSector.reward + bonus;
+                // 敵出現
+                if(frame % (Math.max(5, 30-Math.floor(frame/500))) === 0 && score < curS.len) {
+                    enemies.push({ x: Math.random()*1200, y: -80, hp: 40*curS.d, s: 70 });
                 }
-                saveGame();
-                engine.notify(win ? `MISSION COMPLETE\nHP BONUS: +${bonus} G` : "MISSION FAILED", 5000);
-                setTimeout(() => location.reload(), 5000);
+                enemies.forEach((e, i) => {
+                    e.y += 5 * curS.d;
+                    if(e.y > 1000) enemies.splice(i, 1);
+                    if(Math.hypot(e.x - pX, e.y - pY) < 50) {
+                        if(profile.bombs > 0) { 
+                            engine.warn("AUTO-BOMB!", 1000); 
+                            profile.bombs--; enemies = []; eBullets = []; saveHandler(); 
+                        } else { hp -= 25; enemies.splice(i, 1); }
+                    }
+                });
+
+                // コイン（マグネット物理）
+                coins.forEach((c, i) => {
+                    let d = Math.hypot(c.x - pX, c.y - pY);
+                    if(d < 300) {
+                        c.vx += (pX - c.x) * 0.08;
+                        c.vy += (pY - c.y) * 0.08;
+                    }
+                    c.x += c.vx; c.y += c.vy;
+                    c.vx *= 0.92; c.vy *= 0.92;
+                    c.y += 2.5;
+
+                    if(d < 50) {
+                        profile.gold += c.val;
+                        score += 500;
+                        saveHandler();
+                        coins.splice(i, 1);
+                    }
+                });
+
+                // 終了判定
+                if(score >= curS.len && enemies.length === 0) {
+                    engine.warn("MISSION CLEARED", 5000);
+                    if(!profile.cleared.includes(curS.id)) profile.cleared.push(curS.id);
+                    profile.gold += curS.pay;
+                    saveHandler();
+                    active = false;
+                    setTimeout(() => location.reload(), 5000);
+                }
+                if(hp <= 0) {
+                    active = false;
+                    engine.warn("MISSION FAILED", 5000);
+                    setTimeout(() => location.reload(), 5000);
+                }
+
+                engine.render();
+                requestAnimationFrame(engine.mainLoop);
             },
 
-            draw: () => {
-                ctx.fillStyle = "#000"; ctx.fillRect(0,0,canvas.width,canvas.height);
+            render: () => {
+                ctx.clearRect(0, 0, 1200, 900);
                 
-                // Environmental Effects (Visual only)
-                if(currentSector.g === 'FOG' && !state.unlockedGears.includes('thermal')) {
-                    ctx.fillStyle = "rgba(255,255,255,0.25)"; ctx.fillRect(0,0,canvas.width,canvas.height);
-                }
+                // ギミック視覚効果
+                if(curS.g === 'FOG') { ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fillRect(0,0,1200,900); }
 
-                fxs.forEach(f => { ctx.fillStyle=`rgba(255,255,255,${f.life})`; ctx.fillRect(f.x, f.y, 5, 5); });
+                // 自機
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.moveTo(pX, pY-50); ctx.lineTo(pX+40, pY+20); ctx.lineTo(pX-40, pY+20);
+                ctx.fill();
 
-                // Player
-                if(invul % 6 < 3) {
-                    ctx.shadowBlur = 20; ctx.shadowColor = state.activeSkin;
-                    ctx.fillStyle = state.activeSkin.includes('2') ? '#fff' : state.activeSkin;
-                    ctx.beginPath(); ctx.moveTo(pPos.x, pPos.y-45); ctx.lineTo(pPos.x+35, pPos.y+25); ctx.lineTo(pPos.x-35, pPos.y+25); ctx.fill();
-                    ctx.shadowBlur = 0;
-                }
+                // 弾
+                ctx.fillStyle = '#0ff';
+                bullets.forEach(b => ctx.fillRect(b.x-4, b.y, 8, 30));
 
-                // Enemies
+                // 敵
                 enemies.forEach(e => {
-                    ctx.strokeStyle = (e === boss && e.overdrive) ? "#f00" : (e.elite ? "#f0f" : currentSector.color);
-                    ctx.lineWidth = e === boss ? 12 : 5;
-                    ctx.strokeRect(e.x-e.size/2, e.y-e.size/2, e.size, e.size);
-                    if(e === boss) {
-                        ctx.fillStyle="#111"; ctx.fillRect(e.x-150, e.y-180, 300, 15);
-                        ctx.fillStyle=e.overdrive ? "#f00" : "#0f0"; ctx.fillRect(e.x-150, e.y-180, 300*(e.hp/e.maxHp), 15);
-                    }
+                    ctx.strokeStyle = curS.c; ctx.lineWidth = 6;
+                    ctx.strokeRect(e.x-e.s/2, e.y-e.s/2, e.s, e.s);
                 });
 
-                // Projectiles
-                bullets.forEach(b => { ctx.fillStyle=state.activeSkin; ctx.fillRect(b.x-4, b.y, 8, 35); });
-                eBullets.forEach(eb => { ctx.fillStyle="#f0f"; ctx.beginPath(); ctx.arc(eb.x, eb.y, 12, 0, 7); ctx.fill(); });
+                // コイン
+                ctx.fillStyle = '#ffd700';
+                coins.forEach(c => {
+                    ctx.beginPath(); ctx.arc(c.x, c.y, 12, 0, 7); ctx.fill();
+                    ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+                });
 
-                // HUD Sync
-                document.getElementById('hp-fill').style.width = Math.max(0, hp) + "%";
-                document.getElementById('energy-fill').style.width = charge + "%";
+                // HUD
                 document.getElementById('score-val').innerText = `SCORE: ${score.toString().padStart(8, '0')}`;
-            },
-
-            run: () => {
-                if(active) {
-                    engine.processLogic();
-                    engine.draw();
-                    requestAnimationFrame(engine.run);
-                }
+                document.getElementById('hp-fill').style.width = hp + "%";
+                document.getElementById('bomb-fill').style.width = (frame % 100) + "%";
             }
         };
 
-        // INPUTS
-        window.onmousedown = () => firing = true;
-        window.onmouseup = () => firing = false;
-        window.onmousemove = e => { pPos.tx = e.clientX; pPos.ty = e.clientY; };
-        saveGame();
+        // 入力制御
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            tX = (e.clientX - rect.left) * (1200 / rect.width);
+            tY = (e.clientY - rect.top) * (900 / rect.height);
+        });
+        window.onmousedown = () => shooting = true;
+        window.onmouseup = () => shooting = false;
+
+        saveHandler();
     </script>
 </body>
 </html>
