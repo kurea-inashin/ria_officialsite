@@ -2,62 +2,105 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Minami Project 2026: Pro Arcade</title>
+    <title>Minami Project 2026: Tactical Arcade</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+JP:wght@700&display=swap');
         
-        body { margin: 0; background: #00050a; color: #aab; font-family: 'Press Start 2P', cursive; overflow: hidden; }
+        body { margin: 0; background: #000205; color: #889; font-family: 'Press Start 2P', cursive; overflow: hidden; }
         canvas { display: block; }
 
-        /* HUD: 彩度を落とした落ち着いたデザイン */
-        #hud { position: absolute; top: 20px; left: 20px; z-index: 10; pointer-events: none; }
-        #score-val { font-size: 24px; color: #4af; text-shadow: 0 0 5px rgba(68,170,255,0.5); }
-        .bar-label { font-size: 8px; margin-top: 10px; color: #557; letter-spacing: 1px; }
-        .bar-outer { width: 220px; height: 10px; background: rgba(0,0,0,0.5); border: 1px solid #334; margin-top: 4px; border-radius: 2px; overflow: hidden; }
-        #hp-fill { height: 100%; background: #3a8; width: 100%; transition: width 0.3s; }
-        #burst-fill { height: 100%; background: #37a; width: 0%; }
-        #stats { font-size: 10px; color: #884; margin-top: 10px; }
+        /* HUD: 重厚感のあるアーケードスタイル */
+        #hud { position: absolute; top: 25px; left: 25px; z-index: 10; pointer-events: none; width: 280px; }
+        #score-container { margin-bottom: 15px; }
+        #score-label { font-size: 10px; color: #446; margin-bottom: 5px; }
+        #score-val { font-size: 26px; color: #4af; text-shadow: 0 0 10px rgba(0,180,255,0.4); }
+        
+        .bar-group { margin-top: 15px; }
+        .bar-text { font-size: 8px; color: #556; display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .bar-outer { height: 12px; background: rgba(0,10,20,0.8); border: 1px solid #223; border-radius: 2px; overflow: hidden; }
+        #hp-fill { height: 100%; background: linear-gradient(90deg, #622, #3a8); width: 100%; transition: width 0.3s; }
+        #burst-fill { height: 100%; background: #26a; width: 0%; box-shadow: 0 0 8px #26a; }
+        
+        #stats { font-size: 9px; margin-top: 15px; line-height: 1.8; color: #667; }
+        .stat-line { display: flex; justify-content: space-between; border-bottom: 1px solid #112; padding: 2px 0; }
 
-        /* Overlay */
-        #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,2,8,0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
-        .nav-btn { padding: 15px 30px; border: 1px solid #334; background: #05080c; color: #778; cursor: pointer; font-family: 'Press Start 2P'; font-size: 11px; margin: 10px; transition: 0.3s; }
-        .nav-btn:hover { border-color: #4af; color: #fff; background: #0a1018; }
+        /* Overlay & Panels */
+        #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,1,3,0.96); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; }
+        .panel { display: none; flex-direction: column; align-items: center; width: 80%; }
+        .active-panel { display: flex; }
+
+        .nav-btn { padding: 18px 32px; border: 1px solid #223; background: #05070a; color: #667; cursor: pointer; font-family: 'Press Start 2P'; font-size: 11px; margin: 12px; transition: 0.2s; position: relative; overflow: hidden; }
+        .nav-btn:hover { border-color: #4af; color: #fff; background: #0a121a; }
+        .nav-btn::after { content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(68,170,255,0.1), transparent); transition: 0.5s; }
+        .nav-btn:hover::after { left: 100%; }
+
+        /* Shop Grid */
+        .shop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; max-width: 700px; }
+        .shop-card { border: 1px solid #1a1a25; padding: 15px; background: #030508; cursor: pointer; transition: 0.2s; text-align: left; }
+        .shop-card:hover { border-color: #4af; background: #081018; }
+        .shop-card h4 { font-size: 10px; margin: 0 0 8px 0; color: #4af; }
+        .shop-card p { font-size: 8px; color: #556; margin: 0; font-family: 'Noto Sans JP'; line-height: 1.4; }
 
         /* Messages */
-        #msg { position: absolute; top: 35%; left: 50%; transform: translate(-50%, -50%); font-size: 26px; color: #fff; opacity: 0; transition: 0.5s; z-index: 50; text-align: center; pointer-events: none; }
-        #finish-hint { position: absolute; bottom: 25%; left: 50%; transform: translateX(-50%); font-size: 14px; color: #884; display: none; animation: blink 0.5s infinite; z-index: 50; }
-        @keyframes blink { 0%, 100% { opacity: 0.2; } 50% { opacity: 1; } }
+        #msg-layer { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); pointer-events: none; text-align: center; z-index: 50; }
+        #main-msg { font-size: 32px; color: #fff; opacity: 0; transition: 0.4s; letter-spacing: 4px; }
+        #sub-msg { font-size: 12px; color: #4af; opacity: 0; margin-top: 10px; transition: 0.6s; }
+        
+        #hint { position: absolute; bottom: 20%; left: 50%; transform: translateX(-50%); font-size: 14px; color: #844; display: none; animation: pulse 0.8s infinite; z-index: 50; }
+        @keyframes pulse { 0% { opacity: 0.3; } 50% { opacity: 1; } 100% { opacity: 0.3; } }
 
-        #copy { position: absolute; bottom: 15px; width: 100%; text-align: center; font-size: 9px; color: #223; letter-spacing: 2px; }
+        #copy { position: absolute; bottom: 20px; width: 100%; text-align: center; font-size: 10px; color: #1a1a25; letter-spacing: 3px; }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
     <div id="hud">
-        <div id="score-val">000000</div>
-        <div class="bar-label">ARMOR STATUS</div>
-        <div class="bar-outer"><div id="hp-fill"></div></div>
-        <div class="bar-label">BURST ENERGY</div>
-        <div class="bar-outer"><div id="burst-fill"></div></div>
-        <div id="stats">CREDITS: <span id="g-val">0</span> | BOMB: <span id="b-val">0</span></div>
+        <div id="score-container">
+            <div id="score-label">OPERATIONAL DATA</div>
+            <div id="score-val">000000</div>
+        </div>
+        <div class="bar-group">
+            <div class="bar-text"><span>ARMOR</span><span id="hp-pct">100%</span></div>
+            <div class="bar-outer"><div id="hp-fill"></div></div>
+        </div>
+        <div class="bar-group">
+            <div class="bar-text"><span>BURST</span><span id="bt-pct">0%</span></div>
+            <div class="bar-outer"><div id="burst-fill"></div></div>
+        </div>
+        <div id="stats">
+            <div class="stat-line"><span>WEAPON LEVEL</span><span id="atk-val">1</span></div>
+            <div class="stat-line"><span>BOMB STOCK</span><span id="b-val">0</span></div>
+            <div class="stat-line"><span>CREDITS</span><span id="g-val">0</span></div>
+        </div>
     </div>
 
     <div id="overlay">
-        <h1 style="font-size:22px; color:#4af; margin-bottom:50px; letter-spacing:4px;">MINAMI PROJECT 2026</h1>
-        <div id="menu">
-            <button class="nav-btn" onclick="openPanel('stage-list')">SELECT MISSION</button>
-            <button class="nav-btn" onclick="openPanel('shop-list')">TECH HANGAR</button>
+        <h1 style="font-size:24px; color:#345; margin-bottom:60px;">MINAMI PROJECT <span style="color:#4af;">2026</span></h1>
+        
+        <div id="menu-main" class="panel active-panel">
+            <button class="nav-btn" onclick="openPanel('stage-list')">ENGAGE MISSION</button>
+            <button class="nav-btn" onclick="openPanel('shop-list')">EQUIPMENT & TECH</button>
         </div>
-        <div id="stage-list" style="display:none; grid-template-columns: repeat(3, 1fr); gap:12px;"></div>
-        <div id="shop-list" style="display:none; text-align:center;">
-             <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;" id="shop-items"></div>
-             <button class="nav-btn" style="margin-top:20px;" onclick="location.reload()">BACK</button>
+
+        <div id="stage-list" class="panel">
+            <div id="grid-container" style="display:grid; grid-template-columns: repeat(3, 1fr); gap:12px;"></div>
+            <button class="nav-btn" style="margin-top:40px;" onclick="location.reload()">ABORT</button>
         </div>
-        <div id="copy">© 2026 MINAMI PROJECT / TERMINAL GAMES</div>
+
+        <div id="shop-list" class="panel">
+            <div id="shop-info" style="color:#ffd700; margin-bottom:20px; font-size:12px;">AVAIL: 0G</div>
+            <div class="shop-grid" id="shop-items"></div>
+            <button class="nav-btn" style="margin-top:30px;" onclick="location.reload()">RETURN</button>
+        </div>
+
+        <div id="copy">© 2026 MINAMI PROJECT / TERMINAL SYSTEMS</div>
     </div>
 
-    <div id="msg"></div>
-    <div id="finish-hint">REACHED CRITICAL: USE BURST</div>
+    <div id="msg-layer">
+        <div id="main-msg">PHASE UP</div>
+        <div id="sub-msg">SYSTEM OPTIMIZED</div>
+    </div>
+    <div id="hint">CRITICAL: EXECUTE BURST</div>
     <canvas id="game"></canvas>
 
     <script>
@@ -65,180 +108,289 @@
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth; canvas.height = window.innerHeight;
 
+        // ゲーム状態変数
         let active = false, score = 0, hp = 100, frame = 0, phase = 1, burst = 0;
-        let p = { x: canvas.width/2, y: canvas.height/2 }, bullets = [], eBullets = [], enemies = [], particles = [], bomb = 0;
-        let cur = null, isBossFinishing = false;
+        let p = { x: canvas.width/2, y: canvas.height/2 }, bullets = [], eBullets = [], enemies = [], particles = [], items = [], bombTime = 0;
+        let cur = null, isFinal = false, shake = 0;
 
+        // ステージデータ（色の彩度を少し抑えたアーケード仕様）
         const ST = {
-            'SB': { name: 'ST=SB', color: '#880', diff: 1.0, s1: 5000, s2: 12000, gim: 'vibrate' },
-            'KT': { name: 'ST=KT', color: '#058', diff: 1.2, s1: 6000, s2: 15000, gim: 'water' },
-            'SK': { name: 'ST=SK', color: '#063', diff: 1.5, s1: 8000, s2: 20000, gim: 'fog' },
-            'KY': { name: 'ST=KY', color: '#822', diff: 2.0, s1: 10000, s2: 25000, gim: 'wind' },
-            'PK': { name: 'ST=PK', color: '#846', diff: 2.3, s1: 12000, s2: 30000, gim: 'reverse' },
-            'JB': { name: 'ST=JB', color: '#055', diff: 2.6, s1: 15000, s2: 35000, gim: 'jam' },
-            'S1': { name: 'ST=S1', color: '#508', diff: 3.0, s1: 18000, s2: 45000, gim: 'warp' },
-            'S2': { name: 'ST=S2', color: '#808', diff: 3.5, s1: 20000, s2: 55000, gim: 'poison' },
-            'S3': { name: 'ST=S3', color: '#088', diff: 4.0, s1: 25000, s2: 70000, gim: 'gravity' },
-            'CO': { name: 'ST=CO', color: '#a40', diff: 15.0, s1: 50000, s2: 150000, secret: true }
+            'SB': { id:'SB', name:'ST=SB', col:'#980', diff:1.0, s1:5000, s2:12000, gim:'vibrate' },
+            'KT': { id:'KT', name:'ST=KT', col:'#06a', diff:1.2, s1:6000, s2:15000, gim:'water' },
+            'SK': { id:'SK', name:'ST=SK', col:'#084', diff:1.5, s1:8000, s2:20000, gim:'fog' },
+            'KY': { id:'KY', name:'ST=KY', col:'#a22', diff:2.0, s1:10000, s2:25000, gim:'wind' },
+            'PK': { id:'PK', name:'ST=PK', col:'#a48', diff:2.3, s1:12000, s2:30000, gim:'reverse' },
+            'JB': { id:'JB', name:'ST=JB', col:'#088', diff:2.6, s1:15000, s2:35000, gim:'jam' },
+            'S1': { id:'S1', name:'ST=S1', col:'#62a', diff:3.0, s1:18000, s2:45000, gim:'warp' },
+            'S2': { id:'S2', name:'ST=S2', col:'#a2a', diff:3.5, s1:20000, s2:55000, gim:'poison' },
+            'S3': { id:'S3', name:'ST=S3', col:'#0aa', diff:4.0, s1:25000, s2:70000, gim:'gravity' },
+            'CO': { id:'CO', name:'ST=CO', col:'#c50', diff:12.0, s1:50000, s2:150000, secret:true }
         };
 
-        let db = JSON.parse(localStorage.getItem('minami_pro_v8')) || {
+        // セーブデータ
+        let db = JSON.parse(localStorage.getItem('minami_tactical_v9')) || {
             gold: 0, atk: 4, bombs: 2, eq: [], cleared: []
         };
 
-        function save() { localStorage.setItem('minami_pro_v8', JSON.stringify(db)); }
+        function save() { localStorage.setItem('minami_tactical_v9', JSON.stringify(db)); }
 
+        // UI制御
         function openPanel(id) {
-            document.getElementById('menu').style.display = 'none';
-            document.querySelectorAll('#overlay > div').forEach(d => { if(d.id !== 'copy') d.style.display = 'none'; });
-            const target = document.getElementById(id);
-            target.style.display = id === 'stage-list' ? 'grid' : 'block';
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active-panel'));
+            document.getElementById(id).classList.add('active-panel');
             if(id === 'stage-list') renderStages();
             if(id === 'shop-list') renderShop();
         }
 
         function renderStages() {
-            const g = document.getElementById('stage-list'); g.innerHTML = '';
-            if(db.cleared.length >= 9) ST.CO.secret = false;
-            Object.keys(ST).forEach(id => {
-                if(ST[id].secret) return;
-                const b = document.createElement('button');
-                b.className = 'nav-btn'; b.style.borderColor = '#223';
-                b.innerHTML = `<span style="color:${ST[id].color}">${ST[id].name}</span><br><small style="font-size:7px;">${db.cleared.includes(id)?'COMPLETE':'READY'}</small>`;
-                b.onclick = () => start(id); g.appendChild(b);
+            const container = document.getElementById('grid-container');
+            container.innerHTML = '';
+            const allCleared = Object.keys(ST).filter(k => !ST[k].secret).every(k => db.cleared.includes(k));
+            if(allCleared) ST.CO.secret = false;
+
+            Object.keys(ST).forEach(key => {
+                if(ST[key].secret) return;
+                const btn = document.createElement('button');
+                btn.className = 'nav-btn';
+                btn.style.borderColor = db.cleared.includes(key) ? ST[key].col : '#1a1a25';
+                btn.innerHTML = `<span style="color:${ST[key].col}">${ST[key].name}</span><br><small style="font-size:7px; color:#445;">${db.cleared.includes(key)?'SECURED':'STDBY'}</small>`;
+                btn.onclick = () => startGame(key);
+                container.appendChild(btn);
             });
         }
 
         function renderShop() {
-            const container = document.getElementById('shop-items'); container.innerHTML = '';
-            const items = [
-                { id: 'atk', n: 'ATK UP', c: 1500 }, { id: 'bomb', n: 'BOMB UP', c: 800 },
-                { id: 'eq_wind', n: 'STABILIZER-W', c: 2000 }, { id: 'eq_grav', n: 'STABILIZER-G', c: 2000 }
+            document.getElementById('shop-info').innerText = `AVAILABLE CREDITS: ${db.gold} G`;
+            const container = document.getElementById('shop-items');
+            container.innerHTML = '';
+            const menu = [
+                { id:'atk', n:'ATTACK MODULE', c:1500, d:'ショット威力が永続的に上昇します。' },
+                { id:'bomb', n:'BOMB RELOAD', c:1000, d:'緊急回避用ボムを1つ追加します。' },
+                { id:'eq_wind', n:'WIND-STB', c:2500, d:'強風ギミックの影響を無効化します。' },
+                { id:'eq_grav', n:'GRAV-STB', c:2500, d:'重力ギミックの影響を無効化します。' }
             ];
-            items.forEach(i => {
-                const d = document.createElement('div'); d.className = 'nav-btn';
-                d.innerHTML = `${i.n}<br>${i.c} G`;
-                d.onclick = () => { if(db.gold>=i.c){ db.gold-=i.c; if(i.id.startsWith('eq')){if(!db.eq.includes(i.id))db.eq.push(i.id)} else db[i.id]++; save(); renderShop(); }};
-                container.appendChild(d);
+            menu.forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'shop-card';
+                card.innerHTML = `<h4>${item.n}</h4><p>${item.d}</p><div style="margin-top:10px; color:#ffd700;">${item.c}G</div>`;
+                card.onclick = () => {
+                    if(db.gold >= item.c) {
+                        db.gold -= item.c;
+                        if(item.id.startsWith('eq')){ if(!db.eq.includes(item.id)) db.eq.push(item.id); }
+                        else db[item.id]++;
+                        save(); renderShop();
+                    }
+                };
+                container.appendChild(card);
             });
         }
 
-        function showMsg(txt, color="#fff") {
-            const m = document.getElementById('msg'); m.innerText = txt; m.style.color = color;
-            m.style.opacity = 1; setTimeout(() => m.style.opacity = 0, 1500);
+        function msg(main, sub, col="#fff") {
+            const m = document.getElementById('main-msg');
+            const s = document.getElementById('sub-msg');
+            m.innerText = main; m.style.color = col; m.style.opacity = 1;
+            s.innerText = sub; s.style.opacity = 1;
+            setTimeout(() => { m.style.opacity = 0; s.style.opacity = 0; }, 2000);
         }
 
-        function start(id) {
-            cur = { ...ST[id], id: id };
+        // ゲームコアロジック
+        function startGame(id) {
+            cur = { ...ST[id] };
             document.getElementById('overlay').style.display = 'none';
-            active = true; score = 0; hp = 100; phase = 1; burst = 0; isBossFinishing = false;
-            enemies = []; bullets = []; eBullets = []; particles = []; loop();
-            showMsg("PHASE 1", "#4af");
+            active = true; score = 0; hp = 100; phase = 1; burst = 0; isFinal = false;
+            enemies = []; bullets = []; eBullets = []; particles = []; items = [];
+            msg("MISSION START", `STAGE: ${cur.name}`, cur.col);
+            loop();
+        }
+
+        function spawnExplosion(x, y, col, n=20) {
+            for(let i=0; i<n; i++) {
+                particles.push({
+                    x, y, 
+                    vx: (Math.random()-0.5)*12, 
+                    vy: (Math.random()-0.5)*12, 
+                    life: 40, col: col
+                });
+            }
         }
 
         function update() {
-            frame++; if(bomb > 0) bomb--;
+            frame++;
+            if(bombTime > 0) bombTime--;
+            if(shake > 0) shake--;
 
-            // フェーズ進行ロジック
-            if(phase === 1 && score >= cur.s1) { phase = 2; showMsg("PHASE 2", "#4af"); }
-            if(phase === 2 && score >= cur.s2) { phase = 3; showMsg("BOSS ALERT", "#a44"); }
+            // フェーズ管理
+            if(phase === 1 && score >= cur.s1) { phase = 2; msg("PHASE 2", "ENEMIES AGGRESSION RAISED", "#4af"); }
+            if(phase === 2 && score >= cur.s2) { phase = 3; msg("BOSS ALERT", "TARGET DESTROYER APPROACHING", "#a44"); shake = 30; }
 
             // ギミック
-            if(cur.gim === 'wind' && !db.eq.includes('eq_wind')) p.x += Math.sin(frame/20)*12;
+            if(cur.gim === 'wind' && !db.eq.includes('eq_wind')) p.x += Math.sin(frame/15)*10;
             if(cur.gim === 'gravity' && !db.eq.includes('eq_grav')) p.y += 3;
-            if(cur.gim === 'vibrate') { p.x += (Math.random()-0.5)*5; p.y += (Math.random()-0.5)*5; }
+            if(cur.gim === 'vibrate') { p.x += (Math.random()-0.5)*6; p.y += (Math.random()-0.5)*6; }
 
-            // 射撃
-            if(isDown && frame % 6 === 0) bullets.push({ x: p.x, y: p.y - 20, dmg: db.atk });
-
-            // 敵出現
-            if(!enemies.some(e => e.boss) && frame % 40 === 0) {
-                enemies.push({ x: Math.random()*canvas.width, y: -40, size: 28, hp: 25*cur.diff, vy: 3 + cur.diff, boss: false });
+            // ショット生成
+            if(isDown && frame % 6 === 0) {
+                bullets.push({ x: p.x, y: p.y - 15, d: db.atk });
+                if(db.atk > 8) { // 高レベル特典：ワイドショット
+                    bullets.push({ x: p.x-10, y: p.y-10, d: db.atk/2, vx: -2 });
+                    bullets.push({ x: p.x+10, y: p.y-10, d: db.atk/2, vx: 2 });
+                }
             }
+
+            // 敵生成
+            if(!enemies.some(e => e.boss) && frame % 35 === 0) {
+                const isHeavy = Math.random() < 0.2;
+                enemies.push({
+                    x: Math.random()*canvas.width, y: -50,
+                    size: isHeavy ? 45 : 25,
+                    hp: (isHeavy ? 100 : 25) * cur.diff,
+                    vy: (isHeavy ? 2 : 4) + cur.diff,
+                    boss: false, heavy: isHeavy
+                });
+            }
+
+            // ボス生成
             if(phase === 3 && !enemies.some(e => e.boss)) {
-                enemies.push({ x: canvas.width/2, y: -100, size: 100, hp: 1400*cur.diff, m: 1400*cur.diff, vy: 1, boss: true });
+                enemies.push({
+                    x: canvas.width/2, y: -150,
+                    size: 110, hp: 1600*cur.diff, m: 1600*cur.diff,
+                    vy: 1.2, boss: true
+                });
             }
 
-            // 衝突
-            bullets.forEach((b, i) => {
-                b.y -= 20;
+            // 衝突判定：自機弾 vs 敵
+            bullets.forEach((b, bi) => {
+                b.y -= 22; if(b.vx) b.x += b.vx;
                 enemies.forEach((e, ei) => {
                     if(Math.hypot(b.x-e.x, b.y-e.y) < e.size) {
-                        e.hp -= b.dmg; score += 10; bullets.splice(i, 1);
+                        e.hp -= b.d; score += 15; bullets.splice(bi, 1);
                         if(e.hp <= 0) {
-                            if(e.boss) { e.hp = 0; isBossFinishing = true; document.getElementById('finish-hint').style.display = 'block'; }
-                            else { 
-                                for(let k=0; k<8; k++) particles.push({ x: e.x, y: e.y, vx: (Math.random()-0.5)*8, vy: (Math.random()-0.5)*8, l: 30, c: cur.color });
-                                score += 500; db.gold += 10; burst += 10; if(burst >= 100) { burst = 0; db.bombs++; }
+                            if(e.boss) { e.hp = 0; isFinal = true; document.getElementById('hint').style.display = 'block'; }
+                            else {
+                                spawnExplosion(e.x, e.y, cur.col);
+                                score += 500; db.gold += 15; burst += 12;
+                                if(burst >= 100) { burst = 0; db.bombs++; msg("BOMB UP", "STOCK RELOADED", "#fff"); }
                                 enemies.splice(ei, 1);
                             }
                         }
                     }
                 });
+                if(b.y < -50) bullets.splice(bi, 1);
             });
 
-            if(isBossFinishing && bomb > 0) finish(true);
+            // ボス最終撃破判定
+            if(isFinal && bombTime > 0) {
+                spawnExplosion(canvas.width/2, 200, "#fff", 150);
+                shake = 50;
+                setTimeout(() => finish(true), 1000);
+            }
 
+            // 敵の行動 & 敵弾
             enemies.forEach(e => {
-                e.y += e.vy; if(e.boss && e.y > 180) e.vy = 0;
-                if(e.boss && bomb <= 0 && !isBossFinishing) {
-                    if(frame % 6 === 0) eBullets.push({ x: e.x, y: e.y, vx: Math.cos(frame*0.1)*6, vy: Math.sin(frame*0.1)*6, s: 6 });
-                } else if(Math.random() < 0.03 && bomb <= 0) {
-                    eBullets.push({ x: e.x, y: e.y, vx: 0, vy: 5, s: 5 });
+                e.y += e.vy; 
+                if(e.boss && e.y > 180) e.vy = 0;
+                
+                if(e.boss && bombTime <= 0 && !isFinal) {
+                    if(frame % 5 === 0) {
+                        const angle = frame * 0.15;
+                        eBullets.push({ x: e.x, y: e.y, vx: Math.cos(angle)*7, vy: Math.sin(angle)*7, s: 7 });
+                        if(phase === 3 && e.hp < e.m/2) { // 発狂モード
+                            eBullets.push({ x: e.x, y: e.y, vx: Math.cos(-angle)*5, vy: Math.sin(-angle)*5, s: 5 });
+                        }
+                    }
+                } else if(!e.boss && Math.random() < 0.03 * cur.diff && bombTime <= 0) {
+                    eBullets.push({ x: e.x, y: e.y, vx: 0, vy: 5 + cur.diff, s: 5 });
                 }
             });
 
+            // 敵弾衝突判定
             eBullets.forEach((eb, i) => {
                 eb.x += eb.vx || 0; eb.y += eb.vy;
-                if(Math.hypot(eb.x-p.x, eb.y-p.y) < 18) {
-                    hp -= 10; eBullets.splice(i, 1);
+                if(Math.hypot(eb.x-p.x, eb.y-p.y) < 16) {
+                    hp -= 12; eBullets.splice(i, 1); shake = 10;
                     if(hp <= 0) finish(false);
                 }
+                if(eb.y > canvas.height + 50) eBullets.splice(i, 1);
             });
 
-            particles.forEach((pa, i) => { pa.x += pa.vx; pa.y += pa.vy; pa.l--; if(pa.l<=0) particles.splice(i,1); });
+            // パーティクル更新
+            particles.forEach((pa, i) => {
+                pa.x += pa.vx; pa.y += pa.vy; pa.life--;
+                if(pa.life <= 0) particles.splice(i, 1);
+            });
 
+            // HUD更新
             document.getElementById('hp-fill').style.width = hp + "%";
+            document.getElementById('hp-pct').innerText = Math.max(0, Math.floor(hp)) + "%";
             document.getElementById('burst-fill').style.width = burst + "%";
+            document.getElementById('bt-pct').innerText = Math.floor(burst) + "%";
             document.getElementById('score-val').innerText = score.toString().padStart(6, '0');
             document.getElementById('b-val').innerText = db.bombs;
             document.getElementById('g-val').innerText = db.gold;
+            document.getElementById('atk-val').innerText = db.atk - 3;
         }
 
         function draw() {
-            ctx.fillStyle = "#00050a"; ctx.fillRect(0,0,canvas.width, canvas.height);
+            ctx.save();
+            if(shake > 0) ctx.translate((Math.random()-0.5)*shake, (Math.random()-0.5)*shake);
             
-            // 背景（控えめなグリッド）
+            // 背景描画
+            ctx.fillStyle = "#00050a"; ctx.fillRect(0,0,canvas.width, canvas.height);
             ctx.strokeStyle = "#0a101a"; ctx.lineWidth = 1;
             for(let i=0; i<canvas.width; i+=100) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, canvas.height); ctx.stroke(); }
-            
-            // 自機
-            ctx.fillStyle = "#fff"; ctx.beginPath();
-            ctx.moveTo(p.x, p.y-15); ctx.lineTo(p.x+12, p.y+10); ctx.lineTo(p.x-12, p.y+10); ctx.fill();
+            for(let j=(frame*2)%100; j<canvas.height; j+=100) { ctx.beginPath(); ctx.moveTo(0, j); ctx.lineTo(canvas.width, j); ctx.stroke(); }
 
-            // 敵
+            // 自機：雫型
+            ctx.fillStyle = "#fff"; ctx.shadowBlur = 10; ctx.shadowColor = "#4af";
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y-20);
+            ctx.bezierCurveTo(p.x+15, p.y+10, p.x+10, p.y+15, p.x, p.y+15);
+            ctx.bezierCurveTo(p.x-10, p.y+15, p.x-15, p.y+10, p.x, p.y-20);
+            ctx.fill(); ctx.shadowBlur = 0;
+
+            // 敵：矩形
             enemies.forEach(e => {
-                ctx.strokeStyle = e.boss ? (isBossFinishing ? "#fff" : "#a44") : cur.color;
-                ctx.lineWidth = e.boss ? 4 : 2; ctx.strokeRect(e.x-e.size/2, e.y-e.size/2, e.size, e.size);
-                if(e.boss) {
-                    ctx.fillStyle = "#111"; ctx.fillRect(e.x-50, e.y-70, 100, 6);
-                    ctx.fillStyle = "#a44"; ctx.fillRect(e.x-50, e.y-70, 100*(e.hp/e.m), 6);
+                ctx.strokeStyle = e.boss ? (isFinal ? "#fff" : "#a33") : cur.col;
+                ctx.lineWidth = e.boss ? 6 : 3;
+                ctx.strokeRect(e.x-e.size/2, e.y-e.size/2, e.size, e.size);
+                if(e.boss) { // ボスHPバー
+                    ctx.fillStyle = "#111"; ctx.fillRect(e.x-60, e.y-90, 120, 8);
+                    ctx.fillStyle = "#a33"; ctx.fillRect(e.x-60, e.y-90, 120*(e.hp/e.m), 8);
                 }
             });
 
-            ctx.fillStyle = "#4af"; bullets.forEach(b => ctx.fillRect(b.x-2, b.y, 4, 15));
-            ctx.fillStyle = "#a5a"; eBullets.forEach(eb => { ctx.beginPath(); ctx.arc(eb.x, eb.y, eb.s, 0, 7); ctx.fill(); });
-            particles.forEach(pa => { ctx.fillStyle = pa.c; ctx.fillRect(pa.x, pa.y, 3, 3); });
+            // 弾丸 & エフェクト
+            ctx.fillStyle = "#4af"; bullets.forEach(b => ctx.fillRect(b.x-2, b.y, 4, 18));
+            ctx.fillStyle = "#b4b"; eBullets.forEach(eb => { ctx.beginPath(); ctx.arc(eb.x, eb.y, eb.s, 0, 7); ctx.fill(); });
+            particles.forEach(pa => { ctx.fillStyle = pa.col; ctx.fillRect(pa.x, pa.y, 3, 3); });
 
-            if(bomb > 0) { ctx.fillStyle = `rgba(255,255,255,0.1)`; ctx.fillRect(0,0,canvas.width, canvas.height); }
+            // ボム演出
+            if(bombTime > 0) {
+                ctx.fillStyle = `rgba(255,255,255,${bombTime/60})`;
+                ctx.fillRect(0,0,canvas.width, canvas.height);
+                ctx.strokeStyle = "#fff"; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.arc(p.x, p.y, (60-bombTime)*20, 0, 7); ctx.stroke();
+            }
+            ctx.restore();
         }
 
-        function useBomb() { if(db.bombs > 0 && bomb <= 0) { db.bombs--; bomb = 60; eBullets = []; } }
+        function useBomb() {
+            if(db.bombs > 0 && bombTime <= 0) {
+                db.bombs--; bombTime = 60; eBullets = []; shake = 20;
+            }
+        }
 
         function finish(win) {
-            active = false; document.getElementById('finish-hint').style.display = 'none';
-            if(win) { if(!db.cleared.includes(cur.id)) db.cleared.push(cur.id); db.gold += 3000; save(); alert("MISSION COMPLETE"); }
-            else alert("MISSION FAILED"); location.reload();
+            active = false;
+            document.getElementById('hint').style.display = 'none';
+            if(win) {
+                if(!db.cleared.includes(cur.id)) db.cleared.push(cur.id);
+                db.gold += 5000; save();
+                alert("MISSION COMPLETE\n報酬として 5000G を獲得しました。");
+            } else {
+                alert("MISSION FAILED\n機体が大破しました。");
+            }
+            location.reload();
         }
 
         function loop() { if(!active) return; update(); draw(); requestAnimationFrame(loop); }
