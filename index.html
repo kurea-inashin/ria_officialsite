@@ -1,12 +1,203 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="UTF-8">
-<title>Shooting Game</title>
-<link rel="stylesheet" href="./css/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Railway Shooting Game - ST=KY</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; font-family: sans-serif; }
+        canvas { display: block; cursor: crosshair; }
+        #ui {
+            position: absolute; top: 10px; left: 10px; color: white;
+            pointer-events: none; text-shadow: 2px 2px 2px #000;
+        }
+        .btn-container {
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);
+            display: flex; gap: 10px;
+        }
+        button {
+            padding: 10px; cursor: pointer; border: none; font-weight: bold; color: white;
+        }
+    </style>
 </head>
 <body>
-<canvas id="gameCanvas" width="800" height="600"></canvas>
-<script type="module" src="./src/main.js"></script>
+
+<div id="ui">
+    <div id="status">MODE: LOADING...</div>
+    <div id="hp">HP: 100</div>
+    <div id="score">SCORE: 0</div>
+    <div id="coins">COINS: 0</div>
+</div>
+
+<div class="btn-container">
+    <button onclick="game.setMode('SOBU')" style="background:#FCCE19; color:black;">総武線</button>
+    <button onclick="game.setMode('SAIKYO')" style="background:#00AC9A;">埼京線</button>
+    <button onclick="game.setMode('KEIHIN')" style="background:#00A1E2;">京浜東北線</button>
+    <button onclick="game.setMode('KEIYO')" style="background:#C9242F;">ST=KY</button>
+    <button id="extra-btn" onclick="game.setMode('CHUO')" style="background:#F39800; display:none;">超鬼むず(中央線)</button>
+</div>
+
+<canvas id="gameCanvas"></canvas>
+
+<script>
+/**
+ * 1. データ定義 (JSON構造)
+ */
+const GAME_DATA = {
+    modes: {
+        "SOBU":   { name: "Easy", color: "#FCCE19", line: "総武線" },
+        "SAIKYO": { name: "Normal", color: "#00AC9A", line: "埼京線" },
+        "KEIHIN": { name: "Hard", color: "#00A1E2", line: "京浜東北線" },
+        "KEIYO":  { name: "Very Hard", color: "#C9242F", line: "ST=KY" },
+        "CHUO":   { name: "Extra", color: "#F39800", line: "中央線(超鬼むず)" }
+    }
+};
+
+/**
+ * 2. セーブマネージャー
+ */
+class SaveManager {
+    constructor() {
+        this.key = "railway_shooter_data";
+    }
+    save(data) {
+        localStorage.setItem(this.key, JSON.stringify(data));
+    }
+    load() {
+        const saved = localStorage.getItem(this.key);
+        return saved ? JSON.parse(saved) : { 
+            cleared_modes: [], 
+            total_coins: 0, 
+            high_score: 0 
+        };
+    }
+}
+
+/**
+ * 3. メインゲームクラス
+ */
+class Game {
+    constructor() {
+        this.canvas = document.getElementById('gameCanvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.saveManager = new SaveManager();
+        this.saveData = this.saveManager.load();
+        
+        this.mode = GAME_DATA.modes.KEIYO;
+        this.score = 0;
+        this.hp = 100;
+        this.coins = this.saveData.total_coins;
+        
+        this.player = { x: 0, y: 0, size: 20, speed: 5 };
+        this.bullets = [];
+        this.keys = {};
+
+        this.init();
+    }
+
+    init() {
+        this.resize();
+        window.addEventListener('resize', () => this.resize());
+        window.addEventListener('keydown', (e) => this.keys[e.code] = true);
+        window.addEventListener('keyup', (e) => this.keys[e.code] = false);
+        
+        // スマホ/マウス操作
+        this.canvas.addEventListener('mousemove', (e) => this.handlePointer(e.clientX, e.clientY));
+        this.canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            this.handlePointer(e.touches[0].clientX, e.touches[0].clientY);
+        }, { passive: false });
+
+        this.player.x = this.canvas.width / 2;
+        this.player.y = this.canvas.height - 100;
+
+        this.checkUnlockStatus();
+        this.loop();
+    }
+
+    resize() {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
+    }
+
+    handlePointer(x, y) {
+        this.player.x = x;
+        this.player.y = y;
+    }
+
+    setMode(modeKey) {
+        this.mode = GAME_DATA.modes[modeKey];
+        // モード変更時にクリア実績をテスト追加（本来はボス撃破時に実行）
+        if(!this.saveData.cleared_modes.includes(modeKey)) {
+            this.saveData.cleared_modes.push(modeKey);
+            this.saveManager.save(this.saveData);
+        }
+        this.checkUnlockStatus();
+    }
+
+    checkUnlockStatus() {
+        const required = ["SOBU", "SAIKYO", "KEIHIN", "KEIYO"];
+        const isAllCleared = required.every(m => this.saveData.cleared_modes.includes(m));
+        if (isAllCleared) {
+            document.getElementById('extra-btn').style.display = 'block';
+        }
+    }
+
+    update() {
+        // キーボード移動
+        if (this.keys['ArrowUp'] || this.keys['KeyW']) this.player.y -= this.player.speed;
+        if (this.keys['ArrowDown'] || this.keys['KeyS']) this.player.y += this.player.speed;
+        if (this.keys['ArrowLeft'] || this.keys['KeyA']) this.player.x -= this.player.speed;
+        if (this.keys['ArrowRight'] || this.keys['KeyD']) this.player.x += this.player.speed;
+
+        // 自動攻撃（スペースキー）
+        if (this.keys['Space']) {
+            if(Date.now() % 5 === 0) { // 連射速度調整
+                this.bullets.push({ x: this.player.x, y: this.player.y - 20 });
+            }
+        }
+
+        // 弾の移動
+        this.bullets.forEach((b, i) => {
+            b.y -= 10;
+            if (b.y < 0) this.bullets.splice(i, 1);
+        });
+
+        // UI更新
+        document.getElementById('status').innerText = `MODE: ${this.mode.line}`;
+        document.getElementById('status').style.color = this.mode.color;
+        document.getElementById('score').innerText = `SCORE: ${this.score}`;
+        document.getElementById('coins').innerText = `COINS: ${this.coins}`;
+    }
+
+    draw() {
+        this.ctx.fillStyle = '#000';
+        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+        // 自機描画（鉄道カラーを反映）
+        this.ctx.fillStyle = this.mode.color;
+        this.ctx.beginPath();
+        this.ctx.moveTo(this.player.x, this.player.y - this.player.size);
+        this.ctx.lineTo(this.player.x - this.player.size, this.player.y + this.player.size);
+        this.ctx.lineTo(this.player.x + this.player.size, this.player.y + this.player.size);
+        this.ctx.fill();
+
+        // 弾描画
+        this.ctx.fillStyle = 'white';
+        this.bullets.forEach(b => {
+            this.ctx.fillRect(b.x - 2, b.y, 4, 10);
+        });
+    }
+
+    loop() {
+        this.update();
+        this.draw();
+        requestAnimationFrame(() => this.loop());
+    }
+}
+
+// 起動
+const game = new Game();
+</script>
 </body>
 </html>
