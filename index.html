@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Minami Project 2026: Burst Finale - CUSTOM MISSIONS</title>
+    <title>Minami Project 2026: Burst Finale - FULL INTEGRATED</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+JP:wght@700;900&display=swap');
         
@@ -39,11 +39,12 @@
         
         #briefing-panel { flex: 1.5; background: rgba(0, 20, 50, 0.9); border: 3px solid #333; padding: 30px; font-family: 'Noto Sans JP'; border-radius: 15px; display: flex; flex-direction: column; }
         #brief-title { font-size: 30px; border-bottom: 3px solid currentColor; margin-bottom: 10px; font-weight: 900; }
-        #brief-meta { font-family: 'Press Start 2P'; font-size: 14px; color: #0fa; margin-bottom: 20px; }
+        #brief-meta { font-family: 'Press Start 2P'; font-size: 14px; color: #ffd700; margin-bottom: 20px; }
         #brief-desc { font-size: 17px; line-height: 1.8; color: #eee; flex-grow: 1; white-space: pre-wrap; }
 
+        #copyright-footer { position: absolute; bottom: 20px; width: 100%; text-align: center; font-size: 10px; color: #444; letter-spacing: 5px; pointer-events: none; }
+
         #ending { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 100; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-family: 'Noto Sans JP'; padding: 40px; }
-        #copyright { position: absolute; bottom: 15px; font-size: 10px; color: #444; letter-spacing: 4px; }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -73,7 +74,7 @@
                 <div class="mode-grid" id="grid"></div>
                 <div id="briefing-panel">
                     <div id="brief-title">READY</div>
-                    <div id="brief-meta">RANK: --</div>
+                    <div id="brief-meta">DIFFICULTY: --</div>
                     <div id="brief-desc">ミッション待機中...</div>
                     <button id="launch-btn" class="nav-btn" style="display:none; width:100%; margin-top:20px;">LAUNCH MISSION</button>
                 </div>
@@ -99,15 +100,14 @@
 
         <div id="guide" class="panel">
             <div style="background:rgba(0,30,60,0.9); border:4px solid #0ff; padding:40px; border-radius:15px; font-family:'Noto Sans JP'; line-height:2;">
-                <b>操作:</b> マウス移動 / 左クリック(撃) / 右クリック(ボム)<br>
-                <b>フェーズ:</b> スコアを貯めるとPHASE2、さらに貯めるとBOSSが出現。<br>
-                <b>コイン</b> 各ステージで獲得可能、スキンや武器と交換し攻略を進めよう。<br>
-                <b>隠しステージ</b> 特定の条件を達成で隠しステージが登場！！！一筋縄じゃ行かない。<br>
-                <b>このゲームに関して</b>このゲームは「美波」の生産物です。一切の権利は美波は有するものとし、使用者はこのゲームのコンテンツの一部または全てを美波の許諾なしに外部に使用する行為を固く禁じます<br>
-                
+                <b>操作:</b> マウス(移動・射撃) / 右クリック(ボム)<br>
+                <b>フェーズ:</b> 各ステージのノルマ達成でボスが出現します。<br>
+                <b>機体:</b> ORANGE-Lはギミックへの高い耐性を持ちます。
             </div>
             <button class="nav-btn" style="margin-top:30px;" onclick="backToMain()">BACK</button>
         </div>
+
+        <div id="copyright-footer">© 2026 MINAMI RAIL-SHOOTING PROJECT. ALL RIGHTS RESERVED.</div>
     </div>
 
     <div id="ending">
@@ -129,27 +129,27 @@
         let currentMode = null;
         let sessionData = { atk: 3, hasBit: false };
 
-        const STORAGE_KEY = 'minami_2026_custom_v3';
+        const STORAGE_KEY = 'minami_2026_final_v1';
         let userData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
             gold: 0, bombs: 1, cleared: [], skin: '#fff', ownedSkins: ['#fff']
         };
 
         const STAGES = {
-            'SB': { name: 'ST=SB', color: '#ccaa00', diff: 1.0, star: '★', score1: 3000, score2: 8000, bossHp: 600, g: ['vibrate'], info: '基礎訓練。' },
-            'KT': { name: 'ST=KT', color: '#0088cc', diff: 1.2, star: '★', score1: 4000, score2: 10000, bossHp: 800, g: ['water'], info: '水中戦。' },
-            'SK': { name: 'ST=SK', color: '#008844', diff: 1.4, star: '★★', score1: 5000, score2: 12000, bossHp: 1100, g: ['fog'], info: '濃霧地帯。' },
-            'KY': { name: 'ST=KY', color: '#aa0022', diff: 1.6, star: '★★', score1: 5000, score2: 12000, bossHp: 1600, g: ['wind'], info: '強風区域。' },
-            'PK': { name: 'ST=PK', color: '#cc5588', diff: 1.8, star: '★★', score1: 6000, score2: 15000, bossHp: 1900, g: ['reverse'], info: '反転空間。' },
-            'JB': { name: 'ST=JB', color: '#006666', diff: 2.1, star: '★★★', score1: 7000, score2: 18000, bossHp: 2300, g: ['jamming'], info: '電子妨害。' },
-            'S1': { name: 'ST=S1', color: '#6600cc', diff: 2.4, star: '★★★', score1: 8000, score2: 20000, bossHp: 2700, g: ['warp'], info: '時空歪曲。' },
-            'S2': { name: 'ST=S2', color: '#cc00cc', diff: 2.7, star: '★★★', score1: 8000, score2: 20000, bossHp: 3200, g: ['poison'], info: '毒素汚染。' },
-            'S3': { name: 'ST=S3', color: '#00cccc', diff: 3.2, star: '★★★★', score1: 10000, score2: 25000, bossHp: 3800, g: ['gravity'], info: '重力異常。' },
-            'NM': { name: 'ST=NM', color: '#00bb00', diff: 5.0, star: '★★★★★', score1: 15000, score2: 40000, bossHp: 8000, g: ['vibrate','fog'], secret: 1, info: '【SECRET】高振動・濃霧。' },
-            'TY': { name: 'ST=TY', color: '#888888', diff: 6.0, star: '★★★★★', score1: 15000, score2: 45000, bossHp: 10000, g: ['water','wind'], secret: 1, info: '【SECRET】流水・強風。' },
-            'YF': { name: 'ST=YF', color: '#dddd00', diff: 7.5, star: '★★★★★★', score1: 20000, score2: 50000, bossHp: 15000, g: ['reverse','jamming'], secret: 1, info: '【SECRET】反転・妨害。' },
-            'ME': { name: 'ST=ME', color: '#ff0000', diff: 12.0, star: '★★★★★★★', score1: 30000, score2: 80000, bossHp: 30000, g: ['warp','poison','gravity'], secret: 2, info: '【ULTIMATE】三重複合。' },
-            'SL': { name: 'ST=SL', color: '#00aa00', diff: 25.0, star: '★★★★★★★★★', score1: 50000, score2: 120000, bossHp: 90000, g: ['vibrate','wind','reverse','jamming'], secret: 2, info: '【ULTIMATE】四重複合。' },
-            'CO': { name: 'ST=CO', color: '#ff6600', diff: 150.0, star: '★★★★★★★★★★', score1: 100000, score2: 400000, bossHp: 999999, g: ['all'], secret: 2, info: '【THE END】中央線の終焉。' }
+            'SB': { name: 'ST=SB', color: '#ccaa00', diff: 1.0, star: '★', score1: 3000, score2: 8000, bossHp: 600, g: ['vibrate'], info: '総武線（黄）：基本ステージ' },
+            'KT': { name: 'ST=KT', color: '#0088cc', diff: 1.2, star: '★', score1: 4000, score2: 10000, bossHp: 800, g: ['water'], info: '京浜東北線（青）：水中戦' },
+            'SK': { name: 'ST=SK', color: '#008844', diff: 1.4, star: '★★', score1: 5000, score2: 12000, bossHp: 1100, g: ['fog'], info: '埼京線（緑）：濃霧' },
+            'KY': { name: 'ST=KY', color: '#aa0022', diff: 1.6, star: '★★', score1: 5000, score2: 12000, bossHp: 1600, g: ['wind'], info: '京葉線（赤）：強風' },
+            'PK': { name: 'ST=PK', color: '#cc5588', diff: 1.8, star: '★★', score1: 6000, score2: 15000, bossHp: 1900, g: ['reverse'], info: 'ピンクライン：反転' },
+            'JB': { name: 'ST=JB', color: '#006666', diff: 2.1, star: '★★★', score1: 7000, score2: 18000, bossHp: 2300, g: ['jamming'], info: '電子妨害エリア' },
+            'S1': { name: 'ST=S1', color: '#6600cc', diff: 2.4, star: '★★★', score1: 8000, score2: 20000, bossHp: 2700, g: ['warp'], info: 'ワープゾーン' },
+            'S2': { name: 'ST=S2', color: '#cc00cc', diff: 2.7, star: '★★★', score1: 8000, score2: 20000, bossHp: 3200, g: ['poison'], info: '毒素汚染' },
+            'S3': { name: 'ST=S3', color: '#00cccc', diff: 3.2, star: '★★★★', score1: 10000, score2: 25000, bossHp: 3800, g: ['gravity'], info: '重力異常' },
+            'NM': { name: 'ST=NM', color: '#00bb00', diff: 5.0, star: '★★★★★', score1: 15000, score2: 40000, bossHp: 8000, g: ['vibrate','fog'], secret: 1, info: '【SECRET】高振動・濃霧' },
+            'TY': { name: 'ST=TY', color: '#888888', diff: 6.0, star: '★★★★★', score1: 15000, score2: 45000, bossHp: 10000, g: ['water','wind'], secret: 1, info: '【SECRET】極限移動制限' },
+            'YF': { name: 'ST=YF', color: '#dddd00', diff: 7.5, star: '★★★★★★', score1: 20000, score2: 50000, bossHp: 15000, g: ['reverse','jamming'], secret: 1, info: '【SECRET】感覚の乖離' },
+            'ME': { name: 'ST=ME', color: '#ff0000', diff: 12.0, star: '★★★★★★★', score1: 30000, score2: 80000, bossHp: 30000, g: ['warp','poison','gravity'], secret: 2, info: '【ULTIMATE】三重複合' },
+            'SL': { name: 'ST=SL', color: '#00aa00', diff: 25.0, star: '★★★★★★★★★', score1: 50000, score2: 120000, bossHp: 90000, g: ['vibrate','wind','reverse','jamming'], secret: 2, info: '【ULTIMATE】四重複合' },
+            'CO': { name: 'ST=CO', color: '#ff6600', diff: 150.0, star: '★★★★★★★★★★', score1: 100000, score2: 400000, bossHp: 999999, g: ['all'], secret: 2, info: '【THE END】中央線（橙）：伝説の終点' }
         };
 
         const AVATARS = [
@@ -157,7 +157,8 @@
             { id: '#0f0', name: 'RAPID-G', cost: 10000 },
             { id: '#0ff', name: 'WIDE-C', cost: 20000 },
             { id: '#ff0', name: 'SNAKE-Y', cost: 30000 },
-            { id: '#aa0022', name: 'BURST-R', cost: 50000 }
+            { id: '#aa0022', name: 'BURST-R', cost: 50000 },
+            { id: '#ff6600', name: 'ORANGE-L', cost: 80000 }
         ];
 
         function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(userData)); updateHUD(); }
@@ -170,21 +171,10 @@
             document.getElementById('bomb-stock').innerText = `BOMBS: ${"★".repeat(userData.bombs)}`;
         }
 
-        // ショップ・ガレージでの「お金足りるかチェック」機能
         function refreshShopGarage() {
-            // ショップのボタン制御
-            const shopItems = [
-                { id: 'shop-atk', cost: 2000 },
-                { id: 'shop-heal', cost: 1000 },
-                { id: 'shop-bit', cost: 5000 }
-            ];
+            const shopItems = [{ id: 'shop-atk', cost: 2000 }, { id: 'shop-heal', cost: 1000 }, { id: 'shop-bit', cost: 5000 }];
             document.getElementById('shop-gold').innerText = `GOLD: ${userData.gold}`;
-            shopItems.forEach(item => {
-                const btn = document.getElementById(item.id);
-                btn.disabled = userData.gold < item.cost;
-            });
-
-            // ガレージのボタン制御
+            shopItems.forEach(item => { document.getElementById(item.id).disabled = userData.gold < item.cost; });
             document.getElementById('garage-gold').innerText = `GOLD: ${userData.gold}`;
             renderGarage();
         }
@@ -218,6 +208,7 @@
                         btn.classList.add('selected');
                         document.getElementById('brief-title').innerText = s.name;
                         document.getElementById('brief-title').style.color = s.color;
+                        document.getElementById('brief-meta').innerText = `DIFFICULTY: ${s.star}`;
                         document.getElementById('brief-desc').innerText = `${s.info}\n\n[NORMA]\nPHASE 2: ${s.score1}\nBOSS: ${s.score2}`;
                         const lBtn = document.getElementById('launch-btn');
                         lBtn.style.display = 'block'; lBtn.style.borderColor = s.color; lBtn.style.color = s.color;
@@ -301,6 +292,7 @@
                 else if(s === '#0ff') [-4, 0, 4].forEach(vx => bullets.push({ x: pX, y: pY-20, p: a, vy: -25, vx: vx, w: 8 }));
                 else if(s === '#ff0') bullets.push({ x: pX, y: pY-20, p: a*1.2, vy: -18, vx: Math.sin(frame*0.2)*10, w: 8 });
                 else if(s === '#aa0022') bullets.push({ x: pX, y: pY-25, p: a*2.5, vy: -15, vx: 0, w: 22 });
+                else if(s === '#ff6600') { for(let i=-2; i<=2; i++) bullets.push({ x: pX, y: pY-30, p: a*1.8, vy: -20, vx: i*6, w: 15 }); }
                 else bullets.push({ x: pX, y: pY-20, p: a, vy: -30, vx: 0, w: 8 });
             }
 
@@ -365,7 +357,10 @@
                 ctx.strokeRect(e.x-e.size/2, e.y-e.size/2, e.size, e.size);
                 if(e.isBoss) { ctx.fillStyle = "#333"; ctx.fillRect(e.x-150, e.y-140, 300, 15); ctx.fillStyle = "#f00"; ctx.fillRect(e.x-150, e.y-140, 300*(e.hp/e.maxHp), 15); }
             });
-            bullets.forEach(b => { ctx.fillStyle = (userData.skin === '#fff' ? "#0ff" : userData.skin); ctx.fillRect(b.x-b.w/2, b.y, b.w, 25); });
+            bullets.forEach(b => { 
+                ctx.fillStyle = (userData.skin === '#fff' ? "#0ff" : userData.skin); 
+                ctx.fillRect(b.x-b.w/2, b.y, b.w, 25);
+            });
             eBullets.forEach(eb => { ctx.fillStyle = "#f0f"; ctx.beginPath(); ctx.arc(eb.x, eb.y, 9, 0, 7); ctx.fill(); });
             particles.forEach(p => { ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, 3, 3); });
         }
