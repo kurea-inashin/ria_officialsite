@@ -2,21 +2,21 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Minami Project 2026: Burst Finale - TOTAL EDITION</title>
+    <title>Minami Project 2026: Burst Finale - NEO VISUAL COMPLETE</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+JP:wght@700;900&display=swap');
         
         body { margin: 0; background: #000; color: #fff; font-family: 'Press Start 2P', cursive; overflow: hidden; user-select: none; }
         canvas { display: block; }
 
-        /* HUD: 位置を調整し、未来的な光彩を追加 */
+        /* HUD: 未来感のあるグロウ効果 */
         #hud { position: absolute; top: 40px; left: 40px; z-index: 10; pointer-events: none; }
         #score-val { font-size: 28px; text-shadow: 0 0 15px #0ff; margin-bottom: 15px; letter-spacing: 2px; }
         .bar-container { width: 320px; height: 18px; background: rgba(0,255,255,0.1); border: 2px solid #fff; box-shadow: 0 0 10px rgba(0,255,255,0.3); border-radius: 4px; overflow: hidden; margin-bottom: 12px; }
         #hp-fill { height: 100%; background: linear-gradient(90deg, #ff0055, #00ffaa); width: 100%; transition: width 0.3s; }
         #gauge-fill { height: 100%; background: #00ccff; width: 0%; box-shadow: 0 0 10px #0ff; }
         #bomb-stock { color: #ff0; font-size: 16px; text-shadow: 0 0 8px #f60; margin-top: 5px; }
-        #gold-display { color:#ffd700; font-size:18px; margin-top:10px; }
+        #gold-display { color:#ffd700; font-size:18px; margin-top:10px; text-shadow: 0 0 5px rgba(255,215,0,0.5); }
 
         #phase-notice { position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%); font-size: 50px; color: #fff; text-shadow: 0 0 30px #0ff; z-index: 5; pointer-events: none; opacity: 0; transition: 0.5s; text-align: center; }
 
@@ -27,7 +27,7 @@
         
         .nav-btn { padding: 25px 30px; border: 2px solid #0ff; background: rgba(0,255,255,0.05); color: #0ff; cursor: pointer; font-family: 'Press Start 2P'; font-size: 11px; margin: 10px; transition: 0.3s; clip-path: polygon(10% 0, 100% 0, 90% 100%, 0 100%); }
         .nav-btn:hover:not(:disabled) { background: #0ff; color: #000; box-shadow: 0 0 30px #0ff; transform: translateY(-3px); }
-        .nav-btn:disabled { border-color: #333; color: #333; opacity: 0.4; clip-path: none; }
+        .nav-btn:disabled { border-color: #333; color: #333; opacity: 0.4; clip-path: none; cursor: not-allowed; }
 
         /* ステージ選択画面 */
         .stage-layout { display: flex; flex-direction: row; gap: 35px; width: 92%; align-items: stretch; margin-bottom: 10px; }
@@ -37,14 +37,16 @@
         .mode-btn.selected { background: var(--c); color: #000; box-shadow: 0 0 25px var(--c); transform: scale(1.05); font-weight: bold; }
         .mode-btn.cleared::after { content: '✔'; position: absolute; top: 4px; right: 4px; color: #0f0; }
         
-        /* 説明パネル */
-        #briefing-panel { flex: 1.6; background: rgba(0, 20, 40, 0.85); border: 2px solid #0ff; padding: 35px; font-family: 'Noto Sans JP'; border-radius: 4px; display: flex; flex-direction: column; box-shadow: 0 0 30px rgba(0,255,255,0.2); }
+        /* 説明パネル: 削らずに全文表示可能に */
+        #briefing-panel { flex: 1.6; background: rgba(0, 20, 40, 0.85); border: 2px solid #0ff; padding: 35px; font-family: 'Noto Sans JP'; border-radius: 4px; display: flex; flex-direction: column; box-shadow: 0 0 30px rgba(0,255,255,0.2); overflow-y: auto; }
         #brief-title { font-size: 34px; border-bottom: 3px solid currentColor; margin-bottom: 8px; font-weight: 900; letter-spacing: 2px; }
         #brief-meta { font-family: 'Press Start 2P'; font-size: 12px; color: #0fa; margin-bottom: 5px; }
         #brief-advise { font-family: 'Press Start 2P'; font-size: 13px; color: #ff0; margin-bottom: 15px; text-shadow: 0 0 10px rgba(255,255,0,0.5); }
         #brief-desc { font-size: 16px; line-height: 1.9; color: #ddd; flex-grow: 1; white-space: pre-wrap; }
 
         #copyright { position: absolute; bottom: 25px; font-size: 11px; color: #444; letter-spacing: 5px; }
+
+        #ending { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 100; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-family: 'Noto Sans JP'; padding: 40px; }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -101,6 +103,12 @@
         <div id="copyright">© 2026 MINAMI PROJECT. ALL RIGHTS RESERVED.</div>
     </div>
 
+    <div id="ending">
+        <h2 style="font-size:42px; color:#ff6600; text-shadow: 0 0 20px #f60;">MISSION ACCOMPLISHED</h2>
+        <p id="end-text" style="font-size:20px; line-height:2.5; max-width:900px; color:#eee;"></p>
+        <button class="nav-btn" onclick="location.reload()">REBOOT SYSTEM</button>
+    </div>
+
     <canvas id="game"></canvas>
 
     <script>
@@ -116,12 +124,12 @@
 
         for(let i=0; i<100; i++) stars.push({x: Math.random()*canvas.width, y: Math.random()*canvas.height, s: Math.random()*3});
 
-        const STORAGE_KEY = 'minami_2026_total_v1';
+        const STORAGE_KEY = 'minami_2026_total_v9';
         let userData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
             gold: 0, bombs: 1, cleared: [], skin: '#fff', ownedSkins: ['#fff']
         };
 
-        // 【完全復元】ステージ、星表記、ADVISE、長文説明
+        // 【完全復元】15ステージ、星表記、ADVISE、全文解説テキスト
         const STAGES = {
             'SB': { name: 'ST=SB', color: '#ccaa00', diff: 1.0, star: '★', score1: 3000, score2: 8000, bossHp: 1000, g: ['vibrate'], adv: 'STD-W', info: '【基礎戦闘訓練エリア】\nシステムチェックを兼ねた初期演習。緩やかな振動波が機体を揺らすが、深刻な影響はない。まずはこの平穏な空間で、基本となる射撃と回避のプロトコルを完璧に遂行せよ。' },
             'KT': { name: 'ST=KT', color: '#0088cc', diff: 1.3, star: '★', score1: 4000, score2: 10000, bossHp: 1800, g: ['water'], adv: 'RAPID-G', info: '【高密度重粒子・沈黙の海】\n大気中に高密度の重粒子が充満しており、機体挙動に独特の粘性と慣性が発生する。水中にいるかのような抵抗は、回避のタイミングを狂わせる。' },
@@ -140,6 +148,7 @@
             'CO': { name: 'ST=CO', color: '#ff6600', diff: 100.0, star: '★★★★★★★★★★', score1: 150000, score2: 500000, bossHp: 999999, g: ['all'], secret: 2, info: '【真・終焉：オレンジの神話】\n全宇宙のエネルギーが中央に集束する。全ての干渉、全ての難易度がここに結実した。これを超えた先に、ミナミ・プロジェクトの真の完結が待っている。' }
         };
 
+        // 【完全復元】全スキンデータ
         const AVATARS = [
             { id: '#fff', name: 'STD-W', cost: 0 },
             { id: '#0f0', name: 'RAPID-G', cost: 10000 },
@@ -150,6 +159,7 @@
         ];
 
         function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(userData)); updateHUD(); }
+        
         function updateHUD() {
             document.getElementById('gold-display').innerText = `GOLD: ${userData.gold}`;
             document.getElementById('score-val').innerText = score.toString().padStart(6, '0');
@@ -168,6 +178,7 @@
                 renderGarage();
             }
         }
+
         function backToMain() { document.querySelectorAll('.panel').forEach(p => p.classList.remove('active')); document.getElementById('main-nav').style.display = 'block'; }
 
         function renderStages() {
@@ -207,7 +218,7 @@
                 btn.disabled = !owned && userData.gold < a.cost;
                 btn.innerHTML = `<b>${a.name}</b><br>${owned ? 'EQUIP' : a.cost+'G'}`;
                 btn.onclick = () => {
-                    if(!owned && userData.gold >= a.cost) { userData.gold -= a.cost; userData.ownedSkins.push(a.id); save(); openPanel('garage'); }
+                    if(!owned && userData.gold >= a.cost) { userData.gold -= a.cost; userData.ownedSkins.push(a.id); save(); renderGarage(); }
                     else if(owned) { userData.skin = a.id; save(); alert("SYSTEM LINKED."); }
                 };
                 list.appendChild(btn);
@@ -220,7 +231,7 @@
                 if(type === 'atk') sessionData.atk += 2;
                 if(type === 'heal') hp = 100;
                 if(type === 'bit') sessionData.hasBit = true;
-                save(); openPanel('shop');
+                save(); document.getElementById('shop-gold').innerText = `GOLD: ${userData.gold}`;
             }
         }
 
@@ -262,6 +273,7 @@
 
             if(isDown && frame % 5 === 0) {
                 const s = userData.skin; const a = sessionData.atk;
+                // 【完全復元】各武器の攻撃ロジック
                 if(s === '#0f0') bullets.push({ x: pX, y: pY-20, p: a*0.8, vy: -45, vx: 0, w: 6, c:s });
                 else if(s === '#0ff') [-6, 0, 6].forEach(vx => bullets.push({ x: pX, y: pY-20, p: a, vy: -35, vx: vx, w: 9, c:s }));
                 else if(s === '#ff0') bullets.push({ x: pX, y: pY-20, p: a*1.1, vy: -25, vx: Math.sin(frame*0.3)*15, w: 8, c:s });
@@ -287,12 +299,15 @@
                     if(Math.hypot(b.x-e.x, b.y-e.y) < e.size) {
                         e.hp -= b.p; score += 30; bullets.splice(i, 1);
                         if(e.hp <= 0) {
-                            if(e.isBoss) { gameActive = false; if(!userData.cleared.includes(currentMode.id)) userData.cleared.push(currentMode.id); userData.gold += 20000; save(); alert("MISSION COMPLETE!"); location.reload(); }
+                            if(e.isBoss) { 
+                                gameActive = false; if(!userData.cleared.includes(currentMode.id)) userData.cleared.push(currentMode.id); userData.gold += 20000; save(); 
+                                if(currentMode.id === 'CO') showEnding(); else { alert("MISSION COMPLETE!"); location.reload(); }
+                            }
                             else { enemies.splice(ei, 1); score += 800; userData.gold += Math.floor(80*currentMode.diff); burstGauge += 6; if(burstGauge>=100){burstGauge=0; userData.bombs++;} }
                         }
                     }
                 });
-                if(b.y < -50) bullets.splice(i, 1);
+                if(b.y < -100) bullets.splice(i, 1);
             });
 
             enemies.forEach(e => {
@@ -343,6 +358,12 @@
             ctx.shadowBlur = 0;
             particles.forEach(p => { ctx.fillStyle = p.color; ctx.globalAlpha = p.life/40; ctx.fillRect(p.x, p.y, 4, 4); });
             ctx.globalAlpha = 1.0;
+        }
+
+        function showEnding() {
+            document.getElementById('ending').style.display = 'flex';
+            const msg = "中央線のオレンジが宇宙を包み込む。全路線を制覇したあなたに敬意を。2026年、南プロジェクト完結。";
+            let i = 0; const t = setInterval(() => { document.getElementById('end-text').innerText += msg[i++]; if(i >= msg.length) clearInterval(t); }, 50);
         }
 
         function loop() { if(gameActive) { update(); draw(); requestAnimationFrame(loop); } }
