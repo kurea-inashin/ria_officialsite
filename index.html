@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Minami Project 2026: Burst Finale - FULL INTEGRATED</title>
+    <title>Minami Project 2026: Burst Finale - MISSION DETAIL</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+JP:wght@700;900&display=swap');
         
@@ -18,7 +18,11 @@
         #bomb-stock { color: #ff0; font-size: 14px; text-shadow: 0 0 5px #f60; }
 
         /* フェーズ告知 */
-        #phase-notice { position: absolute; top: 20%; left: 50%; transform: translate(-50%, -50%); font-size: 40px; color: #fff; text-shadow: 0 0 25px #0ff; z-index: 5; pointer-events: none; opacity: 0; transition: 0.5s; text-align: center; }
+        #phase-notice { 
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); 
+            font-size: 48px; color: #fff; text-shadow: 0 0 25px #0ff; z-index: 100; 
+            pointer-events: none; opacity: 0; transition: 0.5s; text-align: center; font-weight: 900;
+        }
 
         /* メニュー */
         #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 15, 0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20; backdrop-filter: blur(15px); }
@@ -40,11 +44,10 @@
         #briefing-panel { flex: 1.5; background: rgba(0, 20, 50, 0.9); border: 3px solid #333; padding: 30px; font-family: 'Noto Sans JP'; border-radius: 15px; display: flex; flex-direction: column; }
         #brief-title { font-size: 30px; border-bottom: 3px solid currentColor; margin-bottom: 10px; font-weight: 900; }
         #brief-meta { font-family: 'Press Start 2P'; font-size: 14px; color: #ffd700; margin-bottom: 20px; }
-        #brief-desc { font-size: 17px; line-height: 1.8; color: #eee; flex-grow: 1; white-space: pre-wrap; }
+        #brief-desc { font-size: 16px; line-height: 1.7; color: #eee; flex-grow: 1; white-space: pre-wrap; }
 
         #copyright-footer { position: absolute; bottom: 20px; width: 100%; text-align: center; font-size: 10px; color: #444; letter-spacing: 5px; pointer-events: none; }
-
-        #ending { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 100; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-family: 'Noto Sans JP'; padding: 40px; }
+        #ending { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 200; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-family: 'Noto Sans JP'; padding: 40px; }
     </style>
 </head>
 <body oncontextmenu="return false;">
@@ -75,7 +78,7 @@
                 <div id="briefing-panel">
                     <div id="brief-title">READY</div>
                     <div id="brief-meta">DIFFICULTY: --</div>
-                    <div id="brief-desc">ミッション待機中...</div>
+                    <div id="brief-desc">ミッションを選択してください。</div>
                     <button id="launch-btn" class="nav-btn" style="display:none; width:100%; margin-top:20px;">LAUNCH MISSION</button>
                 </div>
             </div>
@@ -89,7 +92,7 @@
         </div>
 
         <div id="shop" class="panel">
-            <h2 id="shop-gold" style="color:#ffd700; margin-bottom:20px;">SHOP</h2>
+            <h2 id="shop-gold" style="color:#ffd700; margin-bottom:20px;">TECH SHOP</h2>
             <div id="shop-list" style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
                 <button id="shop-atk" class="nav-btn" onclick="buy('atk', 2000)">ATK UP (2000G)</button>
                 <button id="shop-heal" class="nav-btn" onclick="buy('heal', 1000)">REPAIR (1000G)</button>
@@ -100,13 +103,12 @@
 
         <div id="guide" class="panel">
             <div style="background:rgba(0,30,60,0.9); border:4px solid #0ff; padding:40px; border-radius:15px; font-family:'Noto Sans JP'; line-height:2;">
-                <b>操作:</b> マウス(移動・射撃) / 右クリック(ボム)<br>
-                <b>フェーズ:</b> 各ステージのノルマ達成でボスが出現します。<br>
-                <b>機体:</b> ORANGE-Lはギミックへの高い耐性を持ちます。
+                <b>操作:</b> マウス移動 / 左クリック(ショット) / 右クリック(ボム)<br>
+                <b>全クリア特典:</b> 全モードをクリアすると、隠しステージが解禁されます。<br>
+                <b>ORANGE-LINE:</b> 中央線の力を宿したこの機体は、あらゆる環境ギミックを無効化します。
             </div>
             <button class="nav-btn" style="margin-top:30px;" onclick="backToMain()">BACK</button>
         </div>
-
         <div id="copyright-footer">© 2026 MINAMI RAIL-SHOOTING PROJECT. ALL RIGHTS RESERVED.</div>
     </div>
 
@@ -129,27 +131,27 @@
         let currentMode = null;
         let sessionData = { atk: 3, hasBit: false };
 
-        const STORAGE_KEY = 'minami_2026_final_v1';
+        const STORAGE_KEY = 'minami_2026_final_v5';
         let userData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
             gold: 0, bombs: 1, cleared: [], skin: '#fff', ownedSkins: ['#fff']
         };
 
         const STAGES = {
-            'SB': { name: 'ST=SB', color: '#ccaa00', diff: 1.0, star: '★', score1: 3000, score2: 8000, bossHp: 600, g: ['vibrate'], info: '総武線（黄）：基本ステージ' },
-            'KT': { name: 'ST=KT', color: '#0088cc', diff: 1.2, star: '★', score1: 4000, score2: 10000, bossHp: 800, g: ['water'], info: '京浜東北線（青）：水中戦' },
-            'SK': { name: 'ST=SK', color: '#008844', diff: 1.4, star: '★★', score1: 5000, score2: 12000, bossHp: 1100, g: ['fog'], info: '埼京線（緑）：濃霧' },
-            'KY': { name: 'ST=KY', color: '#aa0022', diff: 1.6, star: '★★', score1: 5000, score2: 12000, bossHp: 1600, g: ['wind'], info: '京葉線（赤）：強風' },
-            'PK': { name: 'ST=PK', color: '#cc5588', diff: 1.8, star: '★★', score1: 6000, score2: 15000, bossHp: 1900, g: ['reverse'], info: 'ピンクライン：反転' },
-            'JB': { name: 'ST=JB', color: '#006666', diff: 2.1, star: '★★★', score1: 7000, score2: 18000, bossHp: 2300, g: ['jamming'], info: '電子妨害エリア' },
-            'S1': { name: 'ST=S1', color: '#6600cc', diff: 2.4, star: '★★★', score1: 8000, score2: 20000, bossHp: 2700, g: ['warp'], info: 'ワープゾーン' },
-            'S2': { name: 'ST=S2', color: '#cc00cc', diff: 2.7, star: '★★★', score1: 8000, score2: 20000, bossHp: 3200, g: ['poison'], info: '毒素汚染' },
-            'S3': { name: 'ST=S3', color: '#00cccc', diff: 3.2, star: '★★★★', score1: 10000, score2: 25000, bossHp: 3800, g: ['gravity'], info: '重力異常' },
-            'NM': { name: 'ST=NM', color: '#00bb00', diff: 5.0, star: '★★★★★', score1: 15000, score2: 40000, bossHp: 8000, g: ['vibrate','fog'], secret: 1, info: '【SECRET】高振動・濃霧' },
-            'TY': { name: 'ST=TY', color: '#888888', diff: 6.0, star: '★★★★★', score1: 15000, score2: 45000, bossHp: 10000, g: ['water','wind'], secret: 1, info: '【SECRET】極限移動制限' },
-            'YF': { name: 'ST=YF', color: '#dddd00', diff: 7.5, star: '★★★★★★', score1: 20000, score2: 50000, bossHp: 15000, g: ['reverse','jamming'], secret: 1, info: '【SECRET】感覚の乖離' },
-            'ME': { name: 'ST=ME', color: '#ff0000', diff: 12.0, star: '★★★★★★★', score1: 30000, score2: 80000, bossHp: 30000, g: ['warp','poison','gravity'], secret: 2, info: '【ULTIMATE】三重複合' },
-            'SL': { name: 'ST=SL', color: '#00aa00', diff: 25.0, star: '★★★★★★★★★', score1: 50000, score2: 120000, bossHp: 90000, g: ['vibrate','wind','reverse','jamming'], secret: 2, info: '【ULTIMATE】四重複合' },
-            'CO': { name: 'ST=CO', color: '#ff6600', diff: 150.0, star: '★★★★★★★★★★', score1: 100000, score2: 400000, bossHp: 999999, g: ['all'], secret: 2, info: '【THE END】中央線（橙）：伝説の終点' }
+            'SB': { name: 'ST=SB', color: '#ccaa00', diff: 1.0, star: '★', score1: 3000, score2: 8000, bossHp: 600, g: ['vibrate'], info: '【低振動エリア】\n標準的な難易度。微細な振動が発生するが、基本を学ぶのに最適。高火力の武器で一気に制圧せよ。' },
+            'KT': { name: 'ST=KT', color: '#0088cc', diff: 1.2, star: '★', score1: 4000, score2: 10000, bossHp: 800, g: ['water'], info: '【水中圧力エリア】\n水圧により弾速と移動に影響が出る。敵との距離を保ち、着実にダメージを与えることが勝利の鍵。' },
+            'SK': { name: 'ST=SK', color: '#008844', diff: 1.4, star: '★★', score1: 5000, score2: 12000, bossHp: 1100, g: ['fog'], info: '【高濃度霧エリア】\n視界が制限される。敵の出現位置を予測し、広範囲攻撃が可能なWIDE-C等の使用を推奨する。' },
+            'KY': { name: 'ST=KY', color: '#aa0022', diff: 1.6, star: '★★', score1: 5000, score2: 12000, bossHp: 1600, g: ['wind'], info: '【強風海沿いエリア】\n強力な左方向への横風。常に右への補正移動が必要。安定性の高い機体選択が望ましい。' },
+            'PK': { name: 'ST=PK', color: '#cc5588', diff: 1.8, star: '★★', score1: 6000, score2: 15000, bossHp: 1900, g: ['reverse'], info: '【空間反転エリア】\n座標系が180度反転。感覚の乖離に注意せよ。パニックに陥らず冷静にコントロールを維持せよ。' },
+            'JB': { name: 'ST=JB', color: '#006666', diff: 2.1, star: '★★★', score1: 7000, score2: 18000, bossHp: 2300, g: ['jamming'], info: '【電磁妨害エリア】\n敵弾の軌道がジャミングにより歪む。予測不能な弾道を回避するため、機動力の強化が不可欠。' },
+            'S1': { name: 'ST=S1', color: '#6600cc', diff: 2.4, star: '★★★', score1: 8000, score2: 20000, bossHp: 2700, g: ['warp'], info: '【時空歪曲エリア】\n敵弾が画面下端から上端へワープする。死角からの攻撃に警戒し、ドローンビットで背後を固めよ。' },
+            'S2': { name: 'ST=S2', color: '#cc00cc', diff: 2.7, star: '★★★', score1: 8000, score2: 20000, bossHp: 3200, g: ['poison'], info: '【毒素汚染エリア】\n機体装甲を腐食させる酸性雨が降る。長期戦は不利。ショップでの修理か、速攻での撃破を狙え。' },
+            'S3': { name: 'ST=S3', color: '#00cccc', diff: 3.2, star: '★★★★', score1: 10000, score2: 25000, bossHp: 3800, g: ['gravity'], info: '【超重力異常エリア】\n中心部へ引き寄せられる重力波。常に脱出を試みなければ撃沈は免れない。出力最大で挑め。' },
+            'NM': { name: 'ST=NM', color: '#00bb00', diff: 5.0, star: '★★★★★', score1: 15000, score2: 40000, bossHp: 8000, g: ['vibrate','fog'], secret: 1, info: '【複合：振動と霧】\n揺れる視界と濃い霧が重なる。もはや目視は不可能。中央線のオレンジ機体によるギミック無効化を推奨。' },
+            'TY': { name: 'ST=TY', color: '#888888', diff: 6.0, star: '★★★★★', score1: 15000, score2: 45000, bossHp: 10000, g: ['water','wind'], secret: 1, info: '【複合：水圧と強風】\n極限まで奪われる機動力。敵の弾幕を避けるスペースすら乏しい。ボムのストック管理が命運を分ける。' },
+            'YF': { name: 'ST=YF', color: '#dddd00', diff: 7.5, star: '★★★★★★', score1: 20000, score2: 50000, bossHp: 15000, g: ['reverse','jamming'], secret: 1, info: '【複合：反転と妨害】\n精神を削る混乱の極致。敵はもはや実体すら曖昧。自動追尾兵装「ORANGE-L」の投入が最終手段となる。' },
+            'ME': { name: 'ST=ME', color: '#ff0000', diff: 12.0, star: '★★★★★★★', score1: 30000, score2: 80000, bossHp: 30000, g: ['warp','poison','gravity'], secret: 2, info: '【ULTIMATE：三重複合】\nワープ、毒、重力。物理法則が崩壊した最終試練の一つ。これまでの全経験を総動員して突破せよ。' },
+            'SL': { name: 'ST=SL', color: '#00aa00', diff: 25.0, star: '★★★★★★★★★', score1: 50000, score2: 120000, bossHp: 90000, g: ['vibrate','wind','reverse','jamming'], secret: 2, info: '【ULTIMATE：四重複合】\n悪夢。機体を制御することすら奇跡に近い。神速の反応と、最大まで強化したATKだけが頼りだ。' },
+            'CO': { name: 'ST=CO', color: '#ff6600', diff: 150.0, star: '★★★★★★★★★★', score1: 100000, score2: 400000, bossHp: 999999, g: ['all'], secret: 2, info: '【THE END：超鬼むず】\n中央線の深淵。全ギミックが襲いかかる。全モードをクリアした選ばれし者のみが辿り着く伝説の終点。' }
         };
 
         const AVATARS = [
@@ -194,14 +196,14 @@
 
         function renderStages() {
             const grid = document.getElementById('grid'); grid.innerHTML = '';
-            const clr = userData.cleared.length;
+            const clrCount = userData.cleared.length;
             Object.keys(STAGES).forEach(id => {
                 const s = STAGES[id];
-                let lock = (s.secret === 1 && clr < 9) || (s.secret === 2 && clr < 12);
+                let lock = (s.secret === 1 && clrCount < 9) || (s.secret === 2 && clrCount < 12);
                 const btn = document.createElement('div');
                 btn.className = `mode-btn ${!lock ? 'unlocked' : ''} ${userData.cleared.includes(id) ? 'cleared' : ''}`;
                 btn.style.setProperty('--c', lock ? '#1a1a1a' : s.color);
-                btn.innerHTML = `<b>${lock ? '???' : s.name}</b>`;
+                btn.innerHTML = `<b>${lock ? 'LOCKED' : s.name}</b>`;
                 if(!lock) {
                     btn.onclick = () => {
                         document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('selected'));
@@ -209,7 +211,7 @@
                         document.getElementById('brief-title').innerText = s.name;
                         document.getElementById('brief-title').style.color = s.color;
                         document.getElementById('brief-meta').innerText = `DIFFICULTY: ${s.star}`;
-                        document.getElementById('brief-desc').innerText = `${s.info}\n\n[NORMA]\nPHASE 2: ${s.score1}\nBOSS: ${s.score2}`;
+                        document.getElementById('brief-desc').innerText = `${s.info}\n\n[ノルマ達成条件]\nPHASE 2: ${s.score1}pts\nBOSS: ${s.score2}pts`;
                         const lBtn = document.getElementById('launch-btn');
                         lBtn.style.display = 'block'; lBtn.style.borderColor = s.color; lBtn.style.color = s.color;
                         lBtn.onclick = () => startGame(id);
@@ -256,8 +258,8 @@
 
         function showPhaseMsg(txt) {
             const el = document.getElementById('phase-notice');
-            el.innerText = txt; el.style.opacity = 1; el.style.top = "50%";
-            setTimeout(() => { el.style.opacity = 0; el.style.top = "20%"; }, 2000);
+            el.innerText = txt; el.style.opacity = 1;
+            setTimeout(() => { el.style.opacity = 0; }, 2000);
         }
 
         function createExplosion(x, y, color) {
@@ -277,17 +279,18 @@
             if(bombActive > 0) bombActive--;
             const g = currentMode.g;
             let pX = player.x, pY = player.y;
-            let res = (userData.skin === '#ff6600') ? 0.3 : 1.0;
+            // オレンジ武器(ORANGE-L)はギミックをほぼ無効化 (res=0.05)
+            let res = (userData.skin === '#ff6600') ? 0.05 : 1.0;
 
             if(g.includes('vibrate') || g.includes('all')) { pX += (Math.random()-0.5)*20*res; pY += (Math.random()-0.5)*20*res; }
             if(g.includes('wind') || g.includes('all')) pX -= 8 * res;
-            if(g.includes('poison') || g.includes('all')) if(frame % 60 === 0) hp -= 2;
+            if(g.includes('poison') || g.includes('all')) if(frame % 60 === 0) hp -= (2 * res);
 
             if(phase === 1 && score >= currentMode.score1) { phase = 2; showPhaseMsg("PHASE 2"); }
-            if(phase === 2 && score >= currentMode.score2) { phase = 3; showPhaseMsg("BOSS INCOMING"); }
+            if(phase === 2 && score >= currentMode.score2) { phase = 3; showPhaseMsg("WARNING: BOSS"); }
 
             if(isDown && frame % 5 === 0) {
-                const s = userData.skin; const a = sessionData.atk;
+                const s = userData.skin, a = sessionData.atk;
                 if(s === '#0f0') bullets.push({ x: pX, y: pY-20, p: a*0.8, vy: -35, vx: 0, w: 6 });
                 else if(s === '#0ff') [-4, 0, 4].forEach(vx => bullets.push({ x: pX, y: pY-20, p: a, vy: -25, vx: vx, w: 8 }));
                 else if(s === '#ff0') bullets.push({ x: pX, y: pY-20, p: a*1.2, vy: -18, vx: Math.sin(frame*0.2)*10, w: 8 });
@@ -345,7 +348,7 @@
             ctx.fillStyle = "#00081a"; ctx.fillRect(0,0,canvas.width, canvas.height);
             if(bombActive > 0) { ctx.fillStyle = `rgba(255, 255, 255, ${bombActive/60})`; ctx.fillRect(0,0,canvas.width, canvas.height); }
             let dX = player.x, dY = player.y;
-            let res = (userData.skin === '#ff6600') ? 0.3 : 1.0;
+            let res = (userData.skin === '#ff6600') ? 0.05 : 1.0;
             if(currentMode.g.includes('vibrate') || currentMode.g.includes('all')) { dX += (Math.random()-0.5)*20*res; dY += (Math.random()-0.5)*20*res; }
             if(currentMode.g.includes('wind') || currentMode.g.includes('all')) dX -= 8*res;
 
@@ -377,7 +380,7 @@
 
         function showEnding() {
             document.getElementById('ending').style.display = 'flex';
-            const msg = "中央線のオレンジが宇宙を包み込む。全路線を制覇したあなたに敬意を。2026年、南プロジェクト完結。";
+            const msg = "深紅、蒼、黄金、翠。そして伝説の橙が宇宙を包み込む。全路線を制覇したあなたに敬意を。2026年、南プロジェクト完結。";
             let i = 0; const t = setInterval(() => { document.getElementById('end-text').innerText += msg[i++]; if(i >= msg.length) clearInterval(t); }, 50);
         }
 
@@ -388,7 +391,10 @@
         window.onmouseup = () => isDown = false;
         window.onmousemove = e => {
             let tx = e.clientX, ty = e.clientY;
-            if(currentMode && (currentMode.g.includes('reverse') || currentMode.g.includes('all'))) { tx = canvas.width - tx; ty = canvas.height - ty; }
+            if(currentMode && (currentMode.g.includes('reverse') || currentMode.g.includes('all'))) { 
+                let res = (userData.skin === '#ff6600') ? 0 : 1;
+                if(res === 1) { tx = canvas.width - tx; ty = canvas.height - ty; }
+            }
             player.x = tx; player.y = ty;
         };
         window.onkeydown = e => { if(e.code === 'Space') useBomb(); };
