@@ -224,23 +224,59 @@
         }
 
         function renderGarage() {
-            const list = document.getElementById('avatar-list'); list.innerHTML = '';
-            AVATARS.forEach(a => {
-                const owned = userData.ownedSkins.includes(a.id);
-                const canAfford = userData.gold >= a.cost;
-                const btn = document.createElement('button');
-                btn.className = 'nav-btn'; btn.style.borderColor = a.id;
-                btn.style.height = "120px";
-                btn.disabled = !owned && !canAfford;
-                btn.innerHTML = `<b style="color:${a.id}">${a.name}</b><br><small style="font-size:8px; display:block; margin:5px 0;">${a.desc}</small>${owned ? (userData.skin===a.id?'EQUIPPED':'SELECT') : a.cost+'G'}`;
-                btn.onclick = () => {
-                    if(!owned && canAfford) { userData.gold -= a.cost; userData.ownedSkins.push(a.id); save(); refreshShopGarage(); }
-                    else if(owned) { userData.skin = a.id; save(); alert("EQUIPPED!"); refreshShopGarage(); }
-                };
-                list.appendChild(btn);
-            });
+    const list = document.getElementById('avatar-list'); list.innerHTML = '';
+    
+    // スキンと対応するステージIDのマップ
+    const unlockMap = {
+        '#0f0': 'SK',     // 緑
+        '#0ff': 'KT',     // 青
+        '#ff0': 'SB',     // 黄
+        '#aa0022': 'KY',  // 赤
+        '#ff6600': 'CO',  // オレンジ
+        '#888': 'JB'      // グレー
+    };
+
+    AVATARS.forEach(a => {
+        const owned = userData.ownedSkins.includes(a.id);
+        const canAfford = userData.gold >= a.cost;
+        
+        // クリア状況によるロック判定（初期機体以外）
+        const requiredStage = unlockMap[a.id];
+        const isLockedByStage = requiredStage && !userData.cleared.includes(requiredStage);
+
+        const btn = document.createElement('button');
+        btn.className = 'nav-btn'; 
+        btn.style.borderColor = isLockedByStage ? '#222' : a.id;
+        btn.style.height = "120px";
+        
+        // 購入・選択ができるかどうかの判定
+        btn.disabled = (!owned && !canAfford) || isLockedByStage;
+
+        if (isLockedByStage) {
+            // ロック中の表示
+            btn.innerHTML = `<b style="color:#555">LOCKED</b><br><small style="font-size:8px;">CLEAR ST=${requiredStage}<br>TO UNLOCK</small>`;
+        } else {
+            // 解禁済みの表示
+            btn.innerHTML = `<b style="color:${a.id}">${a.name}</b><br><small style="font-size:8px; display:block; margin:5px 0;">${a.desc}</small>${owned ? (userData.skin===a.id?'EQUIPPED':'SELECT') : a.cost+'G'}`;
         }
 
+        btn.onclick = () => {
+            if(!owned && !isLockedByStage && canAfford) { 
+                userData.gold -= a.cost; 
+                userData.ownedSkins.push(a.id); 
+                save(); 
+                refreshShopGarage(); 
+            }
+            else if(owned) { 
+                userData.skin = a.id; 
+                save(); 
+                alert("EQUIPPED!"); 
+                refreshShopGarage(); 
+            }
+        };
+        list.appendChild(btn);
+    });
+}
         function buy(type, cost) {
             if(userData.gold >= cost) {
                 userData.gold -= cost;
