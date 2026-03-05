@@ -2,447 +2,393 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Minami Project 2026: Burst Finale - CUSTOM MISSIONS</title>
+    <title>MINAMI PROJECT 2026</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+JP:wght@700;900&display=swap');
-        
-        body { margin: 0; background: #000; color: #fff; font-family: 'Press Start 2P', cursive; overflow: hidden; user-select: none; }
+        body { margin: 0; background: #000; color: #fff; font-family: 'Courier New', monospace; overflow: hidden; user-select: none; }
         canvas { display: block; }
-
-        /* HUD */
-        #hud { position: absolute; top: 20px; left: 20px; z-index: 10; pointer-events: none; }
-        #score-val { font-size: 24px; text-shadow: 0 0 10px #0ff; margin-bottom: 10px; }
-        .bar-container { width: 280px; height: 16px; background: rgba(255,255,255,0.1); border: 2px solid #fff; border-radius: 8px; overflow: hidden; margin-bottom: 8px; }
-        #hp-fill { height: 100%; background: linear-gradient(90deg, #f05, #0fa); width: 100%; transition: width 0.3s; }
-        #gauge-fill { height: 100%; background: #00ccff; width: 0%; transition: width 0.1s; }
-        #bomb-stock { color: #ff0; font-size: 14px; text-shadow: 0 0 5px #f60; }
-
-        /* フェーズ告知 */
-        #phase-notice { position: absolute; top: 20%; left: 50%; transform: translate(-50%, -50%); font-size: 40px; color: #fff; text-shadow: 0 0 25px #0ff; z-index: 5; pointer-events: none; opacity: 0; transition: 0.5s; text-align: center; }
-
-        /* メニュー */
-        #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 15, 0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20; backdrop-filter: blur(15px); }
-        .panel { display: none; flex-direction: column; align-items: center; width: 95%; max-height: 90vh; }
-        .active { display: flex; }
         
-        .nav-btn { padding: 25px 20px; border: 3px solid #0ff; background: rgba(0,255,255,0.05); color: #0ff; cursor: pointer; font-family: 'Press Start 2P'; font-size: 11px; margin: 5px; transition: 0.2s; }
-        .nav-btn:hover:not(:disabled) { background: #0ff; color: #000; box-shadow: 0 0 20px #0ff; transform: scale(1.05); }
-        .nav-btn:disabled { border-color: #333; color: #333; cursor: not-allowed; opacity: 0.4; }
-
-        /* ステージ選択 */
-        .stage-layout { display: flex; flex-direction: row; gap: 25px; width: 92%; align-items: stretch; margin-bottom: 20px; }
-        .mode-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; flex: 2; }
-        .mode-btn { padding: 25px 5px; border: 2px solid #333; background: #111; color: #555; cursor: pointer; text-align: center; font-size: 10px; position: relative; transition: 0.2s; }
-        .mode-btn.unlocked { border-color: var(--c); color: var(--c); }
-        .mode-btn.selected { background: var(--c); color: #000; box-shadow: 0 0 20px var(--c); font-weight: bold; }
-        .mode-btn.cleared::after { content: '✔'; position: absolute; top: 5px; right: 5px; color: #0f0; font-size: 12px; }
+        /* UI レイアウト */
+        #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; flex-direction: column; background: rgba(0,0,0,0.85); z-index: 10; }
+        #hud { position: absolute; top: 0; left: 0; width: 100%; padding: 15px; pointer-events: none; z-index: 5; display: flex; justify-content: space-between; box-sizing: border-box; }
         
-        #briefing-panel { flex: 1.5; background: rgba(0, 20, 50, 0.9); border: 3px solid #333; padding: 30px; font-family: 'Noto Sans JP'; border-radius: 15px; display: flex; flex-direction: column; }
-        #brief-title { font-size: 28px; border-bottom: 3px solid currentColor; margin-bottom: 5px; font-weight: 900; }
-        #brief-meta { font-family: 'Press Start 2P'; font-size: 12px; color: #0fa; margin-bottom: 15px; line-height: 1.6; }
-        #brief-desc { font-size: 15px; line-height: 1.6; color: #eee; flex-grow: 1; white-space: pre-wrap; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; }
-
-        #ending { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 100; flex-direction: column; align-items: center; justify-content: center; text-align: center; font-family: 'Noto Sans JP'; padding: 40px; }
+        .panel { display: none; padding: 40px; height: 85vh; overflow-y: auto; }
+        .panel.active { display: block; }
         
-        #copyright-footer { 
-            position: absolute; bottom: 20px; width: 100%; text-align: center; 
-            font-size: 10px; color: #444; letter-spacing: 5px; pointer-events: none; z-index: 25; 
-        }
+        /* ステージ選択グリッド */
+        #grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 15px; margin-bottom: 30px; }
+        .mode-btn { border: 2px solid #333; padding: 15px; text-align: center; cursor: pointer; transition: 0.3s; background: #050505; color: #444; }
+        .mode-btn.unlocked { color: var(--c); border-color: var(--c); }
+        .mode-btn.unlocked:hover { background: var(--c); color: #000; box-shadow: 0 0 20px var(--c); }
+        .mode-btn.selected { background: var(--c); color: #000; transform: scale(1.05); }
+        .mode-btn.cleared::after { content: " ✔"; font-size: 10px; }
+
+        /* ブリーフィング表示 */
+        #briefing { border: 1px solid #444; padding: 20px; background: #0a0a0a; min-height: 250px; position: relative; }
+        #brief-desc { font-size: 14px; line-height: 1.8; color: #ccc; white-space: pre-wrap; margin-top: 15px; }
+        
+        /* ショップ・ガレージ */
+        .item-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 15px; }
+        .nav-btn { background: #000; color: #fff; border: 1px solid #fff; padding: 10px; cursor: pointer; width: 100%; transition: 0.2s; }
+        .nav-btn:hover:not(:disabled) { background: #fff; color: #000; }
+        .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+        /* ゲーム内HUD要素 */
+        .bar-container { width: 200px; height: 12px; border: 1px solid #fff; margin-top: 5px; background: #222; }
+        #hp-fill { height: 100%; background: #ff3333; width: 100%; transition: 0.2s; }
+        #gauge-fill { height: 100%; background: #ffff00; width: 0%; }
+        #phase-notice { position: absolute; width: 100%; text-align: center; font-size: 40px; font-weight: bold; top: 20%; opacity: 0; transition: 1s; pointer-events: none; color: #fff; text-shadow: 0 0 10px #fff; }
     </style>
 </head>
-<body oncontextmenu="return false;">
+<body>
 
-    <div id="hud">
-        <div id="score-val">SCORE: 000000</div>
+<div id="hud">
+    <div>
+        <div id="gold-val">GOLD: 0</div>
         <div class="bar-container"><div id="hp-fill"></div></div>
+        <div style="font-size:10px">ARMOR STABILITY</div>
+    </div>
+    <div style="text-align: center;">
+        <div id="score-val">SCORE: 000000</div>
+        <div id="bomb-stock" style="color:#ffcc00; font-size:20px;"></div>
+    </div>
+    <div style="text-align: right;">
         <div class="bar-container"><div id="gauge-fill"></div></div>
-        <div id="bomb-stock">BOMBS: </div>
-        <div id="gold-val" style="color:#ffd700; font-size:14px; margin-top:5px;">GOLD: 0</div>
+        <div style="font-size:10px">BURST GAUGE (AUTO-BOMB RECHARGE)</div>
+    </div>
+</div>
+
+<div id="phase-notice"></div>
+
+<div id="overlay">
+    <div id="main-nav" style="padding: 100px; text-align: center;">
+        <h1 style="font-size: 60px; letter-spacing: 15px; color: #fff; text-shadow: 0 0 20px #fff;">MINAMI PROJECT</h1>
+        <p style="color: #666; margin-bottom: 50px;">AESTHETIC SHOOTING SYSTEM Ver 6.0</p>
+        <button class="nav-btn" style="width: 300px; margin-bottom: 15px;" onclick="openPanel('stage-select')">MISSION START</button><br>
+        <button class="nav-btn" style="width: 300px; margin-bottom: 15px;" onclick="openPanel('shop')">UPGRADE SHOP</button><br>
+        <button class="nav-btn" style="width: 300px;" onclick="openPanel('garage')">HANGAR / SKINS</button>
     </div>
 
-    <div id="phase-notice">PHASE 1</div>
-
-    <div id="overlay">
-        <h1 style="font-size:32px; margin-bottom:30px; text-shadow: 0 0 20px #fff;">MINAMI PROJECT 2026</h1>
-     
-        <div id="main-nav">
-            <button class="nav-btn" onclick="openPanel('stage-select')">🎮<br>MISSION START</button>
-            <button class="nav-btn" onclick="openPanel('garage')">📦<br>GARAGE</button>
-            <button class="nav-btn" onclick="openPanel('shop')">🧊<br>TECH SHOP</button>
-            <button class="nav-btn" onclick="openPanel('guide')">📕<br>GUIDE</button>
+    <div id="stage-select" class="panel">
+        <button class="nav-btn" style="width: 100px; margin-bottom: 20px;" onclick="backToMain()">BACK</button>
+        <div id="grid"></div>
+        <div id="briefing">
+            <h2 id="brief-title">SELECT A MISSION</h2>
+            <div id="brief-meta" style="font-size: 12px; color: #888;"></div>
+            <p id="brief-desc">ミッションを選択してください。各エリアには特有の環境干渉が存在します。</p>
+            <button id="launch-btn" class="nav-btn" style="display:none; position: absolute; bottom: 20px; right: 20px; width: 150px; font-size: 20px; font-weight: bold;">LAUNCH</button>
         </div>
-       
-        <div id="stage-select" class="panel">
-            <div class="stage-layout">
-                <div class="mode-grid" id="grid"></div>
-                <div id="briefing-panel">
-                    <div id="brief-title">READY</div>
-                    <div id="brief-meta">RANK: --<br>ADVISE: --</div>
-                    <div id="brief-desc">ミッション待機中...</div>
-                    <button id="launch-btn" class="nav-btn" style="display:none; width:100%; margin-top:20px;">LAUNCH MISSION</button>
-                </div>
-            </div>
-            <button class="nav-btn" onclick="backToMain()">BACK</button>
-        </div>
-
-        <div id="garage" class="panel">
-            <h2 id="garage-gold" style="color:#ffd700; margin-bottom:10px;">GOLD: 0</h2>
-            <div id="avatar-list" style="display:grid; grid-template-columns:repeat(3,1fr); gap:15px; max-height: 60vh; overflow-y: auto; padding: 10px;"></div>
-            <button class="nav-btn" style="margin-top:30px;" onclick="backToMain()">BACK</button>
-        </div>
-
-        <div id="shop" class="panel">
-            <h2 id="shop-gold" style="color:#ffd700; margin-bottom:20px;">SHOP</h2>
-            <div id="shop-list" style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
-                <button id="shop-atk" class="nav-btn" onclick="buy('atk', 2000)">ATK UP (2000G)</button>
-                <button id="shop-heal" class="nav-btn" onclick="buy('heal', 1000)">REPAIR (1000G)</button>
-                <button id="shop-bit" class="nav-btn" onclick="buy('bit', 5000)">DRONE BIT (5000G)</button>
-                <button id="shop-speed" class="nav-btn" onclick="buy('speed', 4000)">SPEED UP (4000G)</button>
-            </div>
-            <button class="nav-btn" style="margin-top:20px;" onclick="backToMain()">BACK</button>
-        </div>
-
-        <div id="guide" class="panel">
-            <div style="background:rgba(0,30,60,0.9); border:4px solid #0ff; padding:30px; border-radius:15px; font-family:'Noto Sans JP'; line-height:1.8; font-size: 14px; max-width: 800px;">
-                <b>基本操作:</b> マウス移動 / 左クリック(射撃) / 右クリックまたはSpace(ボム)<br>
-                <b>攻略のコツ:</b> ステージごとに「適正武器」が存在します。強風には高弾速、多数の敵にはワイドショットが有効です。<br>
-                <b>オレンジ色の機体:</b> 「ORANGE-L」は全物理干渉を無効化する伝説の機体です。<br><br>
-                <small>※本コンテンツの著作権は「美波」に帰属します。無断転載・再配布を禁じます。</small>
-            </div>
-            <button class="nav-btn" style="margin-top:30px;" onclick="backToMain()">BACK</button>
-        </div>
-
-        <div id="copyright-footer">© 2026 MINAMI RAIL-SHOOTING PROJECT. ALL RIGHTS RESERVED BY MINAMI.</div>
     </div>
 
-    <div id="ending">
-        <h2 style="font-size:36px; color:#ff6600;">MISSION ACCOMPLISHED</h2>
-        <p id="end-text" style="font-size:18px; line-height:2.2; max-width:800px; color:#ccc;"></p>
-        <button class="nav-btn" onclick="location.reload()">REBOOT SYSTEM</button>
+    <div id="shop" class="panel">
+        <button class="nav-btn" style="width: 100px; margin-bottom: 20px;" onclick="backToMain()">BACK</button>
+        <h2 id="shop-gold">GOLD: 0</h2>
+        <div class="item-list">
+            <button class="nav-btn" onclick="buy('atk', 5000)">ATK UP (5000G)</button>
+            <button class="nav-btn" onclick="buy('heal', 2000)">REPAIR HP (2000G)</button>
+            <button class="nav-btn" onclick="buy('bit', 15000)">SUPPORT BIT (15000G)</button>
+            <button class="nav-btn" onclick="buy('speed', 8000)">ENGINE TUNE (8000G)</button>
+        </div>
     </div>
 
-    <canvas id="game"></canvas>
+    <div id="garage" class="panel">
+        <button class="nav-btn" style="width: 100px; margin-bottom: 20px;" onclick="backToMain()">BACK</button>
+        <h2 id="garage-gold">GOLD: 0</h2>
+        <div id="avatar-list" class="item-list"></div>
+    </div>
+</div>
 
-    <script>
-        const canvas = document.getElementById('game');
-        const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+<canvas id="game"></canvas>
 
-        let gameActive = false, score = 0, hp = 100, frame = 0, phase = 1, burstGauge = 0, bombActive = 0;
-        let bullets = [], eBullets = [], enemies = [], particles = [];
-        let player = { x: canvas.width/2, y: canvas.height/2, speedMult: 1.0 };
-        let currentMode = null;
-        let sessionData = { atk: 3, hasBit: false };
+<script>
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth; canvas.height = window.innerHeight;
 
-        const STORAGE_KEY = 'minami_2026_custom_v4';
-        let userData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
-            gold: 0, bombs: 1, cleared: [], skin: '#fff', ownedSkins: ['#fff']
-        };
+    let gameActive = false, score = 0, hp = 100, frame = 0, phase = 1, burstGauge = 0, bombActive = 0;
+    let bullets = [], eBullets = [], enemies = [], particles = [];
+    let player = { x: canvas.width/2, y: canvas.height/2, speedMult: 1.0 };
+    let currentMode = null;
+    let isDown = false;
+    let sessionData = { atk: 3, hasBit: false };
 
-        const STAGES = {
-            'SB': { name: 'ST=SB', color: '#ccaa00', diff: 1.0, star: '★', score1: 3000, score2: 8000, bossHp: 600, g: ['vibrate'], adv: 'STD-W', info: '【基礎訓練】京葉車両センター付近。微振動が発生するが、基本操作の確認には最適。' },
-            'KT': { name: 'ST=KT', color: '#0088cc', diff: 1.2, star: '★', score1: 4000, score2: 10000, bossHp: 800, g: ['water'], adv: 'RAPID-G', info: '【水中戦】京浜東北線・鶴見付近。水圧により機体の制動に慣性が働く。高連射で押し切れ。' },
-            'SK': { name: 'ST=SK', color: '#008844', diff: 1.4, star: '★★', score1: 5000, score2: 12000, bossHp: 1100, g: ['fog'], adv: 'WIDE-C', info: '【濃霧地帯】埼京線・赤羽付近。視界が制限されるため、広範囲攻撃での索敵が有効。' },
-            'KY': { name: 'ST=KY', color: '#aa0022', diff: 1.6, star: '★★', score1: 5000, score2: 12000, bossHp: 1600, g: ['wind'], adv: 'BURST-R', info: '【強風区域】京葉線・舞浜付近。海風による左方向への圧力が強い。高火力で一気に殲滅せよ。' },
-            'PK': { name: 'ST=PK', color: '#cc5588', diff: 1.8, star: '★★', score1: 6000, score2: 15000, bossHp: 1900, g: ['reverse'], adv: 'SNAKE-Y', info: '【反転空間】総武線・錦糸町上空。座標軸が逆転している。トリッキーな動きのSNAKEが適正。' },
-            'JB': { name: 'ST=JB', color: '#006666', diff: 2.1, star: '★★★', score1: 7000, score2: 18000, bossHp: 2300, g: ['jamming'], adv: 'WIDE-C', info: '【電子妨害】常磐線・松戸付近。敵弾の軌道が乱れる。弾幕を張って迎撃確率を上げろ。' },
-            'S1': { name: 'ST=S1', color: '#6600cc', diff: 2.4, star: '★★★', score1: 8000, score2: 20000, bossHp: 2700, g: ['warp'], adv: 'RAPID-G', info: '【時空歪曲】中央・総武緩行線。敵弾が画面端でワープする。反射神経と連射速度が鍵。' },
-            'S2': { name: 'ST=S2', color: '#cc00cc', diff: 2.7, star: '★★★', score1: 8000, score2: 20000, bossHp: 3200, g: ['poison'], adv: 'STD-W', info: '【毒素汚染】中央快速線・中野付近。装甲が徐々に腐食する。安定した火力のSTDで迅速にクリアせよ。' },
-            'S3': { name: 'ST=S3', color: '#00cccc', diff: 3.2, star: '★★★★', score1: 10000, score2: 25000, bossHp: 3800, g: ['gravity'], adv: 'BURST-R', info: '【重力異常】武蔵野線・府中本町付近。中央へ吸い寄せられる。高出力のBURST機で重力に抗え。' },
-            'NM': { name: 'ST=NM', color: '#00bb00', diff: 5.0, star: '★★★★★', score1: 15000, score2: 40000, bossHp: 8000, g: ['vibrate','fog'], adv: 'WIDE-C', secret: 1, info: '【SECRET】高振動と濃霧の複合。ターゲット捕捉が極めて困難。広域制圧武器を推奨。' },
-            'TY': { name: 'ST=TY', color: '#888888', diff: 6.0, star: '★★★★★', score1: 15000, score2: 45000, bossHp: 10000, g: ['water','wind'], adv: 'BURST-R', secret: 1, info: '【SECRET】流水と強風のダブル水難。制御不能に近い慣性の中で、一撃の重さが求められる。' },
-            'YF': { name: 'ST=YF', color: '#dddd00', diff: 7.5, star: '★★★★★★', score1: 20000, score2: 50000, bossHp: 15000, g: ['reverse','jamming'], adv: 'ORANGE-L', secret: 1, info: '【SECRET】反転と妨害。脳の処理速度を試される。伝説のオレンジ機体なら無効化可能。' },
-            'ME': { name: 'ST=ME', color: '#ff0000', diff: 12.0, star: '★★★★★★★', score1: 30000, score2: 80000, bossHp: 30000, g: ['warp','poison','gravity'], adv: 'ORANGE-L', secret: 2, info: '【ULTIMATE】ワープ・毒素・重力。三重複合による絶望的領域。' },
-            'SL': { name: 'ST=SL', color: '#00aa00', diff: 25.0, star: '★★★★★★★★★', score1: 50000, score2: 120000, bossHp: 90000, g: ['vibrate','wind','reverse','jamming'], adv: 'ORANGE-L', secret: 2, info: '【ULTIMATE】四重複合。全路線を接続した果てのカオス空間。' },
-            'CO': { name: 'ST=CO', color: '#ff6600', diff: 150.0, star: '★★★★★★★★★★', score1: 100000, score2: 400000, bossHp: 999999, g: ['all'], adv: 'ORANGE-L', secret: 2, info: '【THE END】中央線の終焉。全ての物理干渉が牙を剥く。神話の機体以外に生存の道はない。' }
-        };
-
-        const AVATARS = [
-            { id: '#fff', name: 'STD-W', cost: 0, desc: '標準機。安定した性能。' },
-            { id: '#0f0', name: 'RAPID-G', cost: 10000, desc: '連射特化。弾速が非常に速い。' },
-            { id: '#0ff', name: 'WIDE-C', cost: 20000, desc: '3方向拡散。索敵に有効。' },
-            { id: '#ff0', name: 'SNAKE-Y', cost: 30000, desc: '蛇行弾。トリッキーな軌道。' },
-            { id: '#aa0022', name: 'BURST-R', cost: 50000, desc: '重火力。巨大な弾丸を放つ。' },
-            { id: '#888', name: 'SHADOW-B', cost: 80000, desc: '加速機。移動速度が向上。' },
-            { id: '#ff6600', name: 'ORANGE-L', cost: 150000, desc: '伝説。全ギミックを80%軽減。' }
-        ];
-
-        function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(userData)); updateHUD(); }
-        
-        function updateHUD() {
-            document.getElementById('gold-val').innerText = `GOLD: ${userData.gold}`;
-            document.getElementById('score-val').innerText = `SCORE: ${score.toString().padStart(6, '0')}`;
-            document.getElementById('hp-fill').style.width = hp + "%";
-            document.getElementById('gauge-fill').style.width = burstGauge + "%";
-            document.getElementById('bomb-stock').innerText = `BOMBS: ${"★".repeat(userData.bombs)}`;
-        }
-
-        function refreshShopGarage() {
-            document.getElementById('shop-gold').innerText = `GOLD: ${userData.gold}`;
-            document.getElementById('garage-gold').innerText = `GOLD: ${userData.gold}`;
-            renderGarage();
-        }
-
-        function openPanel(id) {
-            document.getElementById('main-nav').style.display = 'none';
-            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
-            if(id === 'stage-select') renderStages();
-            if(id === 'garage' || id === 'shop') refreshShopGarage();
-        }
-
-        function backToMain() { 
-            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active')); 
-            document.getElementById('main-nav').style.display = 'block'; 
-        }
-
-        function renderStages() {
-            const grid = document.getElementById('grid'); grid.innerHTML = '';
-            const clr = userData.cleared.length;
-            Object.keys(STAGES).forEach(id => {
-                const s = STAGES[id];
-                let lock = (s.secret === 1 && clr < 8) || (s.secret === 2 && clr < 11);
-                const btn = document.createElement('div');
-                btn.className = `mode-btn ${!lock ? 'unlocked' : ''} ${userData.cleared.includes(id) ? 'cleared' : ''}`;
-                btn.style.setProperty('--c', lock ? '#1a1a1a' : s.color);
-                btn.innerHTML = `<b>${lock ? '???' : s.name}</b>`;
-                if(!lock) {
-                    btn.onclick = () => {
-                        document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('selected'));
-                        btn.classList.add('selected');
-                        document.getElementById('brief-title').innerText = s.name;
-                        document.getElementById('brief-title').style.color = s.color;
-                        document.getElementById('brief-meta').innerHTML = `RANK: ${s.star}<br>ADVISE: ${s.adv}`;
-                        document.getElementById('brief-desc').innerText = `${s.info}\n\n[NORMA]\nPHASE 2: ${s.score1}\nBOSS: ${s.score2}`;
-                        const lBtn = document.getElementById('launch-btn');
-                        lBtn.style.display = 'block'; lBtn.style.borderColor = s.color; lBtn.style.color = s.color;
-                        lBtn.onclick = () => startGame(id);
-                    };
-                }
-                grid.appendChild(btn);
-            });
-        }
-
-        function renderGarage() {
-    const list = document.getElementById('avatar-list'); list.innerHTML = '';
-    
-    // スキンと対応するステージIDのマップ
-    const unlockMap = {
-        '#0f0': 'SK',     // 緑
-        '#0ff': 'KT',     // 青
-        '#ff0': 'SB',     // 黄
-        '#aa0022': 'KY',  // 赤
-        '#ff6600': 'CO',  // オレンジ
-        '#888': 'JB'      // グレー
+    const STORAGE_KEY = 'minami_2026_custom_final';
+    let userData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
+        gold: 0, bombs: 1, cleared: [], skin: '#fff', ownedSkins: ['#fff']
     };
 
-    AVATARS.forEach(a => {
-        const owned = userData.ownedSkins.includes(a.id);
-        const canAfford = userData.gold >= a.cost;
-        
-        // クリア状況によるロック判定（初期機体以外）
-        const requiredStage = unlockMap[a.id];
-        const isLockedByStage = requiredStage && !userData.cleared.includes(requiredStage);
+    // ステージデータ：説明文を長文化（路線名なし）
+    const STAGES = {
+        'SB': { name: 'ST=SB', color: '#ccaa00', diff: 1.0, star: '★', score1: 3000, score2: 8000, bossHp: 600, g: ['vibrate'], adv: 'STD-W', info: '【基礎戦闘訓練エリア】\nシステムチェックを兼ねた初期演習。緩やかな振動波が機体を揺らすが、深刻な影響はない。まずはこの平穏な空間で、基本となる射撃と回避のプロトコルを完璧に遂行せよ。' },
+        'KT': { name: 'ST=KT', color: '#0088cc', diff: 1.2, star: '★', score1: 4000, score2: 10000, bossHp: 800, g: ['water'], adv: 'RAPID-G', info: '【高密度重粒子・沈黙の海】\n大気中に高密度の重粒子が充満しており、機体挙動に独特の粘性と慣性が発生する。水中にいるかのような抵抗は、回避のタイミングを狂わせる。高連射モデルでの制圧が推奨される。' },
+        'SK': { name: 'ST=SK', color: '#008844', diff: 1.4, star: '★★', score1: 5000, score2: 12000, bossHp: 1100, g: ['fog'], adv: 'WIDE-C', info: '【深緑の遮断領域】\n濃密な電磁スモッグが視界を遮る高難度視認エリア。敵機は霧の向こうから突如として現れる。広角拡散ショットによるブラインド・ファイアこそが、生存率を高める唯一の手段となるだろう。' },
+        'KY': { name: 'ST=KY', color: '#aa0022', diff: 1.6, star: '★★', score1: 5000, score2: 12000, bossHp: 1600, g: ['wind'], adv: 'BURST-R', info: '【臨界高度・風神の息吹】\n吹き荒れる超高速の偏西風が、常に機体を左方へと押し流す。微細な操作ミスが致命的な接触を招く。風圧に負けない質量弾を持つ重火力機体による、力押しの攻略が試される。' },
+        'PK': { name: 'ST=PK', color: '#cc5588', diff: 1.8, star: '★★', score1: 6000, score2: 15000, bossHp: 1900, g: ['reverse'], adv: 'SNAKE-Y', info: '【位相逆転プリズム】\n光学的・論理的インターフェースが反転した特異点。右は左へ、左は右へ。感覚と入力が乖離する恐怖の中で、変則的な軌道を描く攻撃が敵の裏をかく鍵となるだろう。' },
+        'JB': { name: 'ST=JB', color: '#006666', diff: 2.1, star: '★★★', score1: 7000, score2: 18000, bossHp: 2300, g: ['jamming'], adv: 'WIDE-C', info: '【電子ノイズ地獄】\n強力なジャミング放射により、敵弾の軌道予測が不可能なレベルで乱反射する。規則性のない弾幕を回避するのは至難。広域をカバーする武装で、弾幕密度を上げることで対抗せよ。' },
+        'S1': { name: 'ST=S1', color: '#6600cc', diff: 2.4, star: '★★★', score1: 8000, score2: 20000, bossHp: 2700, g: ['warp'], adv: 'RAPID-G', info: '【時空の境界線】\n空間が捻じ曲がり、画面の端を越えたエネルギー体が逆側から再出現する。前後左右の概念が崩壊したこのエリアでは、一瞬の油断も許されない。高速連射による先手必勝を心がけよ。' },
+        'S2': { name: 'ST=S2', color: '#cc00cc', diff: 2.7, star: '★★★', score1: 8000, score2: 20000, bossHp: 3200, g: ['poison'], adv: 'STD-W', info: '【ナノマシン汚染雲】\n機体装甲をナノレベルで分解する汚染物質が漂う。滞在時間そのものが死を意味する。小細工は無用だ。標準機によるバランスの取れた火力をもって、迅速に中枢部を破壊し離脱せよ。' },
+        'S3': { name: 'ST=S3', color: '#00cccc', diff: 3.2, star: '★★★★', score1: 10000, score2: 25000, bossHp: 3800, g: ['gravity'], adv: 'BURST-R', info: '【虚無の引力圏】\n中心点に向けて絶え間ない重力場が発生しており、自由な飛行を妨げる。引き寄せられる恐怖を振り切り、重力波の歪みを見極めろ。重力に屈しない超重粒子弾が攻略の糸口となる。' },
+        'NM': { name: 'ST=NM', color: '#00bb00', diff: 5.0, star: '★★★★★', score1: 15000, score2: 40000, bossHp: 8000, g: ['vibrate','fog'], adv: 'WIDE-C', secret: 1, info: '【機密：高周波霧領域】\n激しい振動と視界遮断が重なった複合災害エリア。もはや機体センサーは機能しない。直感のみを信じ、画面を埋め尽くす弾幕で空間を支配する覚悟が必要だ。' },
+        'TY': { name: 'ST=TY', color: '#888888', diff: 6.0, star: '★★★★★', score1: 15000, score2: 45000, bossHp: 10000, g: ['water','wind'], adv: 'BURST-R', secret: 1, info: '【機密：暴風雨の迷宮】\n重粒子抵抗と側方気流が同時に襲いかかる。制御不能に陥った機体で、巨大な標的に対して的確な一撃を叩き込むのは至難。一撃必殺の破壊力を持つ機体が求められる。' },
+        'YF': { name: 'ST=YF', color: '#dddd00', diff: 7.5, star: '★★★★★★', score1: 20000, score2: 50000, bossHp: 15000, g: ['reverse','jamming'], adv: 'ORANGE-L', secret: 1, info: '【機密：認知崩壊の奈落】\n反転する世界と、狂った電子信号。脳と機体の神経接続が焼き切れるようなカオスが支配する。この矛盾した空間を、伝説のオレンジの光だけが切り裂くことができる。' },
+        'ME': { name: 'ST=ME', color: '#ff0000', diff: 12.0, star: '★★★★★★★', score1: 30000, score2: 80000, bossHp: 30000, g: ['warp','poison','gravity'], adv: 'ORANGE-L', secret: 2, info: '【極秘：三重複合・滅びの地】\nワープする空間、腐食する大気、そして逃げ場のない引力。物理法則が完全に崩壊した最終試練の一角。もはや通常の機体で到達することすら奇跡に近い。' },
+        'SL': { name: 'ST=SL', color: '#00aa00', diff: 25.0, star: '★★★★★★★★★', score1: 50000, score2: 120000, bossHp: 90000, g: ['vibrate','wind','reverse','jamming'], adv: 'ORANGE-L', secret: 2, info: '【極秘：四重複合・終末の予兆】\n全てが混ざり合い、全てが牙を剥く。神を殺すための機体でさえ、ここでは一瞬の隙が死に直結する。極限の集中力をもって、この暴虐を鎮めよ。' },
+        'CO': { name: 'ST=CO', color: '#ff6600', diff: 150.0, star: '★★★★★★★★★★', score1: 100000, score2: 400000, bossHp: 999999, g: ['all'], adv: 'ORANGE-L', secret: 2, info: '【真・終焉：オレンジの神話】\n全宇宙のエネルギーが中央に集束する。全ての干渉、全ての憎悪、全ての難易度がここに結実した。これを超えた先に、ミナミ・プロジェクトの真の完結が待っている。' }
+    };
 
-        const btn = document.createElement('button');
-        btn.className = 'nav-btn'; 
-        btn.style.borderColor = isLockedByStage ? '#222' : a.id;
-        btn.style.height = "120px";
-        
-        // 購入・選択ができるかどうかの判定
-        btn.disabled = (!owned && !canAfford) || isLockedByStage;
+    const AVATARS = [
+        { id: '#fff', name: 'STD-W', cost: 0, desc: '初期型標準機。バランス重視。' },
+        { id: '#0f0', name: 'RAPID-G', cost: 10000, desc: '超高連射モデル。' },
+        { id: '#0ff', name: 'WIDE-C', cost: 20000, desc: '広域拡散弾搭載。' },
+        { id: '#ff0', name: 'SNAKE-Y', cost: 30000, desc: 'トリッキーな蛇行弾。' },
+        { id: '#aa0022', name: 'BURST-R', cost: 50000, desc: '圧倒的火力の重質量弾。' },
+        { id: '#888', name: 'SHADOW-B', cost: 80000, desc: '加速性能を極限まで強化。' },
+        { id: '#ff6600', name: 'ORANGE-L', cost: 200000, desc: '全ての環境干渉を無効化。' }
+    ];
 
-        if (isLockedByStage) {
-            // ロック中の表示
-            btn.innerHTML = `<b style="color:#555">LOCKED</b><br><small style="font-size:8px;">CLEAR ST=${requiredStage}<br>TO UNLOCK</small>`;
-        } else {
-            // 解禁済みの表示
-            btn.innerHTML = `<b style="color:${a.id}">${a.name}</b><br><small style="font-size:8px; display:block; margin:5px 0;">${a.desc}</small>${owned ? (userData.skin===a.id?'EQUIPPED':'SELECT') : a.cost+'G'}`;
-        }
+    function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(userData)); updateHUD(); }
+    
+    function updateHUD() {
+        document.getElementById('gold-val').innerText = `GOLD: ${userData.gold}`;
+        document.getElementById('score-val').innerText = `SCORE: ${score.toString().padStart(6, '0')}`;
+        document.getElementById('hp-fill').style.width = hp + "%";
+        document.getElementById('gauge-fill').style.width = burstGauge + "%";
+        document.getElementById('bomb-stock').innerText = `BOMBS: ${"★".repeat(userData.bombs)}`;
+    }
 
-        btn.onclick = () => {
-            if(!owned && !isLockedByStage && canAfford) { 
-                userData.gold -= a.cost; 
-                userData.ownedSkins.push(a.id); 
-                save(); 
-                refreshShopGarage(); 
+    function refreshShopGarage() {
+        document.getElementById('shop-gold').innerText = `GOLD: ${userData.gold}`;
+        document.getElementById('garage-gold').innerText = `GOLD: ${userData.gold}`;
+        renderGarage();
+    }
+
+    function openPanel(id) {
+        document.getElementById('main-nav').style.display = 'none';
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        if(id === 'stage-select') renderStages();
+        if(id === 'garage' || id === 'shop') refreshShopGarage();
+    }
+
+    function backToMain() { 
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active')); 
+        document.getElementById('main-nav').style.display = 'block'; 
+    }
+
+    function renderStages() {
+        const grid = document.getElementById('grid'); grid.innerHTML = '';
+        const clrNum = userData.cleared.length;
+        Object.keys(STAGES).forEach(id => {
+            const s = STAGES[id];
+            let lock = (s.secret === 1 && clrNum < 9) || (s.secret === 2 && clrNum < 12);
+            const btn = document.createElement('div');
+            btn.className = `mode-btn ${!lock ? 'unlocked' : ''} ${userData.cleared.includes(id) ? 'cleared' : ''}`;
+            btn.style.setProperty('--c', lock ? '#1a1a1a' : s.color);
+            btn.innerHTML = `<b>${lock ? '???' : s.name}</b>`;
+            if(!lock) {
+                btn.onclick = () => {
+                    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('selected'));
+                    btn.classList.add('selected');
+                    document.getElementById('brief-title').innerText = s.name;
+                    document.getElementById('brief-title').style.color = s.color;
+                    document.getElementById('brief-meta').innerHTML = `RANK: ${s.star} | ADVISE: ${s.adv}`;
+                    document.getElementById('brief-desc').innerText = `${s.info}\n\n[NORMA]\nPHASE 2: ${s.score1}pts\nBOSS: ${s.score2}pts`;
+                    const lBtn = document.getElementById('launch-btn');
+                    lBtn.style.display = 'block'; lBtn.style.borderColor = s.color; lBtn.style.color = s.color;
+                    lBtn.onclick = () => startGame(id);
+                };
             }
-            else if(owned) { 
-                userData.skin = a.id; 
-                save(); 
-                alert("EQUIPPED!"); 
-                refreshShopGarage(); 
-            }
+            grid.appendChild(btn);
+        });
+    }
+
+    function renderGarage() {
+        const list = document.getElementById('avatar-list'); list.innerHTML = '';
+        const unlockMap = {
+            '#0f0': 'SK', '#0ff': 'KT', '#ff0': 'SB', '#aa0022': 'KY', '#ff6600': 'CO', '#888': 'JB'
         };
-        list.appendChild(btn);
-    });
-}
-        function buy(type, cost) {
-            if(userData.gold >= cost) {
-                userData.gold -= cost;
-                if(type === 'atk') sessionData.atk += 2;
-                if(type === 'heal') hp = 100;
-                if(type === 'bit') sessionData.hasBit = true;
-                if(type === 'speed') player.speedMult += 0.2;
-                save(); refreshShopGarage();
-                alert("TECH UPGRADED!");
+        AVATARS.forEach(a => {
+            const owned = userData.ownedSkins.includes(a.id);
+            const req = unlockMap[a.id];
+            const isLocked = req && !userData.cleared.includes(req);
+            const btn = document.createElement('button');
+            btn.className = 'nav-btn'; 
+            btn.style.borderColor = isLocked ? '#222' : a.id;
+            btn.style.height = "130px";
+            btn.disabled = (!owned && userData.gold < a.cost) || isLocked;
+
+            if (isLocked) {
+                btn.innerHTML = `<b style="color:#444">LOCKED</b><br><small style="font-size:8px;">CLEAR ST=${req}<br>TO UNLOCK</small>`;
+            } else {
+                btn.innerHTML = `<b style="color:${a.id}">${a.name}</b><br><small style="font-size:8px; display:block; margin:5px 0;">${a.desc}</small>${owned ? (userData.skin===a.id?'EQUIPPED':'SELECT') : a.cost+'G'}`;
             }
+
+            btn.onclick = () => {
+                if(!owned && !isLocked && userData.gold >= a.cost) { 
+                    userData.gold -= a.cost; userData.ownedSkins.push(a.id); save(); refreshShopGarage(); 
+                } else if(owned) { 
+                    userData.skin = a.id; save(); refreshShopGarage(); 
+                }
+            };
+            list.appendChild(btn);
+        });
+    }
+
+    function buy(type, cost) {
+        if(userData.gold >= cost) {
+            userData.gold -= cost;
+            if(type === 'atk') sessionData.atk += 2;
+            if(type === 'heal') hp = 100;
+            if(type === 'bit') sessionData.hasBit = true;
+            if(type === 'speed') player.speedMult += 0.2;
+            save(); refreshShopGarage();
+        }
+    }
+
+    // ゲームエンジン部
+    function startGame(id) {
+        currentMode = STAGES[id]; currentMode.id = id;
+        document.getElementById('overlay').style.display = 'none';
+        gameActive = true; score = 0; hp = 100; phase = 1; frame = 0; burstGauge = 0;
+        enemies = []; bullets = []; eBullets = []; particles = [];
+        showPhaseMsg("MISSION START"); loop();
+    }
+
+    function finish(win) {
+        gameActive = false;
+        if(win && !userData.cleared.includes(currentMode.id)) {
+            userData.cleared.push(currentMode.id);
+            userData.gold += 5000;
+        }
+        save();
+        alert(win ? "MISSION CLEAR!" : "MISSION FAILED...");
+        document.getElementById('overlay').style.display = 'flex';
+        backToMain();
+    }
+
+    function showPhaseMsg(txt) {
+        const el = document.getElementById('phase-notice');
+        el.innerText = txt; el.style.opacity = 1; el.style.top = "50%";
+        setTimeout(() => { el.style.opacity = 0; el.style.top = "20%"; }, 2000);
+    }
+
+    function createExplosion(x, y, color) {
+        for(let i=0; i<10; i++) particles.push({ x, y, vx: (Math.random()-0.5)*15, vy: (Math.random()-0.5)*15, life: 25, color });
+    }
+
+    window.onmousemove = (e) => { player.x = e.clientX; player.y = e.clientY; };
+    window.onmousedown = () => isDown = true;
+    window.onmouseup = () => isDown = false;
+    window.onkeydown = (e) => { if(e.code === 'Space') useBomb(); };
+
+    function useBomb() {
+        if(userData.bombs > 0 && bombActive <= 0) {
+            userData.bombs--; bombActive = 60; eBullets = [];
+            enemies.forEach(e => { e.hp -= 2000; createExplosion(e.x, e.y, "#fff"); });
+            showPhaseMsg("MAXIMUM BURST!!");
+        }
+    }
+
+    function update() {
+        frame++;
+        if(bombActive > 0) bombActive--;
+        const g = currentMode.g;
+        let dX = player.x, dY = player.y;
+        let res = (userData.skin === '#ff6600') ? 0.1 : 1.0; // オレンジ機体は干渉をほぼ無効化
+
+        if(g.includes('vibrate') || g.includes('all')) { dX += (Math.random()-0.5)*25*res; dY += (Math.random()-0.5)*25*res; }
+        if(g.includes('wind') || g.includes('all')) dX -= 12 * res;
+        if(g.includes('poison') || g.includes('all')) if(frame % 60 === 0) hp -= 1 * res;
+        if(g.includes('gravity') || g.includes('all')) {
+            let gx = canvas.width/2 - dX, gy = canvas.height/2 - dY;
+            let dist = Math.hypot(gx, gy) || 1;
+            dX += (gx/dist) * 6 * res; dY += (gy/dist) * 6 * res;
         }
 
-        function startGame(id) {
-            currentMode = STAGES[id]; currentMode.id = id;
-            document.getElementById('overlay').style.display = 'none';
-            gameActive = true; score = 0; hp = 100; phase = 1; frame = 0; burstGauge = 0;
-            enemies = []; bullets = []; eBullets = []; particles = [];
-            showPhaseMsg("MISSION START"); loop();
+        if(phase === 1 && score >= currentMode.score1) { phase = 2; showPhaseMsg("PHASE 2"); }
+        if(phase === 2 && score >= currentMode.score2) { phase = 3; showPhaseMsg("BOSS WARNING"); }
+
+        if(isDown && frame % 5 === 0) {
+            const s = userData.skin; const a = sessionData.atk;
+            if(s === '#0f0') bullets.push({ x: dX, y: dY-20, p: a*0.8, vy: -45, vx: 0, w: 6 });
+            else if(s === '#0ff') [-6, 0, 6].forEach(vx => bullets.push({ x: dX, y: dY-20, p: a, vy: -25, vx: vx, w: 8 }));
+            else if(s === '#ff0') bullets.push({ x: dX, y: dY-20, p: a*1.2, vy: -20, vx: Math.sin(frame*0.3)*15, w: 8 });
+            else if(s === '#aa0022') bullets.push({ x: dX, y: dY-25, p: a*4.0, vy: -15, vx: 0, w: 30 });
+            else if(s === '#ff6600') [-10,-5,0,5,10].forEach(vx => bullets.push({ x: dX, y: dY-20, p: a*2, vy: -35, vx: vx, w: 10 }));
+            else bullets.push({ x: dX, y: dY-20, p: a, vy: -30, vx: 0, w: 8 });
         }
 
-        function showPhaseMsg(txt) {
-            const el = document.getElementById('phase-notice');
-            el.innerText = txt; el.style.opacity = 1; el.style.top = "50%";
-            setTimeout(() => { el.style.opacity = 0; el.style.top = "20%"; }, 2000);
+        if(sessionData.hasBit && frame % 15 === 0) {
+            bullets.push({ x: dX + Math.cos(frame*0.1)*80, y: dY + Math.sin(frame*0.1)*80, p: 5, vy: -35, vx: 0, w: 6 });
         }
 
-        function createExplosion(x, y, color) {
-            for(let i=0; i<8; i++) particles.push({ x: x, y: y, vx: (Math.random()-0.5)*15, vy: (Math.random()-0.5)*15, life: 20, color: color });
+        if(phase < 3 && frame % Math.max(5, 30 - Math.floor(currentMode.diff*2)) === 0) {
+            enemies.push({ x: Math.random()*canvas.width, y: -50, hp: (phase === 1 ? 40 : 120)*currentMode.diff, size: 40, vy: (4 + currentMode.diff/2) });
+        }
+        if(phase === 3 && !enemies.some(e => e.isBoss)) {
+            enemies.push({ x: canvas.width/2, y: -150, hp: currentMode.bossHp, maxHp: currentMode.bossHp, size: 200, vy: 1.0, isBoss: true });
         }
 
-        function useBomb() {
-            if(userData.bombs > 0 && bombActive <= 0) {
-                userData.bombs--; bombActive = 60; eBullets = [];
-                enemies.forEach(e => { e.hp -= 5000; createExplosion(e.x, e.y, "#fff"); });
-                showPhaseMsg("MAXIMUM BURST!!");
-            }
-        }
-
-        function update() {
-            frame++;
-            if(bombActive > 0) bombActive--;
-            const g = currentMode.g;
-            let dX = player.x, dY = player.y;
-            let res = (userData.skin === '#ff6600') ? 0.2 : 1.0;
-
-            if(g.includes('vibrate')) { dX += (Math.random()-0.5)*20*res; dY += (Math.random()-0.5)*20*res; }
-            if(g.includes('wind')) dX -= 10 * res;
-            if(g.includes('poison')) if(frame % 60 === 0) hp -= 2 * res;
-            if(g.includes('gravity')) {
-                let gx = canvas.width/2 - dX, gy = canvas.height/2 - dY;
-                let dist = Math.hypot(gx, gy) || 1;
-                dX += (gx/dist) * 5 * res; dY += (gy/dist) * 5 * res;
-            }
-            if(g.includes('all')) { dX += (Math.random()-0.5)*15*res; dX -= 5*res; if(frame%60===0) hp -= 1*res; }
-
-            if(phase === 1 && score >= currentMode.score1) { phase = 2; showPhaseMsg("PHASE 2"); }
-            if(phase === 2 && score >= currentMode.score2) { phase = 3; showPhaseMsg("BOSS INCOMING"); }
-
-            if(isDown && frame % 5 === 0) {
-                const s = userData.skin; const a = sessionData.atk;
-                if(s === '#0f0') bullets.push({ x: dX, y: dY-20, p: a*0.8, vy: -40, vx: 0, w: 6 });
-                else if(s === '#0ff') [-5, 0, 5].forEach(vx => bullets.push({ x: dX, y: dY-20, p: a, vy: -25, vx: vx, w: 8 }));
-                else if(s === '#ff0') bullets.push({ x: dX, y: dY-20, p: a*1.2, vy: -20, vx: Math.sin(frame*0.3)*12, w: 8 });
-                else if(s === '#aa0022') bullets.push({ x: dX, y: dY-25, p: a*3.0, vy: -15, vx: 0, w: 25 });
-                else if(s === '#ff6600') [-8,-4,0,4,8].forEach(vx => bullets.push({ x: dX, y: dY-20, p: a*1.5, vy: -30, vx: vx, w: 10 }));
-                else bullets.push({ x: dX, y: dY-20, p: a, vy: -30, vx: 0, w: 8 });
-            }
-
-            if(sessionData.hasBit && frame % 15 === 0) {
-                bullets.push({ x: dX + Math.cos(frame*0.1)*70, y: dY + Math.sin(frame*0.1)*70, p: 5, vy: -35, vx: 0, w: 6 });
-            }
-
-            if(phase < 3 && !enemies.some(e => e.isBoss) && frame % Math.max(5, (phase === 1 ? 40 : 20) - Math.floor(currentMode.diff)) === 0) {
-                enemies.push({ x: Math.random()*canvas.width, y: -50, hp: (phase === 1 ? 30 : 100)*currentMode.diff, size: 40, vy: (4 + currentMode.diff/2) });
-            }
-            if(phase === 3 && !enemies.some(e => e.isBoss)) {
-                enemies.push({ x: canvas.width/2, y: -100, hp: currentMode.bossHp, maxHp: currentMode.bossHp, size: 180, vy: 1.0, isBoss: true });
-            }
-
-            bullets.forEach((b, i) => {
-                b.y += b.vy; b.x += (b.vx || 0);
-                enemies.forEach((e, ei) => {
-                    if(Math.hypot(b.x-e.x, b.y-e.y) < e.size) {
-                        e.hp -= b.p; score += 20; bullets.splice(i, 1);
-                        if(e.hp <= 0) {
-                            createExplosion(e.x, e.y, currentMode.color);
-                            if(e.isBoss) finish(true);
-                            else { score += 500; userData.gold += Math.floor(50*currentMode.diff); enemies.splice(ei, 1); 
-                                burstGauge += 8; if(burstGauge >= 100) { burstGauge = 0; userData.bombs++; }
-                            }
+        bullets.forEach((b, i) => {
+            b.y += b.vy; b.x += (b.vx || 0);
+            enemies.forEach((e, ei) => {
+                if(Math.hypot(b.x-e.x, b.y-e.y) < e.size) {
+                    e.hp -= b.p; score += 10; bullets.splice(i, 1);
+                    if(e.hp <= 0) {
+                        createExplosion(e.x, e.y, currentMode.color);
+                        if(e.isBoss) finish(true);
+                        else { score += 500; userData.gold += 100; enemies.splice(ei, 1); 
+                            burstGauge += 5; if(burstGauge >= 100) { burstGauge = 0; userData.bombs++; }
                         }
                     }
-                });
-                if(b.y < -50) bullets.splice(i, 1);
-            });
-
-            enemies.forEach(e => {
-                e.y += e.vy; if(e.isBoss && e.y > 150) e.vy = 0;
-                if(Math.random() < 0.1 * currentMode.diff && bombActive <= 0) {
-                    let ebvx = (g.includes('jamming') || g.includes('all')) ? (Math.random()-0.5)*20 : 0;
-                    eBullets.push({ x: e.x, y: e.y, vx: ebvx, vy: 6 + currentMode.diff/2 });
                 }
-                if(e.y > canvas.height + 100) enemies.splice(enemies.indexOf(e), 1);
             });
+            if(b.y < -50) bullets.splice(i, 1);
+        });
 
-            eBullets.forEach((eb, i) => {
-                eb.y += eb.vy; eb.x += (eb.vx || 0);
-                if((g.includes('warp') || g.includes('all')) && eb.y > canvas.height) { eb.y = 0; eb.x = Math.random()*canvas.width; }
-                if(Math.hypot(eb.x-dX, eb.y-dY) < 22) { hp -= 20; eBullets.splice(i, 1); createExplosion(dX, dY, "#f00"); if(hp <= 0) finish(false); }
-                if(eb.y > canvas.height + 100) eBullets.splice(i, 1);
-            });
-            particles.forEach((p, i) => { p.x += p.vx; p.y += p.vy; p.life--; if(p.life <= 0) particles.splice(i, 1); });
-            updateHUD();
-        }
-
-        function draw() {
-            ctx.fillStyle = "#00081a"; ctx.fillRect(0,0,canvas.width, canvas.height);
-            if(bombActive > 0) { ctx.fillStyle = `rgba(255, 255, 255, ${bombActive/60})`; ctx.fillRect(0,0,canvas.width, canvas.height); }
-            let dX = player.x, dY = player.y;
-            let res = (userData.skin === '#ff6600') ? 0.2 : 1.0;
-            if(currentMode.g.includes('vibrate')) { dX += (Math.random()-0.5)*20*res; dY += (Math.random()-0.5)*20*res; }
-            if(currentMode.g.includes('wind')) dX -= 10*res;
-
-            if(sessionData.hasBit) { ctx.fillStyle = "#0ff"; ctx.fillRect(dX + Math.cos(frame*0.1)*70-5, dY + Math.sin(frame*0.1)*70-5, 10, 10); }
-            ctx.fillStyle = userData.skin; ctx.beginPath(); ctx.moveTo(dX, dY-30); ctx.lineTo(dX+25, dY+20); ctx.lineTo(dX-25, dY+20); ctx.fill();
-            
-            enemies.forEach(e => {
-                ctx.strokeStyle = currentMode.color; ctx.lineWidth = e.isBoss ? 8 : 4;
-                ctx.strokeRect(e.x-e.size/2, e.y-e.size/2, e.size, e.size);
-                if(e.isBoss) { ctx.fillStyle = "#333"; ctx.fillRect(e.x-150, e.y-140, 300, 15); ctx.fillStyle = "#f00"; ctx.fillRect(e.x-150, e.y-140, 300*(e.hp/e.maxHp), 15); }
-            });
-            bullets.forEach(b => { ctx.fillStyle = (userData.skin === '#fff' ? "#0ff" : userData.skin); ctx.fillRect(b.x-b.w/2, b.y, b.w, 25); });
-            eBullets.forEach(eb => { ctx.fillStyle = "#f0f"; ctx.beginPath(); ctx.arc(eb.x, eb.y, 9, 0, 7); ctx.fill(); });
-            particles.forEach(p => { ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, 3, 3); });
-        }
-
-        function finish(clear) {
-            gameActive = false;
-            if(clear) {
-                if(!userData.cleared.includes(currentMode.id)) userData.cleared.push(currentMode.id);
-                userData.gold += 15000; save();
-                if(currentMode.id === 'CO') showEnding();
-                else { alert("MISSION COMPLETE!\nBonus: 15000G"); location.reload(); }
-            } else { alert("MISSION FAILED..."); location.reload(); }
-        }
-
-        function showEnding() {
-            document.getElementById('ending').style.display = 'flex';
-            const msg = "中央線のオレンジが全宇宙の路線網を掌握した。重力、時空、毒素…全ての干渉を乗り越え、あなたは真の車掌となった。2026年、南プロジェクト・完結。";
-            let i = 0; const t = setInterval(() => { document.getElementById('end-text').innerText += msg[i++]; if(i >= msg.length) clearInterval(t); }, 50);
-        }
-
-        function loop() { if(!gameActive) return; update(); draw(); requestAnimationFrame(loop); }
-        
-        let isDown = false;
-        window.onmousedown = (e) => { if(e.button === 0) isDown = true; if(e.button === 2) useBomb(); };
-        window.onmouseup = () => isDown = false;
-        window.onmousemove = e => {
-            let tx = e.clientX, ty = e.clientY;
-            if(currentMode && currentMode.g.includes('reverse')) {
-                let res = (userData.skin === '#ff6600') ? 0.2 : 1.0;
-                if(res > 0.5) { tx = canvas.width - tx; ty = canvas.height - ty; }
+        enemies.forEach(e => {
+            e.y += e.vy; if(e.isBoss && e.y > 200) e.vy = 0;
+            if(Math.random() < 0.08 * currentMode.diff && bombActive <= 0) {
+                let ebvx = (g.includes('jamming') || g.includes('all')) ? (Math.random()-0.5)*25 : 0;
+                eBullets.push({ x: e.x, y: e.y, vx: ebvx, vy: 7 + currentMode.diff/2 });
             }
-            player.x = tx; player.y = ty;
-        };
-        window.onkeydown = e => { if(e.code === 'Space') useBomb(); };
-    </script>
+        });
+
+        eBullets.forEach((eb, i) => {
+            eb.y += eb.vy; eb.x += (eb.vx || 0);
+            if((g.includes('warp') || g.includes('all')) && eb.y > canvas.height) { eb.y = 0; eb.x = Math.random()*canvas.width; }
+            if(Math.hypot(eb.x-dX, eb.y-dY) < 25) { hp -= 15; eBullets.splice(i, 1); createExplosion(dX, dY, "#f00"); if(hp <= 0) finish(false); }
+            if(eb.y > canvas.height + 100) eBullets.splice(i, 1);
+        });
+        particles.forEach((p, i) => { p.x += p.vx; p.y += p.vy; p.life--; if(p.life <= 0) particles.splice(i, 1); });
+        updateHUD();
+    }
+
+    function draw() {
+        ctx.fillStyle = "#000b1e"; ctx.fillRect(0,0,canvas.width, canvas.height);
+        if(bombActive > 0) { ctx.fillStyle = "rgba(255,255,255,0.3)"; ctx.fillRect(0,0,canvas.width,canvas.height); }
+        
+        ctx.shadowBlur = 15; ctx.shadowColor = userData.skin;
+        ctx.fillStyle = userData.skin;
+        ctx.beginPath(); ctx.moveTo(player.x, player.y-25); ctx.lineTo(player.x-20, player.y+15); ctx.lineTo(player.x+20, player.y+15); ctx.fill();
+        ctx.shadowBlur = 0;
+
+        bullets.forEach(b => { ctx.fillStyle = "#fff"; ctx.fillRect(b.x-b.w/2, b.y, b.w, 15); });
+        enemies.forEach(e => {
+            ctx.fillStyle = e.isBoss ? "#f0f" : "#555";
+            ctx.beginPath(); ctx.arc(e.x, e.y, e.size, 0, Math.PI*2); ctx.fill();
+            if(e.isBoss) {
+                ctx.strokeStyle = "#fff"; ctx.strokeRect(e.x-100, e.y-e.size-20, 200, 10);
+                ctx.fillStyle = "#f00"; ctx.fillRect(e.x-100, e.y-e.size-20, (e.hp/e.maxHp)*200, 10);
+            }
+        });
+        eBullets.forEach(eb => { ctx.fillStyle = "#ff0066"; ctx.beginPath(); ctx.arc(eb.x, eb.y, 8, 0, Math.PI*2); ctx.fill(); });
+        particles.forEach(p => { ctx.fillStyle = p.color; ctx.globalAlpha = p.life/25; ctx.fillRect(p.x, p.y, 4, 4); });
+        ctx.globalAlpha = 1.0;
+    }
+
+    function loop() { if(gameActive) { update(); draw(); requestAnimationFrame(loop); } }
+    
+    updateHUD();
+</script>
 </body>
 </html>
