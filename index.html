@@ -2,14 +2,14 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Minami Project 2026: Burst Finale - FULL ARCHIVE & RESTORED</title>
+    <title>Minami Project 2026: Burst Finale - SCORE REPAIR</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+JP:wght@700;900&display=swap');
         
         body { margin: 0; background: #000; color: #fff; font-family: 'Press Start 2P', cursive; overflow: hidden; user-select: none; }
         canvas { display: block; position: absolute; top: 0; left: 0; z-index: 5; }
 
-        /* HUD: 美波様が指定したHP・スコア・ボム表示を最前面に固定 */
+        /* HUD: スコア・HP・ボム表示を最前面(z-index: 9999)に固定 */
         #hud { 
             position: absolute; 
             top: 20px; 
@@ -18,7 +18,7 @@
             pointer-events: none; 
             display: block !important; 
         }
-        #score-val { font-size: 26px; text-shadow: 0 0 15px #0ff; margin-bottom: 12px; color: #0ff; font-family: 'Press Start 2P'; }
+        #score-val { font-size: 28px; text-shadow: 0 0 15px #0ff; margin-bottom: 12px; color: #fff; font-family: 'Press Start 2P'; }
         .bar-container { width: 300px; height: 18px; background: rgba(255,255,255,0.1); border: 2px solid #fff; border-radius: 9px; overflow: hidden; margin-bottom: 10px; }
         #hp-fill { height: 100%; background: linear-gradient(90deg, #ff0055, #00ffaa); width: 100%; transition: width 0.1s linear; }
         #gauge-fill { height: 100%; background: #00ccff; width: 0%; transition: width 0.1s; }
@@ -108,7 +108,7 @@
                 ・BLUE-MARINE: 水中戦(ST=KT等)での粘性による移動遅延を完全に無効化。<br>
                 ・SAIKYO-GREEN: 索敵強化。霧(ST=SK等)の中でも常に3方向への広角射撃を維持。<br>
                 ・SOBU-YELLOW: 電磁装甲。振動(ST=SB等)への耐性を持ち、被弾ダメージを大幅に軽減。<br>
-                ・KEIYO-RED: 暴風耐性。風(ST=KY等)に押し流されず、ボム威力が2倍に強化される。<br>
+                ・KEIYO-RED: 暴風耐性。風(ST=KY等)に押し流されず、ボム火力が2倍に強化される。<br>
                 ・CHUO-ORANGE: 神域機体。全環境干渉（毒、重力、反転、風、水、振動）を完全無効化。<br>
                 <hr style="border:1px solid #333; margin:25px 0;">
                 <b style="color:#f0f; font-size:22px; border-left:6px solid #f0f; padding-left:20px;">知的財産権に関する通知:</b><br>
@@ -132,34 +132,33 @@
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth; canvas.height = window.innerHeight;
 
-        const STORAGE_KEY = 'minami_v3_final_2026';
+        const STORAGE_KEY = 'minami_v3_final_2026_score_fixed';
         let userData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
             gold: 0, bombs: 2, cleared: [], skin: '#fff', ownedSkins: ['#fff']
         };
 
         let gameActive = false, score = 0, hp = 100, frame = 0, phase = 1, burstGauge = 0, bombActive = 0;
-        let bullets = [], eBullets = [], enemies = [], particles = [];
+        let bullets = [], eBullets = [], enemies = [];
         let player = { x: canvas.width/2, y: canvas.height/2 };
         let currentMode = null;
-        let sessionData = { atk: 5, hasBit: false };
+        let sessionData = { atk: 10, hasBit: false };
 
-        // 美波様オリジナル：全ステージ設定と攻略条件（簡略化禁止）
         const STAGES = {
-            'SB': { name: 'ST=SB', color: '#ccaa00', diff: 1.0, score1: 3000, score2: 8000, bossHp: 1200, g: ['vibrate'], info: '【黄昏の静止衛星】\n攻略条件：微振動への順応。SOBU-YELLOWの重装甲はこの振動を相殺する適正を持つ。' },
-            'KT': { name: 'ST=KT', color: '#0088cc', diff: 1.2, score1: 4000, score2: 10000, bossHp: 1800, g: ['water'], info: '【紺碧の深層回路】\n攻略条件：水中減速の克服。BLUE-MARINEを使用すれば、水の粘性による移動遅延を無効化できる。' },
-            'SK': { name: 'ST=SK', color: '#008844', diff: 1.4, score1: 5000, score2: 12000, bossHp: 2500, g: ['fog'], info: '【深翠の迷宮森林】\n攻略条件：索敵範囲の拡大。SAIKYO-GREENの3方向同時射撃は、霧の中の敵を効率よく排除可能。' },
-            'KY': { name: 'ST=KY', color: '#aa0022', diff: 1.6, score1: 5000, score2: 12000, bossHp: 3000, g: ['wind'], info: '【紅蓮の暴風境界】\n攻略条件：強風耐性。KEIYO-REDはこのエリアの西風を無効化し、ボム火力が2倍に強化される。' },
-            'PK': { name: 'ST=PK', color: '#cc5588', diff: 1.8, score1: 6000, score2: 15000, bossHp: 3500, g: ['reverse'], info: '【薄桃の鏡像世界】\n攻略条件：認識の再定義。左右移動が反転する。プレイヤーの直感が試される。' },
-            'JB': { name: 'ST=JB', color: '#006666', diff: 2.1, score1: 7000, score2: 18000, bossHp: 4500, g: ['jamming'], info: '【電磁の断層廃墟】\n攻略条件：弾道補正。強力なジャミングで弾道が歪む。YELLOWの防御力で耐えつつ近接戦を挑め。' },
-            'S1': { name: 'ST=S1', color: '#6600cc', diff: 2.4, score1: 8000, score2: 20000, bossHp: 6000, g: ['warp'], info: '【紫紺の跳躍空域】\n攻略条件：空間把握。画面端から端へ弾がワープする。空間の繋がりを読み解け。' },
-            'S2': { name: 'ST=S2', color: '#cc00cc', diff: 2.7, score1: 9000, score2: 22000, bossHp: 7500, g: ['poison'], info: '【極彩の腐食雲】\n攻略条件：短期決戦。装甲が毒で蝕まれる。ORANGE機体があればこの腐食を完全無効化可能。' },
-            'S3': { name: 'ST=S3', color: '#00cccc', diff: 3.2, score1: 10000, score2: 25000, bossHp: 9000, g: ['gravity'], info: '【青磁の重力特異点】\n攻略条件：物理干渉の遮断。激しい重力変動で挙動が乱れる。物理法則を無視するORANGE推奨。' },
-            'NM': { name: 'ST=NM', color: '#00bb00', diff: 5.0, score1: 15000, score2: 40000, bossHp: 20000, g: ['vibrate','fog'], secret: 1, info: '【機密：深翠の虚無】\n隠しステージ。全モードクリアへの門番。' },
-            'TY': { name: 'ST=TY', color: '#888888', diff: 6.0, score1: 15000, score2: 45000, bossHp: 25000, g: ['water','wind'], secret: 1, info: '【機密：灰色の暴風域】\n隠しステージ。水の抵抗と強風が同時に襲う。' },
-            'YF': { name: 'ST=YF', color: '#dddd00', diff: 7.5, score1: 20000, score2: 50000, bossHp: 30000, g: ['reverse','jamming'], secret: 1, info: '【機密：黄金の混乱】\n隠しステージ。理論を超越した直感が必要。' },
-            'ME': { name: 'ST=ME', color: '#ff0000', diff: 12.0, score1: 30000, score2: 80000, bossHp: 60000, g: ['warp','poison','gravity'], secret: 2, info: '【極限：紅蓮の零地点】\n物理崩壊空域。CHUO-ORANGEによる環境無効化が唯一の希望。' },
-            'SL': { name: 'ST=SL', color: '#00aa00', diff: 25.0, score1: 50000, score2: 120000, bossHp: 150000, g: ['vibrate','wind','reverse','jamming'], secret: 2, info: '【極限：翠緑の審判】\n美波が課した最大級の試練。四重複合干渉を潜り抜けろ。' },
-            'CO': { name: 'ST=CO', color: '#ff6600', diff: 150.0, score1: 100000, score2: 400000, bossHp: 999999, g: ['all'], secret: 2, info: '【終焉：光輝の神話】\n全色の収束。全干渉が無効化されるこの地で、美波との一体化を果たせ。' }
+            'SB': { name: 'ST=SB', color: '#ccaa00', diff: 1.0, score1: 3000, score2: 8000, bossHp: 1500, g: ['vibrate'], info: '【黄昏の静止衛星】\n攻略条件：微振動への順応。SOBU-YELLOW推奨。' },
+            'KT': { name: 'ST=KT', color: '#0088cc', diff: 1.2, score1: 4000, score2: 10000, bossHp: 2000, g: ['water'], info: '【紺碧の深層回路】\n攻略条件：水中減速の克服。BLUE-MARINE推奨。' },
+            'SK': { name: 'ST=SK', color: '#008844', diff: 1.4, score1: 5000, score2: 12000, bossHp: 2800, g: ['fog'], info: '【深翠の迷宮森林】\n攻略条件：広角索敵。SAIKYO-GREEN推奨。' },
+            'KY': { name: 'ST=KY', color: '#aa0022', diff: 1.6, score1: 5000, score2: 12000, bossHp: 3500, g: ['wind'], info: '【紅蓮の暴風境界】\n攻略条件：強風耐性。KEIYO-RED推奨。' },
+            'PK': { name: 'ST=PK', color: '#cc5588', diff: 1.8, score1: 6000, score2: 15000, bossHp: 4000, g: ['reverse'], info: '【薄桃の鏡像世界】\n攻略条件：認識の再定義。左右反転。' },
+            'JB': { name: 'ST=JB', color: '#006666', diff: 2.1, score1: 7000, score2: 18000, bossHp: 5000, g: ['jamming'], info: '【電磁の断層廃墟】\n攻略条件：弾道歪曲。至近距離射撃。' },
+            'S1': { name: 'ST=S1', color: '#6600cc', diff: 2.4, score1: 8000, score2: 20000, bossHp: 6500, g: ['warp'], info: '【紫紺の跳躍空域】\n攻略条件：空間跳躍への対応。' },
+            'S2': { name: 'ST=S2', color: '#cc00cc', diff: 2.7, score1: 9000, score2: 22000, bossHp: 8000, g: ['poison'], info: '【極彩の腐食雲】\n攻略条件：毒性空域での短期決戦。' },
+            'S3': { name: 'ST=S3', color: '#00cccc', diff: 3.2, score1: 10000, score2: 25000, bossHp: 10000, g: ['gravity'], info: '【青磁の重力特異点】\n攻略条件：重力干渉の無視。' },
+            'NM': { name: 'ST=NM', color: '#00bb00', diff: 5.0, score1: 15000, score2: 40000, bossHp: 25000, g: ['vibrate','fog'], secret: 1, info: '【機密：深翠の虚無】' },
+            'TY': { name: 'ST=TY', color: '#888888', diff: 6.0, score1: 15000, score2: 45000, bossHp: 30000, g: ['water','wind'], secret: 1, info: '【機密：灰色の暴風域】' },
+            'YF': { name: 'ST=YF', color: '#dddd00', diff: 7.5, score1: 20000, score2: 50000, bossHp: 40000, g: ['reverse','jamming'], secret: 1, info: '【機密：黄金の混乱】' },
+            'ME': { name: 'ST=ME', color: '#ff0000', diff: 12.0, score1: 30000, score2: 80000, bossHp: 80000, g: ['warp','poison','gravity'], secret: 2, info: '【極限：紅蓮の零地点】' },
+            'SL': { name: 'ST=SL', color: '#00aa00', diff: 25.0, score1: 50000, score2: 120000, bossHp: 200000, g: ['vibrate','wind','reverse','jamming'], secret: 2, info: '【極限：翠緑の審判】' },
+            'CO': { name: 'ST=CO', color: '#ff6600', diff: 150.0, score1: 100000, score2: 400000, bossHp: 999999, g: ['all'], secret: 2, info: '【終焉：光輝の神話】\n美波の全構想の終着点。' }
         };
 
         const AVATARS = [
@@ -173,16 +172,14 @@
 
         function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(userData)); updateHUD(); }
         
-        // --- HUDの完全反映ロジック ---
+        // --- 画面表示の更新（スコア等すべてを同期） ---
         function updateHUD() {
+            // ここでHTMLの要素に確実に現在の数値を反映
             document.getElementById('score-val').innerText = `SCORE: ${score.toString().padStart(6, '0')}`;
             document.getElementById('hp-fill').style.width = Math.max(0, hp) + "%";
             document.getElementById('gauge-fill').style.width = burstGauge + "%";
             document.getElementById('bomb-stock').innerText = `BOMBS: ${"★".repeat(userData.bombs)}`;
             document.getElementById('gold-val').innerText = `GOLD: ${userData.gold}`;
-            
-            // HPが低くなったらバーを赤くするなどの視覚効果
-            document.getElementById('hp-fill').style.filter = hp < 30 ? 'hue-rotate(-50deg) brightness(1.5)' : 'none';
         }
 
         function openPanel(id) {
@@ -191,7 +188,6 @@
             document.getElementById(id).classList.add('active');
             if(id === 'stage-select') renderStages();
             if(id === 'garage') renderGarage();
-            if(id === 'shop') document.getElementById('shop-gold').innerText = `GOLD: ${userData.gold}`;
         }
 
         function backToMain() { 
@@ -247,7 +243,6 @@
                 userData.gold -= cost;
                 if(type === 'atk') sessionData.atk += 10;
                 if(type === 'heal') hp = 100;
-                if(type === 'bit') sessionData.hasBit = true;
                 if(type === 'bomb') userData.bombs++;
                 save(); updateHUD();
             }
@@ -256,9 +251,11 @@
         function startGame(id) {
             currentMode = STAGES[id]; currentMode.id = id;
             document.getElementById('overlay').style.display = 'none';
-            gameActive = true; score = 0; hp = 100; phase = 1; frame = 0; burstGauge = 0;
-            enemies = []; bullets = []; eBullets = []; particles = [];
-            showPhaseMsg("MISSION START"); loop();
+            gameActive = true; score = 0; hp = 100; frame = 0; phase = 1; burstGauge = 0;
+            enemies = []; bullets = []; eBullets = [];
+            showPhaseMsg("MISSION START"); 
+            updateHUD(); // 開始時に0をセット
+            loop();
         }
 
         function showPhaseMsg(txt) {
@@ -270,8 +267,14 @@
         function useBomb() {
             if(userData.bombs > 0 && bombActive <= 0) {
                 userData.bombs--; bombActive = 60; eBullets = [];
-                let dmg = (userData.skin === '#aa0022') ? 25000 : 12000;
-                enemies.forEach(e => { e.hp -= dmg; });
+                let dmg = (userData.skin === '#aa0022') ? 30000 : 15000;
+                enemies.forEach(e => { 
+                    e.hp -= dmg; 
+                    if(e.hp <= 0 && !e.dead) { // ボムで倒した場合もスコア加算
+                        e.dead = true; 
+                        score += 500; userData.gold += 100;
+                    }
+                });
                 showPhaseMsg("MAXIMUM BURST!!");
                 updateHUD();
             }
@@ -282,53 +285,55 @@
             frame++;
             if(bombActive > 0) bombActive--;
 
-            const g = currentMode.g;
             const skin = userData.skin;
-            let immune = (skin === '#ff6600');
+            const g = currentMode.g;
 
-            // 環境干渉ロジック（簡略化なし）
-            if(!immune) {
-                if((g.includes('vibrate') || g.includes('all')) && skin !== '#ccaa00') { player.x += (Math.random()-0.5)*20; player.y += (Math.random()-0.5)*20; }
-                if((g.includes('wind') || g.includes('all')) && skin !== '#aa0022') player.x -= 8;
-                if(g.includes('poison') || g.includes('all')) if(frame % 60 === 0) hp -= 2;
+            // 環境干渉
+            if(skin !== '#ff6600') {
+                if(g.includes('vibrate') && skin !== '#ccaa00') { player.x += (Math.random()-0.5)*18; player.y += (Math.random()-0.5)*18; }
+                if(g.includes('wind') && skin !== '#aa0022') player.x -= 8;
+                if(g.includes('poison')) if(frame % 60 === 0) hp -= 2;
             }
 
+            // フェーズ移行
             if(phase === 1 && score >= currentMode.score1) { phase = 2; showPhaseMsg("PHASE 2"); }
             if(phase === 2 && score >= currentMode.score2) { phase = 3; showPhaseMsg("BOSS WARNING"); }
 
-            // 射撃（自機適正反映）
+            // 射撃
             if(isDown && frame % 5 === 0) {
-                const a = sessionData.atk;
-                if(skin === '#008844') { // GREEN適正：3方向
-                    [-6, 0, 6].forEach(vx => bullets.push({ x: player.x, y: player.y-25, p: a, vy: -25, vx: vx, w: 10 }));
+                if(skin === '#008844') {
+                    [-6, 0, 6].forEach(vx => bullets.push({ x: player.x, y: player.y-25, p: sessionData.atk, vy: -25, vx: vx }));
                 } else {
-                    bullets.push({ x: player.x, y: player.y-25, p: a, vy: -30, vx: 0, w: 12 });
+                    bullets.push({ x: player.x, y: player.y-25, p: sessionData.atk, vy: -30, vx: 0 });
                 }
-            }
-            if(sessionData.hasBit && frame % 15 === 0) {
-                bullets.push({ x: player.x + Math.cos(frame*0.1)*80, y: player.y + Math.sin(frame*0.1)*80, p: 5, vy: -35, vx: 0, w: 6 });
             }
 
             // 敵生成
             if(phase < 3 && frame % 25 === 0) {
-                enemies.push({ x: Math.random()*canvas.width, y: -60, hp: 150*currentMode.diff, maxHp: 150*currentMode.diff, size: 50, vy: 5 + currentMode.diff });
+                enemies.push({ x: Math.random()*canvas.width, y: -60, hp: 150*currentMode.diff, size: 50, vy: 5 + currentMode.diff, dead: false });
             }
             if(phase === 3 && !enemies.some(e => e.isBoss)) {
-                enemies.push({ x: canvas.width/2, y: -150, hp: currentMode.bossHp, maxHp: currentMode.bossHp, size: 220, vy: 1, isBoss: true });
+                enemies.push({ x: canvas.width/2, y: -150, hp: currentMode.bossHp, maxHp: currentMode.bossHp, size: 220, vy: 1, isBoss: true, dead: false });
             }
 
-            // 当たり判定と反映
+            // --- スコア加算の核心部分 ---
             bullets.forEach((b, i) => {
                 b.y += b.vy; b.x += (b.vx || 0);
                 enemies.forEach((e, ei) => {
-                    if(Math.hypot(b.x-e.x, b.y-e.y) < e.size) {
+                    if(!e.dead && Math.hypot(b.x-e.x, b.y-e.y) < e.size) {
                         e.hp -= b.p; bullets.splice(i, 1);
                         if(e.hp <= 0) {
-                            if(e.isBoss) finish(true);
-                            else { 
-                                score += 500; userData.gold += 100; enemies.splice(ei, 1); 
-                                burstGauge += 6; if(burstGauge >= 100) { burstGauge = 0; userData.bombs++; }
-                                updateHUD(); // 数値更新
+                            e.dead = true;
+                            if(e.isBoss) {
+                                finish(true);
+                            } else {
+                                // 撃破時にスコアを確実に加算
+                                score += 500; 
+                                userData.gold += 100;
+                                burstGauge += 8; 
+                                if(burstGauge >= 100) { burstGauge = 0; userData.bombs++; }
+                                enemies.splice(ei, 1);
+                                updateHUD(); // ここで画面のスコア表示を書き換える
                             }
                         }
                     }
@@ -337,37 +342,31 @@
 
             enemies.forEach(e => {
                 e.y += e.vy; if(e.isBoss && e.y > 180) e.vy = 0;
-                if(Math.random() < 0.06 * currentMode.diff) {
-                    let ebvx = (g.includes('jamming') || g.includes('all')) ? (Math.random()-0.5)*18 : 0;
-                    eBullets.push({ x: e.x, y: e.y, vx: ebvx, vy: 9 });
+                if(Math.random() < 0.05 * currentMode.diff) {
+                    let ebvx = (g.includes('jamming')) ? (Math.random()-0.5)*15 : 0;
+                    eBullets.push({ x: e.x, y: e.y, vx: ebvx });
                 }
             });
 
             eBullets.forEach((eb, i) => {
-                eb.y += eb.vy; eb.x += eb.vx;
-                if((g.includes('warp') || g.includes('all')) && eb.y > canvas.height) { eb.y = 0; eb.x = Math.random()*canvas.width; }
+                eb.y += 10; eb.x += eb.vx;
                 if(Math.hypot(eb.x-player.x, eb.y-player.y) < 25) {
                     hp -= (skin === '#ccaa00' ? 10 : 20); eBullets.splice(i, 1);
-                    updateHUD(); // ダメージ反映
+                    updateHUD(); // ダメージ時にHP表示を更新
                     if(hp <= 0) finish(false);
                 }
             });
-            
-            updateHUD(); // 毎フレーム同期
         }
 
         function draw() {
             ctx.fillStyle = "#000510"; ctx.fillRect(0,0,canvas.width, canvas.height);
             if(bombActive > 0) { ctx.fillStyle = `rgba(255,255,255,${bombActive/60})`; ctx.fillRect(0,0,canvas.width, canvas.height); }
             
-            // 自機描画
-            ctx.shadowBlur = 15; ctx.shadowColor = userData.skin;
-            ctx.fillStyle = userData.skin; ctx.beginPath(); ctx.moveTo(player.x, player.y-40); ctx.lineTo(player.x+30, player.y+20); ctx.lineTo(player.x-30, player.y+20); ctx.fill();
-            ctx.shadowBlur = 0;
+            ctx.fillStyle = userData.skin; ctx.beginPath();
+            ctx.moveTo(player.x, player.y-35); ctx.lineTo(player.x+25, player.y+15); ctx.lineTo(player.x-25, player.y+15); ctx.fill();
             
-            // 敵・ボス
             enemies.forEach(e => {
-                ctx.strokeStyle = currentMode.color; ctx.lineWidth = e.isBoss ? 10 : 5;
+                ctx.strokeStyle = currentMode.color; ctx.lineWidth = e.isBoss ? 8 : 4;
                 ctx.strokeRect(e.x-e.size/2, e.y-e.size/2, e.size, e.size);
                 if(e.isBoss) {
                     ctx.fillStyle = "#222"; ctx.fillRect(e.x-150, e.y-160, 300, 15);
@@ -375,8 +374,7 @@
                 }
             });
 
-            // 弾
-            ctx.fillStyle = "#fff"; bullets.forEach(b => ctx.fillRect(b.x-b.w/2, b.y, b.w, 25));
+            ctx.fillStyle = "#fff"; bullets.forEach(b => ctx.fillRect(b.x-5, b.y, 10, 20));
             ctx.fillStyle = "#f0f"; eBullets.forEach(eb => { ctx.beginPath(); ctx.arc(eb.x, eb.y, 10, 0, 7); ctx.fill(); });
         }
 
@@ -403,10 +401,8 @@
         window.onmouseup = () => isDown = false;
         window.onmousemove = e => {
             let tx = e.clientX, ty = e.clientY;
-            if(currentMode && (currentMode.g.includes('reverse') || currentMode.g.includes('all'))) { tx = canvas.width - tx; ty = canvas.height - ty; }
-            if(currentMode && (currentMode.g.includes('water') || currentMode.g.includes('all')) && userData.skin !== '#0088cc') {
-                player.x += (tx - player.x) * 0.06; player.y += (ty - player.y) * 0.06;
-            } else { player.x = tx; player.y = ty; }
+            if(currentMode && (currentMode.g.includes('reverse'))) { tx = canvas.width - tx; ty = canvas.height - ty; }
+            player.x = tx; player.y = ty;
         };
         window.onkeydown = e => { if(e.code === 'Space') useBomb(); };
         updateHUD();
