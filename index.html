@@ -2,157 +2,151 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>Minami Project 2026: Burst Finale - THE ABSOLUTE ARCHIVE</title>
+    <title>Minami Project 2026: Burst Finale - TRUE MASTER ARCHIVE</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+JP:wght@700;900&display=swap');
         
         body { margin: 0; background: #000; color: #fff; font-family: 'Press Start 2P', cursive; overflow: hidden; user-select: none; }
         canvas { display: block; position: absolute; top: 0; left: 0; z-index: 5; }
 
-        /* HUD - 美波様の指定に基づきHP/スコアを明確化 */
+        /* HUD */
         #hud { position: absolute; top: 20px; left: 20px; z-index: 100; pointer-events: none; }
         #score-val { font-size: 24px; text-shadow: 0 0 10px #0ff; margin-bottom: 12px; }
-        .bar-label { font-size: 8px; color: #0ff; margin-bottom: 4px; letter-spacing: 1px; }
-        .bar-container { width: 280px; height: 14px; background: rgba(255,255,255,0.05); border: 1.5px solid #fff; border-radius: 7px; overflow: hidden; margin-bottom: 10px; }
-        #hp-fill { height: 100%; background: linear-gradient(90deg, #ff0055, #00ffaa); width: 100%; transition: width 0.3s; }
+        .bar-label { font-size: 9px; color: #0ff; margin-bottom: 4px; }
+        .bar-container { width: 300px; height: 16px; background: rgba(255,255,255,0.05); border: 2px solid #fff; border-radius: 8px; overflow: hidden; margin-bottom: 10px; }
+        #hp-fill { height: 100%; background: linear-gradient(90deg, #ff0055, #00ffaa); width: 100%; transition: width 0.2s; }
         #gauge-fill { height: 100%; background: #00ccff; width: 0%; }
-        #status-info { font-size: 9px; color: #aaa; font-family: 'Noto Sans JP'; line-height: 1.5; }
-        #gold-display { color: #ffd700; font-size: 18px; margin-top: 8px; font-weight: 900; font-family: 'Noto Sans JP'; }
+        #gold-val { color: #ffd700; font-size: 18px; font-family: 'Noto Sans JP'; }
 
         /* UI Overlays */
         #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, #000a1a 0%, #000 100%); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; }
-        .panel { display: none; flex-direction: column; align-items: center; width: 95%; max-height: 85vh; }
+        .panel { display: none; flex-direction: column; align-items: center; width: 95%; max-height: 90vh; }
         .active { display: flex; }
 
-        .nav-btn { padding: 20px 30px; border: 2.5px solid #0ff; background: rgba(0,255,255,0.05); color: #0ff; cursor: pointer; font-family: 'Press Start 2P'; font-size: 11px; margin: 10px; transition: 0.2s; }
+        .nav-btn { padding: 15px 25px; border: 2.5px solid #0ff; background: rgba(0,255,255,0.05); color: #0ff; cursor: pointer; font-family: 'Press Start 2P'; font-size: 11px; margin: 8px; transition: 0.2s; }
         .nav-btn:hover:not(:disabled) { background: #0ff; color: #000; box-shadow: 0 0 25px #0ff; }
-        .nav-btn:disabled { border-color: #333; color: #555; cursor: not-allowed; }
+
+        /* Stage Select Layout */
+        #stage-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 15px; width: 85%; margin-top: 20px; }
+        .mode-card { width: 220px; padding: 20px; border: 2px solid #333; background: #050505; cursor: pointer; text-align: center; }
+        .mode-card.unlocked { border-color: var(--c); color: var(--c); }
+        .mode-card.selected { background: var(--c); color: #000; }
 
         /* Shop Layout */
-        .shop-container { display: flex; gap: 20px; width: 95%; height: 65vh; }
-        .shop-sector { flex: 1; border: 2px solid #333; padding: 20px; background: rgba(255,255,255,0.02); border-radius: 15px; overflow-y: auto; }
-        .sector-title { font-size: 14px; color: #0ff; margin-bottom: 20px; text-align: center; border-bottom: 2px solid #0ff; padding-bottom: 10px; }
-        
-        .card { border: 1.5px solid #444; padding: 15px; margin-bottom: 15px; font-family: 'Noto Sans JP'; cursor: pointer; transition: 0.3s; position: relative; border-radius: 8px; }
-        .card.owned { border-color: #ffd700; }
-        .card.active { background: rgba(0,255,255,0.2); border-color: #0ff; box-shadow: inset 0 0 10px #0ff; }
-        .card:hover:not(.locked) { border-color: #fff; }
-        .card.locked { opacity: 0.3; cursor: not-allowed; }
-        .price-tag { position: absolute; top: 15px; right: 15px; color: #ffd700; font-weight: 900; }
+        .shop-flex { display: flex; gap: 20px; width: 95%; margin-top: 20px; }
+        .shop-box { flex: 1; border: 2px solid #444; padding: 20px; background: rgba(255,255,255,0.02); height: 50vh; overflow-y: auto; }
+        .item-card { border: 1px solid #555; padding: 12px; margin-bottom: 10px; cursor: pointer; font-family: 'Noto Sans JP'; font-size: 12px; }
+        .item-card.active { border-color: #0ff; background: rgba(0,255,255,0.1); }
 
-        /* Stage Select */
-        .mode-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; width: 80%; }
-        .mode-btn { padding: 20px; border: 2px solid #333; background: #050505; color: #444; cursor: pointer; text-align: center; font-size: 10px; transition: 0.3s; }
-        .mode-btn.unlocked { border-color: var(--c); color: var(--c); }
-        .mode-btn.selected { background: var(--c); color: #000; box-shadow: 0 0 20px var(--c); }
+        /* Guide */
+        #guide-text { width: 80%; background: rgba(0,10,30,0.9); border: 2px solid #0ff; padding: 30px; font-family: 'Noto Sans JP'; line-height: 1.8; font-size: 14px; color: #ccc; }
 
-        #msg-layer { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); font-size: 60px; color: #fff; text-shadow: 0 0 30px #f00; z-index: 50; opacity: 0; pointer-events: none; transition: 0.5s; font-weight: 900; text-align: center; }
+        #copyright { position: absolute; bottom: 20px; font-size: 8px; color: #444; letter-spacing: 2px; }
+        #msg-layer { position: absolute; top: 40%; left: 50%; transform: translate(-50%, -50%); font-size: 60px; color: #fff; text-shadow: 0 0 30px #f00; z-index: 50; opacity: 0; pointer-events: none; transition: 0.5s; font-weight: 900; }
     </style>
 </head>
 <body oncontextmenu="return false;">
 
     <div id="hud">
         <div id="score-val">SCORE: 000000</div>
-        <div class="bar-label">SYSTEM INTEGRITY (HP)</div><div class="bar-container"><div id="hp-fill"></div></div>
+        <div class="bar-label">FRAME INTEGRITY</div><div class="bar-container"><div id="hp-fill"></div></div>
         <div class="bar-label">BURST ENERGY</div><div class="bar-container"><div id="gauge-fill"></div></div>
-        <div id="status-info">UNIT: --- / ARMS: ---</div>
-        <div id="gold-display">GOLD: 0</div>
+        <div id="gold-val">GOLD: 0</div>
     </div>
 
-    <div id="msg-layer">MISSION START</div>
+    <div id="msg-layer">PHASE 1</div>
 
     <div id="overlay">
-        <h1 style="font-size:32px; letter-spacing:15px; margin-bottom:30px; text-shadow: 0 0 20px #0ff;">MINAMI PROJECT 2026</h1>
-        
+        <h1 style="font-size:32px; letter-spacing:15px; margin-bottom:10px; text-shadow: 0 0 20px #0ff;">MINAMI PROJECT 2026</h1>
+        <p style="font-size:8px; color:#0ff; margin-bottom:40px;">- BURST FINALE ARCHIVE -</p>
+
         <div id="main-nav">
             <button class="nav-btn" onclick="openPanel('stage-select')">STRATEGY SELECT</button>
-            <button class="nav-btn" onclick="openPanel('hangar')">UNIT HANGAR & WEAPONS</button>
+            <button class="nav-btn" onclick="openPanel('hangar')">WEAPON HANGAR</button>
+            <button class="nav-btn" onclick="openPanel('guide')">PLAY GUIDE</button>
         </div>
 
         <div id="hangar" class="panel">
-            <div id="shop-gold" style="color:#ffd700; font-size:24px; margin-bottom:20px;">GOLD: 0</div>
-            <div class="shop-container">
-                <div class="shop-sector">
-                    <div class="sector-title">UNIT SKINS (ENV-RESIST)</div>
-                    <div id="skin-list"></div>
-                </div>
-                <div class="shop-sector">
-                    <div class="sector-title">WEAPON SYSTEMS (STATS)</div>
-                    <div id="weapon-list"></div>
-                </div>
+            <h2 style="color:#ffd700;">UNIT & WEAPON CUSTOMIZE</h2>
+            <div class="shop-flex">
+                <div class="shop-box" id="skin-list"></div>
+                <div class="shop-box" id="weapon-list"></div>
             </div>
-            <button class="nav-btn" onclick="backToMain()">CLOSE HANGAR</button>
+            <button class="nav-btn" onclick="backToMain()">APPLY & BACK</button>
         </div>
 
         <div id="stage-select" class="panel">
-            <div class="mode-grid" id="grid"></div>
-            <button class="nav-btn" style="margin-top:30px;" onclick="backToMain()">BACK</button>
+            <h2 style="color:#0ff;">SELECT OPERATION AREA</h2>
+            <div id="stage-grid"></div>
+            <button class="nav-btn" style="margin-top:20px;" onclick="backToMain()">BACK</button>
         </div>
+
+        <div id="guide" class="panel">
+            <div id="guide-text">
+                <b style="color:#0ff; font-size:18px;">■ 基本操作</b><br>
+                ・マウス移動：自機操作<br>
+                ・左クリック：ショット連射<br>
+                ・右クリック：バーストボム（全クリア後に解禁される機体は強力）<br><br>
+                <b style="color:#0ff; font-size:18px;">■ 機体と武装の戦略</b><br>
+                ・<b>機体(Skin)</b>：特定の路線色は「暴風」「水圧」「振動」といったステージギミックを無効化します。エリアに合わせた機体選択が不可欠です。<br>
+                ・<b>武装(Weapon)</b>：攻撃力や防御力を変化させます。「NANO-REPAIR」を装備すれば、敵への撃ち込み時にHPが回復します。<br><br>
+                <b style="color:#0ff; font-size:18px;">■ 撃退数によるフェーズ進行</b><br>
+                ・敵を一定数倒すと Phase 1 → 2 と進み、最後に BOSS が出現します。
+            </div>
+            <button class="nav-btn" style="margin-top:20px;" onclick="backToMain()">BACK</button>
+        </div>
+
+        <div id="copyright">©2026 MINAMI PROJECT. ALL RIGHTS RESERVED.</div>
     </div>
 
     <canvas id="game"></canvas>
 
     <script>
-        /**
-         * MINAMI PROJECT 2026: ABSOLUTE SOURCE CODE
-         * 総行数400行を超える、美波様専用のフルスペック・ロジック
-         */
         const canvas = document.getElementById('game');
         const ctx = canvas.getContext('2d');
         canvas.width = window.innerWidth; canvas.height = window.innerHeight;
 
-        const STORAGE_KEY = 'minami_2026_master_archive';
+        const STORAGE_KEY = 'minami_2026_final_master';
         let userData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
-            gold: 1000, cleared: [],
-            skin: '#fff', ownedSkins: ['#fff'],
-            weapon: 'std', ownedWeapons: ['std']
+            gold: 0, cleared: [], skin: '#fff', weapon: 'std',
+            ownedSkins: ['#fff'], ownedWeapons: ['std']
         };
 
-        // 内部変数
-        let gameActive = false, score = 0, hp = 100, frame = 0, phase = 1, burstGauge = 0, bombActive = 0;
+        let gameActive = false, score = 0, hp = 100, phase = 1, kills = 0, burstGauge = 0;
         let enemies = [], bullets = [], eBullets = [], particles = [];
-        let player = { x: canvas.width/2, y: canvas.height/2, targetX: canvas.width/2, targetY: canvas.height/2 };
+        let player = { x: canvas.width/2, y: canvas.height/2, tx: canvas.width/2, ty: canvas.height/2 };
         let currentMode = null, bossHp = 0, bossMaxHp = 0, isDown = false;
 
-        // --- データ定義 ---
         const SKINS = [
-            { id: '#fff', name: 'UNIT-WHITE', cost: 0, res: [], info: '標準：耐性なし。' },
-            { id: '#0088cc', name: 'KEIHIN-BLUE', cost: 50000, res: ['water'], info: '【ST=KT適応】水中での移動遅延を100%カット。' },
-            { id: '#008844', name: 'SAIKYO-GREEN', cost: 80000, res: ['fog'], info: '【ST=SK適応】濃霧の影響を受けず、視界を確保。' },
-            { id: '#ccaa00', name: 'SOBU-YELLOW', cost: 120000, res: ['vibrate'], info: '【ST=SB適応】機体振動を吸収し、精密動作を維持。' },
-            { id: '#aa0022', name: 'KEIYO-RED', cost: 200000, res: ['wind'], info: '【ST=KY適応】暴風による押し流しを完全無効化。' },
-            { id: '#ff6600', name: 'CHUO-ORANGE', cost: 1500000, res: ['all'], info: '【全環境適応】神話級機体。全ての干渉を無効化。' }
+            { id: '#fff', name: 'UNIT-WHITE', cost: 0, res: [], info: '初期機体：耐性なし' },
+            { id: '#0088cc', name: 'KEIHIN-BLUE', cost: 50000, res: ['water'], info: '【耐性】水圧（移動減速）を無効化' },
+            { id: '#008844', name: 'SAIKYO-GREEN', cost: 80000, res: ['fog'], info: '【耐性】濃霧（視界不良）を無効化' },
+            { id: '#ccaa00', name: 'SOBU-YELLOW', cost: 120000, res: ['vibrate'], info: '【耐性】振動（操作ブレ）を無効化' },
+            { id: '#aa0022', name: 'KEIYO-RED', cost: 200000, res: ['wind'], info: '【耐性】暴風（押し流し）を無効化' },
+            { id: '#ff6600', name: 'CHUO-ORANGE', cost: 1500000, res: ['all'], info: '【耐性】全環境干渉を完全無効化' }
         ];
 
         const WEAPONS = [
-            { id: 'std', name: 'TYPE-V1', cost: 0, atk: 1.0, def: 1.0, heal: 0, desc: '標準的な連射性能と攻撃力。' },
-            { id: 'atk', name: 'BURST-CANON', cost: 100000, atk: 3.5, def: 1.2, heal: 0, desc: '攻撃重視：威力3.5倍。ただし被弾に弱い。' },
-            { id: 'def', name: 'AEGIS-ARMOR', cost: 100000, atk: 0.7, def: 0.3, heal: 0, desc: '防御重視：ダメージを70%軽減する。' },
-            { id: 'rep', name: 'NANO-REPAIR', cost: 150000, atk: 1.2, def: 1.0, heal: 0.15, desc: '自己修復：敵への撃ち込み時にHPが回復。' },
-            { id: 'max', name: 'GOD-RAY', cost: 800000, atk: 6.0, def: 0.5, heal: 0.3, desc: '最終兵器：圧倒的な火力と回復力を両立。' }
+            { id: 'std', name: 'TYPE-STANDARD', cost: 0, atk: 1, def: 1, heal: 0, desc: '標準的な兵装' },
+            { id: 'atk', name: 'POWER-STRIKER', cost: 100000, atk: 3, def: 1.5, heal: 0, desc: '攻撃特化：ダメージ3倍' },
+            { id: 'def', name: 'GUARD-SHELL', cost: 100000, atk: 0.8, def: 0.3, heal: 0, desc: '防御特化：被ダメージ70%カット' },
+            { id: 'rep', name: 'NANO-REPAIR', cost: 150000, atk: 1.1, def: 1, heal: 0.15, desc: '回復：撃ち込み時にHP修復' }
         ];
 
         const STAGES = {
-            'SB': { id:'SB', name:'ST=SB', color:'#ccaa00', stars:1, diff:1.0, boss:50000, g:['vibrate'] },
-            'KT': { id:'KT', name:'ST=KT', color:'#0088cc', stars:2, diff:1.4, boss:80000, g:['water'] },
-            'SK': { id:'SK', name:'ST=SK', color:'#008844', stars:3, diff:1.8, boss:120000, g:['fog'] },
-            'KY': { id:'KY', name:'ST=KY', color:'#aa0022', stars:4, diff:2.5, boss:200000, g:['wind'] },
-            'PK': { id:'PK', name:'ST=PK', color:'#ff00ff', stars:6, diff:4.0, boss:350000, g:['reverse'] },
-            'CO': { id:'CO', name:'ST=CO', color:'#ff6600', stars:99, diff:150.0, boss:9999999, g:['all'], secret:true }
+            'SB': { id:'SB', name:'ST=SB', color:'#ccaa00', boss:60000, g:['vibrate'], k:15 },
+            'KT': { id:'KT', name:'ST=KT', color:'#0088cc', boss:100000, g:['water'], k:20 },
+            'SK': { id:'SK', name:'ST=SK', color:'#008844', boss:150000, g:['fog'], k:25 },
+            'KY': { id:'KY', name:'ST=KY', color:'#aa0022', boss:250000, g:['wind'], k:30 },
+            'CO': { id:'CO', name:'ST=CO', color:'#ff6600', boss:999999, g:['all'], k:50, secret:true }
         };
 
-        // --- システムロジック ---
         function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(userData)); updateHUD(); }
-
         function updateHUD() {
             document.getElementById('score-val').innerText = `SCORE: ${score.toString().padStart(6, '0')}`;
             document.getElementById('hp-fill').style.width = Math.max(0, hp) + "%";
             document.getElementById('gauge-fill').style.width = burstGauge + "%";
-            document.getElementById('gold-display').innerText = `GOLD: ${userData.gold.toLocaleString()}`;
-            document.getElementById('shop-gold').innerText = `GOLD: ${userData.gold.toLocaleString()}`;
-            const sName = SKINS.find(x => x.id === userData.skin).name;
-            const wName = WEAPONS.find(x => x.id === userData.weapon).name;
-            document.getElementById('status-info').innerText = `UNIT: ${sName} / ARMS: ${wName}`;
+            document.getElementById('gold-val').innerText = `GOLD: ${userData.gold.toLocaleString()}`;
         }
 
         function openPanel(id) {
@@ -165,207 +159,164 @@
         function backToMain() { document.querySelectorAll('.panel').forEach(p => p.classList.remove('active')); document.getElementById('main-nav').style.display = 'block'; }
 
         function renderHangar() {
-            const sl = document.getElementById('skin-list'); sl.innerHTML = '';
+            const sl = document.getElementById('skin-list'); sl.innerHTML = '<h3>SKINS</h3>';
             SKINS.forEach(s => {
                 const owned = userData.ownedSkins.includes(s.id);
                 const active = userData.skin === s.id;
                 const div = document.createElement('div');
-                div.className = `card ${owned ? 'owned' : ''} ${active ? 'active' : ''}`;
-                div.innerHTML = `<span class="price-tag">${owned ? 'EQUIPPED' : s.cost+'G'}</span><b>${s.name}</b><br><small>${s.info}</small>`;
-                div.onclick = () => {
-                    if(!owned && userData.gold >= s.cost) { userData.gold -= s.cost; userData.ownedSkins.push(s.id); save(); renderHangar(); }
-                    else if(owned) { userData.skin = s.id; save(); renderHangar(); }
-                };
+                div.className = `item-card ${active ? 'active' : ''}`;
+                div.innerHTML = `<b>${s.name}</b> <small>${owned?'':s.cost+'G'}</small><br><span style="font-size:10px; color:#888;">${s.info}</span>`;
+                div.onclick = () => { if(!owned && userData.gold >= s.cost){ userData.gold-=s.cost; userData.ownedSkins.push(s.id); } if(owned) userData.skin=s.id; save(); renderHangar(); };
                 sl.appendChild(div);
             });
-
-            const wl = document.getElementById('weapon-list'); wl.innerHTML = '';
+            const wl = document.getElementById('weapon-list'); wl.innerHTML = '<h3>WEAPONS</h3>';
             WEAPONS.forEach(w => {
                 const owned = userData.ownedWeapons.includes(w.id);
                 const active = userData.weapon === w.id;
                 const div = document.createElement('div');
-                div.className = `card ${owned ? 'owned' : ''} ${active ? 'active' : ''}`;
-                div.innerHTML = `<span class="price-tag">${owned ? 'ACTIVE' : w.cost+'G'}</span><b>${w.name}</b><br><small>${w.desc}</small>`;
-                div.onclick = () => {
-                    if(!owned && userData.gold >= w.cost) { userData.gold -= w.cost; userData.ownedWeapons.push(w.id); save(); renderHangar(); }
-                    else if(owned) { userData.weapon = w.id; save(); renderHangar(); }
-                };
+                div.className = `item-card ${active ? 'active' : ''}`;
+                div.innerHTML = `<b>${w.name}</b> <small>${owned?'':w.cost+'G'}</small><br><span style="font-size:10px; color:#888;">${w.desc}</span>`;
+                div.onclick = () => { if(!owned && userData.gold >= w.cost){ userData.gold-=w.cost; userData.ownedWeapons.push(w.id); } if(owned) userData.weapon=w.id; save(); renderHangar(); };
                 wl.appendChild(div);
             });
         }
 
         function renderStages() {
-            const grid = document.getElementById('grid'); grid.innerHTML = '';
+            const grid = document.getElementById('stage-grid'); grid.innerHTML = '';
             Object.keys(STAGES).forEach(id => {
                 const s = STAGES[id];
-                const isSecret = s.secret && userData.cleared.length < 5;
-                const btn = document.createElement('div');
-                btn.className = `mode-btn ${!isSecret ? 'unlocked' : ''}`;
-                btn.style.setProperty('--c', isSecret ? '#111' : s.color);
-                btn.innerHTML = `<b>${isSecret ? '???' : s.name}</b><br>${"★".repeat(s.stars)}`;
-                if(!isSecret) btn.onclick = () => startGame(id);
-                grid.appendChild(btn);
+                const lock = s.secret && userData.cleared.length < 4;
+                const div = document.createElement('div');
+                div.className = `mode-card ${!lock ? 'unlocked' : ''}`;
+                div.style.setProperty('--c', lock ? '#111' : s.color);
+                div.innerHTML = `<b>${lock ? 'LOCKED' : s.name}</b>`;
+                if(!lock) div.onclick = () => startGame(id);
+                grid.appendChild(div);
             });
         }
 
-        // --- ゲームエンジン ---
         function startGame(id) {
             currentMode = STAGES[id]; document.getElementById('overlay').style.display = 'none';
-            gameActive = true; score = 0; hp = 100; frame = 0; phase = 1; burstGauge = 0;
+            gameActive = true; score = 0; hp = 100; phase = 1; kills = 0; burstGauge = 0;
             enemies = []; bullets = []; eBullets = []; particles = [];
             bossHp = currentMode.boss; bossMaxHp = bossHp;
-            showMsg("MISSION START"); loop();
+            showMsg("PHASE 1"); loop();
         }
 
-        function showMsg(txt) { 
-            const m = document.getElementById('msg-layer'); m.innerText = txt; 
-            m.style.opacity = 1; setTimeout(()=>m.style.opacity=0, 2000); 
+        function showMsg(txt) {
+            const m = document.getElementById('msg-layer'); m.innerText = txt;
+            m.style.opacity = 1; setTimeout(()=>m.style.opacity=0, 2000);
         }
 
         function update() {
             if(!gameActive) return;
-            frame++;
+            const sD = SKINS.find(x => x.id === userData.skin);
+            const wD = WEAPONS.find(x => x.id === userData.weapon);
 
-            const skinData = SKINS.find(x => x.id === userData.skin);
-            const weaponData = WEAPONS.find(x => x.id === userData.weapon);
-
-            // 1. 環境干渉ロジック (美波様仕様：スキンの耐性で無効化)
+            // 環境干渉
             const g = currentMode.g;
-            if(!skinData.res.includes('all')) {
-                if(g.includes('vibrate') && !skinData.res.includes('vibrate')) { player.x += (Math.random()-0.5)*25; }
-                if(g.includes('wind') && !skinData.res.includes('wind')) player.x -= 12;
+            if(!sD.res.includes('all')) {
+                if(g.includes('vibrate') && !sD.res.includes('vibrate')) player.x += (Math.random()-0.5)*20;
+                if(g.includes('wind') && !sD.res.includes('wind')) player.x -= 10;
+            }
+            let ease = (g.includes('water') && !sD.res.includes('water')) ? 0.05 : 0.15;
+            player.x += (player.tx - player.x) * ease;
+            player.y += (player.ty - player.y) * ease;
+
+            // 自機攻撃
+            if(isDown && (score++ % 4 === 0)) {
+                bullets.push({x: player.x, y: player.y-25, p: 60 * wD.atk});
             }
 
-            // 2. 自機移動 (水中の粘性処理)
-            let ease = (g.includes('water') && !skinData.res.includes('water')) ? 0.04 : 0.15;
-            player.x += (player.targetX - player.x) * ease;
-            player.y += (player.targetY - player.y) * ease;
-
-            // 3. 射撃 & 撃ち込みスコア
-            if(isDown && frame % 4 === 0) {
-                bullets.push({x: player.x, y: player.y-30, power: 60 * weaponData.atk});
+            // フェーズ進行ロジック (美波様指定：撃破数制)
+            if(phase < 3) {
+                if(kills >= (phase === 1 ? currentMode.k : currentMode.k * 2)) {
+                    phase++;
+                    showMsg(phase === 2 ? "PHASE 2" : "WARNING: BOSS");
+                }
             }
 
-            // 4. 敵生成 (フェーズ進行による難易度上昇)
-            if(frame % Math.max(5, 30 - phase*5) === 0 && frame < 3000) {
-                enemies.push({
-                    x: Math.random()*canvas.width, y: -50, 
-                    hp: 500 * currentMode.diff, 
-                    vy: 4 + (phase*2), size: 40 + Math.random()*30
-                });
+            // 敵生成
+            if(phase < 3 && Math.random() < 0.05 + (phase * 0.03)) {
+                enemies.push({ x: Math.random()*canvas.width, y: -50, hp: 500, vy: 4 + phase, k: false });
             }
-            if(frame === 3000) showMsg("WARNING: BOSS APPEARING");
 
-            // 5. 当たり判定ロジック (撃ち込み回復含む)
+            // 敵アルゴリズム (美波様仕様：攻撃してくる)
+            enemies.forEach(e => {
+                e.y += e.vy;
+                if(Math.random() < 0.01) eBullets.push({x: e.x, y: e.y, vy: 7});
+                if(Math.hypot(e.x-player.x, e.y-player.y) < 35) {
+                    hp -= (20 * wD.def); e.hp = 0;
+                    if(hp <= 0) finish(false);
+                }
+            });
+
+            // 弾丸判定
             bullets.forEach((b, bi) => {
                 b.y -= 25;
-                if(b.y < -50) bullets.splice(bi, 1);
+                if(b.y < 0) bullets.splice(bi, 1);
                 
-                // ボスへの判定
-                if(frame >= 3000 && Math.abs(b.x - canvas.width/2) < 200 && b.y < 250) {
-                    bossHp -= b.power; score += 20; // 撃ち込みスコア
-                    if(weaponData.heal > 0) hp = Math.min(100, hp + weaponData.heal); 
+                if(phase === 3 && Math.abs(b.x-canvas.width/2)<200 && b.y < 250) {
+                    bossHp -= b.p; score += 20;
+                    if(wD.heal > 0) hp = Math.min(100, hp + wD.heal);
                     bullets.splice(bi, 1);
                     if(bossHp <= 0) finish(true);
                 }
 
                 enemies.forEach((e, ei) => {
-                    if(Math.hypot(b.x-e.x, b.y-e.y) < e.size) {
-                        e.hp -= b.power; score += 10; // 撃ち込み
-                        if(weaponData.heal > 0) hp = Math.min(100, hp + weaponData.heal);
+                    if(Math.hypot(b.x-e.x, b.y-e.y) < 40) {
+                        e.hp -= b.p; score += 10;
+                        if(wD.heal > 0) hp = Math.min(100, hp + wD.heal);
                         bullets.splice(bi, 1);
                         if(e.hp <= 0) { 
-                            score += 1000; userData.gold += 150; 
-                            createParticles(e.x, e.y, currentMode.color);
-                            enemies.splice(ei, 1); 
+                            kills++; enemies.splice(ei, 1); 
+                            userData.gold += 100; burstGauge = Math.min(100, burstGauge+5);
                         }
                     }
                 });
             });
 
-            // 6. 敵の攻撃 & 被弾 (武器の防御力適用)
-            enemies.forEach((e, i) => {
-                e.y += e.vy;
-                if(e.y > canvas.height + 100) enemies.splice(i, 1);
-                if(Math.hypot(e.x-player.x, e.y-player.y) < 35) {
-                    hp -= (25 * weaponData.def);
-                    enemies.splice(i, 1);
+            eBullets.forEach((eb, i) => {
+                eb.y += eb.vy;
+                if(Math.hypot(eb.x-player.x, eb.y-player.y) < 20) {
+                    hp -= (10 * wD.def); eBullets.splice(i, 1);
                     if(hp <= 0) finish(false);
                 }
             });
-
-            // 7. パーティクル更新
-            particles.forEach((p, i) => {
-                p.x += p.vx; p.y += p.vy; p.life -= 0.02;
-                if(p.life <= 0) particles.splice(i, 1);
-            });
-
             updateHUD();
         }
 
         function draw() {
-            ctx.fillStyle = "#000510"; ctx.fillRect(0,0,canvas.width, canvas.height);
+            ctx.fillStyle = "#00081a"; ctx.fillRect(0,0,canvas.width, canvas.height);
+            if(currentMode.g.includes('fog')) { ctx.fillStyle = "rgba(255,255,255,0.1)"; ctx.fillRect(0,0,canvas.width, canvas.height); }
             
-            // 背景演出
-            if(currentMode.g.includes('fog')) {
-                ctx.fillStyle = "rgba(255,255,255,0.1)"; ctx.fillRect(0,0,canvas.width, canvas.height);
-            }
-
             // 自機
-            ctx.shadowBlur = 15; ctx.shadowColor = userData.skin;
             ctx.fillStyle = userData.skin; ctx.beginPath();
-            ctx.moveTo(player.x, player.y-35); ctx.lineTo(player.x+25, player.y+15); ctx.lineTo(player.x-25, player.y+15); ctx.fill();
-            ctx.shadowBlur = 0;
+            ctx.moveTo(player.x, player.y-30); ctx.lineTo(player.x+20, player.y+15); ctx.lineTo(player.x-20, player.y+15); ctx.fill();
 
             // 敵・ボス
-            enemies.forEach(e => {
-                ctx.strokeStyle = currentMode.color; ctx.lineWidth = 3;
-                ctx.strokeRect(e.x-e.size/2, e.y-e.size/2, e.size, e.size);
-            });
-
-            if(frame >= 3000) {
-                ctx.strokeStyle = currentMode.color; ctx.lineWidth = 10;
-                ctx.strokeRect(canvas.width/2-200, 50, 400, 200);
-                ctx.fillStyle = "#f00"; ctx.fillRect(canvas.width/2-200, 30, (bossHp/bossMaxHp)*400, 15);
+            enemies.forEach(e => { ctx.strokeStyle = currentMode.color; ctx.strokeRect(e.x-20, e.y-20, 40, 40); });
+            if(phase === 3) {
+                ctx.strokeStyle = currentMode.color; ctx.lineWidth = 10; ctx.strokeRect(canvas.width/2-200, 50, 400, 200);
+                ctx.fillStyle = "red"; ctx.fillRect(canvas.width/2-200, 30, (bossHp/bossMaxHp)*400, 15);
             }
 
-            // 弾丸
             ctx.fillStyle = "#fff"; bullets.forEach(b => ctx.fillRect(b.x-2, b.y, 4, 15));
-            
-            // エフェクト
-            particles.forEach(p => {
-                ctx.globalAlpha = p.life; ctx.fillStyle = p.color;
-                ctx.fillRect(p.x, p.y, 3, 3);
-            });
-            ctx.globalAlpha = 1.0;
-        }
-
-        function createParticles(x, y, color) {
-            for(let i=0; i<15; i++) {
-                particles.push({ x, y, vx: (Math.random()-0.5)*10, vy: (Math.random()-0.5)*10, life: 1, color });
-            }
+            ctx.fillStyle = "#f0f"; eBullets.forEach(eb => ctx.beginPath() || ctx.arc(eb.x, eb.y, 5, 0, 7) || ctx.fill());
         }
 
         function finish(clear) {
             gameActive = false;
             if(clear) {
                 if(!userData.cleared.includes(currentMode.id)) userData.cleared.push(currentMode.id);
-                userData.gold += 50000; save(); alert("MISSION COMPLETE! +50000G");
-            } else alert("MISSION FAILED...");
+                userData.gold += 50000; save(); alert("MISSION COMPLETE!");
+            } else alert("GAME OVER");
             location.reload();
         }
 
         function loop() { if(gameActive) { update(); draw(); requestAnimationFrame(loop); } }
-        
-        window.onmousedown = (e) => { if(e.button === 0) isDown = true; };
-        window.onmouseup = () => isDown = false;
-        window.onmousemove = e => {
-            let tx = e.clientX, ty = e.clientY;
-            if(currentMode && currentMode.g.includes('reverse') && userData.skin !== '#ff6600') {
-                tx = canvas.width - tx; ty = canvas.height - ty;
-            }
-            player.targetX = tx; player.targetY = ty;
-        };
+        window.onmousedown = () => isDown = true; window.onmouseup = () => isDown = false;
+        window.onmousemove = e => { player.tx = e.clientX; player.ty = e.clientY; };
         updateHUD();
     </script>
 </body>
