@@ -193,7 +193,7 @@
             const clr = userData.cleared.length;
             Object.keys(STAGES).forEach(id => {
                 const s = STAGES[id];
-                let lock = (s.secret === 1 && clr < 9) || (s.secret === 2 && clr < 14);
+                let lock = (s.secret === 1 && clr < 9) || (s.secret === 2 && clr < 12);
                 const btn = document.createElement('div');
                 btn.className = `mode-btn ${!lock ? 'unlocked' : ''} ${userData.cleared.includes(id) ? 'cleared' : ''}`;
                 btn.style.setProperty('--c', lock ? '#1a1a1a' : s.color);
