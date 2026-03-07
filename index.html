@@ -138,21 +138,21 @@
         let sessionData = { atk: 10, hasBit: false };
 
         const STAGES = {
-            'SB': { name: 'ST=SB', color: '#ccaa00', diff: 1.0, score1: 3000, score2: 6000, bossHp: 800, g: ['vibrate'], info: '【黄昏の静止衛星】\n攻略条件：微振動への順応。SOBU-YELLOWの重装甲はこの振動を相殺する適正を持つ。' },
-            'KT': { name: 'ST=KT', color: '#0088cc', diff: 1.2, score1: 4000, score2: 80000, bossHp: 1200, g: ['water'], info: '【紺碧の深層回路】\n攻略条件：水中減速の克服。BLUE-MARINEを使用すれば、水の粘性による移動遅延を無効化できる。' },
-            'SK': { name: 'ST=SK', color: '#008844', diff: 1.4, score1: 5000, score2: 10000, bossHp: 1600, g: ['fog'], info: '【深翠の迷宮森林】\n攻略条件：索敵範囲の拡大。SAIKYO-GREENの3方向同時射撃は、霧の中の敵を効率よく排除可能。' },
-            'KY': { name: 'ST=KY', color: '#aa0022', diff: 1.6, score1: 5000, score2: 10000, bossHp: 2000, g: ['wind'], info: '【紅蓮の暴風境界】\n攻略条件：強風耐性。KEIYO-REDはこのエリアの西風を無効化し、ボム火力が2倍に。' },
-            'PK': { name: 'ST=PK', color: '#cc5588', diff: 1.8, score1: 6000, score2: 12000, bossHp: 2500, g: ['reverse'], info: '【薄桃の鏡像世界】\n攻略条件：認識の再定義。左右移動が反転する。' },
-            'JB': { name: 'ST=JB', color: '#006666', diff: 2.1, score1: 7000, score2: 14000, bossHp: 3000, g: ['jamming'], info: '【電磁の断層廃墟】\n攻略条件：弾道補正。強力なジャミングで弾道が歪む。' },
-            'S1': { name: 'ST=S1', color: '#6600cc', diff: 2.4, score1: 8000, score2: 16000, bossHp: 4000, g: ['warp'], info: '【紫紺の跳躍空域】\n攻略条件：空間把握。画面端から端へ弾がワープする。' },
-            'S2': { name: 'ST=S2', color: '#cc00cc', diff: 2.7, score1: 8000, score2: 16000, bossHp: 5000, g: ['poison'], info: '【極彩の腐食雲】\n攻略条件：短期決戦。装甲が毒で蝕まれる。' },
-            'S3': { name: 'ST=S3', color: '#00cccc', diff: 3.2, score1: 10000, score2: 2000, bossHp: 6500, g: ['gravity'], info: '【青磁の重力特異点】\n攻略条件：物理干渉の遮断。激しい重力変動。' },
-            'NM': { name: 'ST=NM', color: '#00bb00', diff: 5.0, score1: 15000, score2: 30000, bossHp: 12000, g: ['vibrate','fog'], secret: 1, info: '【機密：深翠の虚無】\n隠しステージ。振動と霧の複合。' },
-            'TY': { name: 'ST=TY', color: '#888888', diff: 6.0, score1: 15000, score2: 30000, bossHp: 15000, g: ['water','wind'], secret: 1, info: '【機密：灰色の暴風域】\n隠しステージ。水の抵抗と強風。' },
-            'YF': { name: 'ST=YF', color: '#dddd00', diff: 7.5, score1: 20000, score2: 40000, bossHp: 20000, g: ['reverse','jamming'], secret: 1, info: '【機密：黄金の混乱】\n隠しステージ。反転と歪曲。' },
-            'ME': { name: 'ST=ME', color: '#ff0000', diff: 12.0, score1: 30000, score2: 60000, bossHp: 50000, g: ['warp','poison','gravity'], secret: 2, info: '【極限：紅蓮の零地点】\n超難関。三重複合干渉。' },
-            'SL': { name: 'ST=SL', color: '#00aa00', diff: 25.0, score1: 50000, score2: 100000, bossHp: 100000, g: ['vibrate','wind','reverse','jamming'], secret: 2, info: '【極限：翠緑の審判】\n美波が課した最大級の試練。' },
-            'CO': { name: 'ST=CO', color: '#ff6600', diff: 150.0, score1: 100000, score2: 200000, bossHp: 400000, g: ['all'], secret: 2, info: '【終焉：光輝の神話】\n全色の収束。美波との一体化を果たせ。' }
+            'SB': { name: 'ST=SB', color: '#ccaa00', diff: 0.1, score1: 3000, score2: 6000, bossHp: 800, g: ['vibrate'], info: '【黄昏の静止衛星】\n攻略条件：微振動への順応。SOBU-YELLOWの重装甲はこの振動を相殺する適正を持つ。' },
+            'KT': { name: 'ST=KT', color: '#0088cc', diff: 0.15, score1: 4000, score2: 80000, bossHp: 1200, g: ['water'], info: '【紺碧の深層回路】\n攻略条件：水中減速の克服。BLUE-MARINEを使用すれば、水の粘性による移動遅延を無効化できる。' },
+            'SK': { name: 'ST=SK', color: '#008844', diff: 0.2, score1: 5000, score2: 10000, bossHp: 1600, g: ['fog'], info: '【深翠の迷宮森林】\n攻略条件：索敵範囲の拡大。SAIKYO-GREENの3方向同時射撃は、霧の中の敵を効率よく排除可能。' },
+            'KY': { name: 'ST=KY', color: '#aa0022', diff: 0.25, score1: 5000, score2: 10000, bossHp: 2000, g: ['wind'], info: '【紅蓮の暴風境界】\n攻略条件：強風耐性。KEIYO-REDはこのエリアの西風を無効化し、ボム火力が2倍に。' },
+            'PK': { name: 'ST=PK', color: '#cc5588', diff: 0.3, score1: 6000, score2: 12000, bossHp: 2500, g: ['reverse'], info: '【薄桃の鏡像世界】\n攻略条件：認識の再定義。左右移動が反転する。' },
+            'JB': { name: 'ST=JB', color: '#006666', diff: 0.35, score1: 7000, score2: 14000, bossHp: 3000, g: ['jamming'], info: '【電磁の断層廃墟】\n攻略条件：弾道補正。強力なジャミングで弾道が歪む。' },
+            'S1': { name: 'ST=S1', color: '#6600cc', diff: 0.4, score1: 8000, score2: 16000, bossHp: 4000, g: ['warp'], info: '【紫紺の跳躍空域】\n攻略条件：空間把握。画面端から端へ弾がワープする。' },
+            'S2': { name: 'ST=S2', color: '#cc00cc', diff: 0.45, score1: 8000, score2: 16000, bossHp: 5000, g: ['poison'], info: '【極彩の腐食雲】\n攻略条件：短期決戦。装甲が毒で蝕まれる。' },
+            'S3': { name: 'ST=S3', color: '#00cccc', diff: 0.5, score1: 10000, score2: 2000, bossHp: 6500, g: ['gravity'], info: '【青磁の重力特異点】\n攻略条件：物理干渉の遮断。激しい重力変動。' },
+            'NM': { name: 'ST=NM', color: '#00bb00', diff: 0.6, score1: 15000, score2: 30000, bossHp: 12000, g: ['vibrate','fog'], secret: 1, info: '【機密：深翠の虚無】\n隠しステージ。振動と霧の複合。' },
+            'TY': { name: 'ST=TY', color: '#888888', diff: 0.7, score1: 15000, score2: 30000, bossHp: 15000, g: ['water','wind'], secret: 1, info: '【機密：灰色の暴風域】\n隠しステージ。水の抵抗と強風。' },
+            'YF': { name: 'ST=YF', color: '#dddd00', diff: 0.72, score1: 20000, score2: 40000, bossHp: 20000, g: ['reverse','jamming'], secret: 1, info: '【機密：黄金の混乱】\n隠しステージ。反転と歪曲。' },
+            'ME': { name: 'ST=ME', color: '#ff0000', diff: 0.75, score1: 30000, score2: 60000, bossHp: 50000, g: ['warp','poison','gravity'], secret: 2, info: '【極限：紅蓮の零地点】\n超難関。三重複合干渉。' },
+            'SL': { name: 'ST=SL', color: '#00aa00', diff: 0.78, score1: 50000, score2: 100000, bossHp: 100000, g: ['vibrate','wind','reverse','jamming'], secret: 2, info: '【極限：翠緑の審判】\n美波が課した最大級の試練。' },
+            'CO': { name: 'ST=CO', color: '#ff6600', diff: 0.8, score1: 100000, score2: 200000, bossHp: 400000, g: ['all'], secret: 2, info: '【終焉：光輝の神話】\n全色の収束。美波との一体化を果たせ。' }
         };
 
         const AVATARS = [
